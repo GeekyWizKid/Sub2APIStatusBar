@@ -34,7 +34,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
           else
-            VERSION="v0.1.1"
+            VERSION="v0.1.2"
           fi
           VERSION="$VERSION" ./scripts/package-release.sh
           VERSION="$VERSION" ./scripts/verify-release.sh

@@ -150,6 +150,12 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     #expect(metrics.errorRate == 0.025)
 }
 
+@Test func sub2APIErrorIdentifiesUnauthorizedResponses() {
+    #expect(Sub2APIError.badStatus(401, "expired").isUnauthorized == true)
+    #expect(Sub2APIError.badStatus(403, "forbidden").isUnauthorized == false)
+    #expect(Sub2APIError.invalidBaseURL.isUnauthorized == false)
+}
+
 @Test func currentUserResponseDecodesDirectUserPayload() throws {
     let json = """
     {

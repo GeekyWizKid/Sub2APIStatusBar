@@ -126,42 +126,82 @@ final class MonitorViewModel: ObservableObject {
 
         let client = Sub2APIClient(config: config)
         do {
-            let currentUser = try? await client.currentUser().user
-            async let summaryTask = client.subscriptionSummary()
-            async let statsTask = client.usageDashboardStats()
-            let range = Self.lastSevenDayRange()
-            async let trendTask = client.usageDashboardTrend(startDate: range.start, endDate: range.end, granularity: "day")
-            async let modelsTask = client.usageDashboardModels(startDate: range.start, endDate: range.end)
-
-            let summary = try await summaryTask
-            let stats = try? await statsTask
-            let trend = try? await trendTask
-            let models = try? await modelsTask
-            publish(MonitorSnapshot(
-                mode: .user,
-                connected: true,
-                currentUser: currentUser,
-                stats: stats,
-                trend: trend?.trend,
-                modelDistribution: models?.models,
-                realtime: nil,
-                accountHealth: nil,
-                subscriptionSummary: summary,
-                lastUpdatedAt: Date(),
-                message: nil
-            ))
+            publish(try await userSnapshot(client: client))
         } catch {
-            publish(MonitorSnapshot(
-                mode: config.monitorMode,
-                connected: false,
-                stats: nil,
-                realtime: nil,
-                accountHealth: nil,
-                subscriptionSummary: nil,
-                lastUpdatedAt: snapshot.lastUpdatedAt,
-                message: error.localizedDescription
-            ))
+            if await refreshAuthTokenIfNeeded(after: error) {
+                do {
+                    publish(try await userSnapshot(client: Sub2APIClient(config: config)))
+                    return
+                } catch {
+                    publishDisconnected(error)
+                    return
+                }
+            }
+            publishDisconnected(error)
         }
+    }
+
+    private func userSnapshot(client: Sub2APIClient) async throws -> MonitorSnapshot {
+        let currentUser = try? await client.currentUser().user
+        async let summaryTask = client.subscriptionSummary()
+        async let statsTask = client.usageDashboardStats()
+        let range = Self.lastSevenDayRange()
+        async let trendTask = client.usageDashboardTrend(startDate: range.start, endDate: range.end, granularity: "day")
+        async let modelsTask = client.usageDashboardModels(startDate: range.start, endDate: range.end)
+
+        let summary = try await summaryTask
+        let stats = try? await statsTask
+        let trend = try? await trendTask
+        let models = try? await modelsTask
+        return MonitorSnapshot(
+            mode: .user,
+            connected: true,
+            currentUser: currentUser,
+            stats: stats,
+            trend: trend?.trend,
+            modelDistribution: models?.models,
+            realtime: nil,
+            accountHealth: nil,
+            subscriptionSummary: summary,
+            lastUpdatedAt: Date(),
+            message: nil
+        )
+    }
+
+    private func refreshAuthTokenIfNeeded(after error: Error) async -> Bool {
+        guard let apiError = error as? Sub2APIError,
+              apiError.isUnauthorized,
+              !config.refreshToken.isEmpty else {
+            return false
+        }
+
+        var refreshConfig = config
+        refreshConfig.authToken = ""
+        do {
+            let response = try await Sub2APIClient(config: refreshConfig).refreshToken(config.refreshToken)
+            var next = config
+            next.authToken = response.accessToken
+            next.refreshToken = response.refreshToken ?? config.refreshToken
+            try store.save(next)
+            config = next
+            settingsDraft = next
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func publishDisconnected(_ error: Error) {
+        publish(MonitorSnapshot(
+            mode: config.monitorMode,
+            connected: false,
+            stats: nil,
+            realtime: nil,
+            accountHealth: nil,
+            subscriptionSummary: nil,
+            lastUpdatedAt: snapshot.lastUpdatedAt,
+            message: error.localizedDescription
+        ))
     }
 
     func saveSettings() {

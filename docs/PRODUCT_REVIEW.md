@@ -123,3 +123,16 @@ The only meaningful blockers for public distribution are external materials and 
 
 3. 提升
    - The app now matches the intended release promise: ordinary users can see usage without needing an admin account.
+
+### 2026-04-28 Cycle G
+
+1. 审视
+   - Refresh tokens were stored but not used, so an expired access token could still force the user back into manual login.
+
+2. 执行
+   - Added automatic token refresh on `401` responses.
+   - Saved renewed credentials back to Keychain and retried the dashboard refresh after renewal.
+   - Added test coverage for unauthorized-response classification.
+
+3. 提升
+   - The status bar can now run longer as a quiet monitor instead of becoming another thing the user has to babysit.

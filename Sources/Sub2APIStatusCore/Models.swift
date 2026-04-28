@@ -18,6 +18,15 @@ public enum Sub2APIError: Error, LocalizedError, Equatable, Sendable {
             "HTTP \(status): \(message)"
         }
     }
+
+    public var isUnauthorized: Bool {
+        switch self {
+        case let .badStatus(status, _):
+            status == 401
+        default:
+            false
+        }
+    }
 }
 
 public struct Sub2APIEnvelope<Value: Decodable & Sendable>: Decodable, Sendable {

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${VERSION:-v0.1.1}"
+VERSION="${VERSION:-v0.1.2}"
 APP_NAME="Sub2APIStatusBar"
 BUNDLE_ID="${BUNDLE_ID:-com.geekywizkid.sub2api-statusbar}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"

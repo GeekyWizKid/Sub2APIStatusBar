@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.2
+
+- Added automatic access-token refresh on `401` responses when a refresh token is available.
+- Retried the user dashboard refresh after successful token renewal.
+- Added test coverage for unauthorized-response classification.
+
 ## v0.1.1
 
 - Moved login tokens to the macOS Keychain with automatic migration from older config files.
