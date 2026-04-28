@@ -72,8 +72,26 @@ public struct AuthResponse: Decodable, Sendable {
     public let user: CurrentUser?
 }
 
-public struct CurrentUserResponse: Decodable, Sendable {
+public struct CurrentUserResponse: Decodable, Equatable, Sendable {
     public let user: CurrentUser?
+
+    private enum CodingKeys: String, CodingKey {
+        case user
+    }
+
+    public init(user: CurrentUser?) {
+        self.user = user
+    }
+
+    public init(from decoder: Decoder) throws {
+        if let wrapped = try? decoder.container(keyedBy: CodingKeys.self),
+           let user = try wrapped.decodeIfPresent(CurrentUser.self, forKey: .user) {
+            self.user = user
+            return
+        }
+
+        user = try? CurrentUser(from: decoder)
+    }
 }
 
 public struct CurrentUser: Decodable, Identifiable, Equatable, Sendable {

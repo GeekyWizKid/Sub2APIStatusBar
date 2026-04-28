@@ -341,24 +341,24 @@ struct MonitorPanel: View {
         VStack(alignment: .leading, spacing: 14) {
             if let stats = model.snapshot.stats {
                 MetricGrid(items: [
-                    MetricItem(title: "Balance", value: balanceText, caption: "Available"),
-                    MetricItem(title: "API Keys", value: "\(stats.totalAPIKeys)", caption: "\(stats.activeAPIKeys) active"),
-                    MetricItem(title: "Today Requests", value: StatusFormatters.menuBarCount(stats.todayRequests), caption: "Total \(StatusFormatters.compactNumber(stats.totalRequests))"),
-                    MetricItem(title: "Today Cost", value: StatusFormatters.preciseCurrency(stats.todayActualCost), caption: "Total \(StatusFormatters.preciseCurrency(stats.totalActualCost))"),
-                    MetricItem(title: "Today Tokens", value: StatusFormatters.compactNumber(stats.todayTokens), caption: tokenBreakdown(input: stats.todayInputTokens, output: stats.todayOutputTokens)),
-                    MetricItem(title: "Total Tokens", value: StatusFormatters.compactNumber(stats.totalTokens), caption: tokenBreakdown(input: stats.totalInputTokens, output: stats.totalOutputTokens)),
-                    MetricItem(title: "Performance", value: "\(StatusFormatters.menuBarRate(stats.rpm)) RPM", caption: "\(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM"),
-                    MetricItem(title: "Avg Response", value: latencyText(milliseconds: stats.averageDurationMs), caption: "Average time"),
+                    MetricItem(title: "Balance", value: balanceText, caption: "Available", systemImage: "banknote", tint: .green),
+                    MetricItem(title: "API Keys", value: "\(stats.totalAPIKeys)", caption: "\(stats.activeAPIKeys) active", systemImage: "key", tint: .blue),
+                    MetricItem(title: "Today Requests", value: StatusFormatters.menuBarCount(stats.todayRequests), caption: "Total \(StatusFormatters.compactNumber(stats.totalRequests))", systemImage: "chart.bar", tint: .green),
+                    MetricItem(title: "Today Cost", value: StatusFormatters.preciseCurrency(stats.todayActualCost), caption: "Total \(StatusFormatters.preciseCurrency(stats.totalActualCost))", systemImage: "dollarsign.circle", tint: .purple),
+                    MetricItem(title: "Today Tokens", value: StatusFormatters.compactNumber(stats.todayTokens), caption: tokenBreakdown(input: stats.todayInputTokens, output: stats.todayOutputTokens), systemImage: "cube", tint: .orange),
+                    MetricItem(title: "Total Tokens", value: StatusFormatters.compactNumber(stats.totalTokens), caption: tokenBreakdown(input: stats.totalInputTokens, output: stats.totalOutputTokens), systemImage: "database", tint: .indigo),
+                    MetricItem(title: "Performance", value: "\(StatusFormatters.menuBarRate(stats.rpm)) RPM", caption: "\(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM", systemImage: "bolt", tint: .purple),
+                    MetricItem(title: "Avg Response", value: latencyText(milliseconds: stats.averageDurationMs), caption: "Average time", systemImage: "clock", tint: .pink),
                 ])
             }
 
             if let summary = model.snapshot.subscriptionSummary {
                 if model.snapshot.stats == nil {
                     MetricGrid(items: [
-                        MetricItem(title: "Balance", value: balanceText),
-                        MetricItem(title: "Active Subs", value: "\(summary.activeCount)"),
-                        MetricItem(title: "Peak Usage", value: StatusFormatters.percent(summary.highestProgress)),
-                        MetricItem(title: "Total Used", value: StatusFormatters.preciseCurrency(summary.totalUsedUSD)),
+                        MetricItem(title: "Balance", value: balanceText, systemImage: "banknote", tint: .green),
+                        MetricItem(title: "Active Subs", value: "\(summary.activeCount)", systemImage: "checkmark.seal", tint: .green),
+                        MetricItem(title: "Peak Usage", value: StatusFormatters.percent(summary.highestProgress), systemImage: "gauge.with.dots.needle.67percent", tint: .orange),
+                        MetricItem(title: "Total Used", value: StatusFormatters.preciseCurrency(summary.totalUsedUSD), systemImage: "dollarsign.circle", tint: .purple),
                     ])
                 }
 
@@ -633,11 +633,15 @@ struct MetricItem: Identifiable {
     let title: String
     let value: String
     let caption: String?
+    let systemImage: String?
+    let tint: Color
 
-    init(title: String, value: String, caption: String? = nil) {
+    init(title: String, value: String, caption: String? = nil, systemImage: String? = nil, tint: Color = .accentColor) {
         self.title = title
         self.value = value
         self.caption = caption
+        self.systemImage = systemImage
+        self.tint = tint
     }
 }
 
@@ -647,20 +651,30 @@ struct MetricGrid: View {
     var body: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
             ForEach(items) { item in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(item.value)
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    if let caption = item.caption {
-                        Text(caption)
-                            .font(.caption2)
+                HStack(spacing: 10) {
+                    if let systemImage = item.systemImage {
+                        Image(systemName: systemImage)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(item.tint)
+                            .frame(width: 32, height: 32)
+                            .background(item.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
+                        Text(item.value)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .minimumScaleFactor(0.75)
+                        if let caption = item.caption {
+                            Text(caption)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

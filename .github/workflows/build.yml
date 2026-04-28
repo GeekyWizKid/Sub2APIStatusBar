@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: Test and Package
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift Version
+        run: swift --version
+
+      - name: Test
+        run: swift test
+
+      - name: Build Debug
+        run: swift build
+
+      - name: Package App
+        run: |
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            VERSION="$GITHUB_REF_NAME"
+          else
+            VERSION="v0.1.0"
+          fi
+          VERSION="$VERSION" ./scripts/package-release.sh
+
+      - name: Upload App Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sub2APIStatusBar-macOS
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error

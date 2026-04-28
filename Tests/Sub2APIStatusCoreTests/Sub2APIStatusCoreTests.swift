@@ -56,6 +56,24 @@ import Testing
     #expect(metrics.errorRate == 0.025)
 }
 
+@Test func currentUserResponseDecodesDirectUserPayload() throws {
+    let json = """
+    {
+      "id": 7,
+      "email": "user@example.com",
+      "username": "das",
+      "role": "user",
+      "balance": 12.34,
+      "status": "active"
+    }
+    """.data(using: .utf8)!
+
+    let response = try JSONDecoder.sub2api.decode(CurrentUserResponse.self, from: json)
+
+    #expect(response.user?.balance == 12.34)
+    #expect(response.user?.username == "das")
+}
+
 @Test func dashboardSnapshotDecodesTokenBreakdownAndModelDistribution() throws {
     let json = """
     {
