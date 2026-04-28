@@ -34,9 +34,10 @@ jobs:
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
           else
-            VERSION="v0.1.0"
+            VERSION="v0.1.1"
           fi
           VERSION="$VERSION" ./scripts/package-release.sh
+          VERSION="$VERSION" ./scripts/verify-release.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4

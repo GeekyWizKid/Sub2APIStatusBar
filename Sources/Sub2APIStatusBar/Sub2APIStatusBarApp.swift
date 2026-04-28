@@ -180,6 +180,22 @@ final class MonitorViewModel: ObservableObject {
         }
     }
 
+    func disconnect() {
+        settingsError = nil
+        var next = config
+        next.clearAuthTokens()
+        do {
+            try store.save(next)
+            config = next
+            settingsDraft = next
+            loginEmail = ""
+            loginPassword = ""
+            publish(.idle(mode: next.monitorMode))
+        } catch {
+            settingsError = error.localizedDescription
+        }
+    }
+
     func loginAndSave() {
         settingsError = nil
         var draft = settingsDraft
@@ -339,6 +355,10 @@ struct MonitorPanel: View {
 
     private var userSection: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if let user = model.snapshot.currentUser {
+                UserAccountCard(user: user)
+            }
+
             if let stats = model.snapshot.stats {
                 MetricGrid(items: [
                     MetricItem(title: "Balance", value: balanceText, caption: "Available", systemImage: "banknote", tint: .green),
@@ -574,11 +594,6 @@ struct SettingsView: View {
 
             Form {
                 TextField("Base URL", text: $model.settingsDraft.baseURL)
-                Picker("Language", selection: $model.settingsDraft.language) {
-                    ForEach(AppLanguage.allCases) { language in
-                        Text(language.displayName).tag(language)
-                    }
-                }
                 Toggle("Show text in menu bar", isOn: $model.settingsDraft.showsMenuBarText)
                 HStack {
                     Slider(value: $model.settingsDraft.refreshIntervalSeconds, in: 5...300, step: 5)
@@ -601,6 +616,14 @@ struct SettingsView: View {
                     Label("Login and Save Token", systemImage: "key")
                 }
                 .disabled(!LoginFormState(baseURL: model.settingsDraft.baseURL, email: model.loginEmail, password: model.loginPassword).canSubmit || model.isLoggingIn)
+
+                Button(role: .destructive) {
+                    model.disconnect()
+                    dismiss()
+                } label: {
+                    Label("Disconnect", systemImage: "person.crop.circle.badge.xmark")
+                }
+                .disabled(model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
             }
 
             if let error = model.settingsError {
@@ -642,6 +665,51 @@ struct MetricItem: Identifiable {
         self.caption = caption
         self.systemImage = systemImage
         self.tint = tint
+    }
+}
+
+struct UserAccountCard: View {
+    let user: CurrentUser
+
+    private var displayName: String {
+        guard let username = user.username, !username.isEmpty else {
+            return user.email
+        }
+        return username
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.crop.circle.fill")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 42, height: 42)
+                .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayName)
+                    .font(.headline)
+                    .lineLimit(1)
+                Text(user.email)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+
+            Spacer()
+
+            if let status = user.status, !status.isEmpty {
+                Text(status.capitalized)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(status.lowercased() == "active" ? .green : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background((status.lowercased() == "active" ? Color.green : Color.secondary).opacity(0.14), in: Capsule())
+            }
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -790,11 +858,19 @@ struct QuotaProgressRow: View {
 struct ModelDistributionView: View {
     let models: [ModelUsageSummary]
 
+    private var visibleModels: [ModelUsageSummary] {
+        Array(models.prefix(5))
+    }
+
+    private var maximumTokens: Double {
+        max(Double(visibleModels.map(\.totalTokens).max() ?? 0), 1)
+    }
+
     var body: some View {
         SectionBlock(title: "Model Distribution") {
             VStack(spacing: 10) {
-                ForEach(models.prefix(5)) { item in
-                    VStack(spacing: 6) {
+                ForEach(visibleModels) { item in
+                    VStack(spacing: 7) {
                         HStack {
                             Text(item.model)
                                 .font(.callout.weight(.medium))
@@ -811,8 +887,10 @@ struct ModelDistributionView: View {
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        ProgressView(value: Double(item.totalTokens) / maximumTokens)
+                            .tint(.blue)
                     }
-                    if item.id != models.prefix(5).last?.id {
+                    if item.id != visibleModels.last?.id {
                         Divider()
                     }
                 }

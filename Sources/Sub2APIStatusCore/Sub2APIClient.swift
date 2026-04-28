@@ -17,26 +17,6 @@ public struct Sub2APIClient: Sendable {
         try await get("/auth/me")
     }
 
-    public func realtimeMetrics() async throws -> RealtimeMetrics {
-        try await get("/admin/dashboard/realtime")
-    }
-
-    public func dashboardSnapshot() async throws -> DashboardSnapshot {
-        try await get("/admin/dashboard/snapshot-v2", query: [
-            URLQueryItem(name: "include_stats", value: "true"),
-            URLQueryItem(name: "include_trend", value: "true"),
-            URLQueryItem(name: "granularity", value: "hour"),
-        ])
-    }
-
-    public func accounts(pageSize: Int = 100) async throws -> PaginatedResponse<AccountSummary> {
-        try await get("/admin/accounts", query: [
-            URLQueryItem(name: "page", value: "1"),
-            URLQueryItem(name: "page_size", value: String(pageSize)),
-            URLQueryItem(name: "lite", value: "true"),
-        ])
-    }
-
     public func usageDashboardStats() async throws -> DashboardStats {
         try await get("/usage/dashboard/stats")
     }
@@ -53,12 +33,6 @@ public struct Sub2APIClient: Sendable {
         try await get("/usage/dashboard/models", query: [
             URLQueryItem(name: "start_date", value: startDate),
             URLQueryItem(name: "end_date", value: endDate),
-        ])
-    }
-
-    public func accountUsage(id: Int64, source: String = "passive") async throws -> AccountUsageInfo {
-        try await get("/admin/accounts/\(id)/usage", query: [
-            URLQueryItem(name: "source", value: source),
         ])
     }
 

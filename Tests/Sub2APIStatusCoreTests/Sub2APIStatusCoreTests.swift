@@ -2,8 +2,22 @@ import Foundation
 import Testing
 @testable import Sub2APIStatusCore
 
+final class MemoryTokenStore: TokenStore, @unchecked Sendable {
+    var tokens = StoredAuthTokens()
+    var saves: [StoredAuthTokens] = []
+
+    func loadTokens() -> StoredAuthTokens {
+        tokens
+    }
+
+    func saveTokens(_ tokens: StoredAuthTokens) throws {
+        self.tokens = tokens
+        saves.append(tokens)
+    }
+}
+
 @Test func appConfigNormalizesBaseURLAndRefreshInterval() {
-    var config = AppConfig(baseURL: " http://127.0.0.1:8080/api/v1/// ", authToken: " token ", refreshIntervalSeconds: 1, language: .zhHans, monitorMode: .admin)
+    var config = AppConfig(baseURL: " http://127.0.0.1:8080/api/v1/// ", authToken: " token ", refreshIntervalSeconds: 1, language: .zhHans, monitorMode: .user)
 
     config.normalize()
 
@@ -28,10 +42,90 @@ import Testing
     #expect(loaded.showsMenuBarText == true)
 }
 
+@Test func configStoreSavesTokensOutsideConfigJSON() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let tokenStore = MemoryTokenStore()
+    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        authToken: "access-token",
+        refreshToken: "refresh-token",
+        showsMenuBarText: true
+    )
+
+    try store.save(config)
+
+    let rawJSON = try String(contentsOf: configURL, encoding: .utf8)
+    #expect(!rawJSON.contains("access-token"))
+    #expect(!rawJSON.contains("refresh-token"))
+    #expect(!rawJSON.contains("authToken"))
+    #expect(!rawJSON.contains("refreshToken"))
+    #expect(tokenStore.tokens.authToken == "access-token")
+    #expect(tokenStore.tokens.refreshToken == "refresh-token")
+    #expect(store.load().authToken == "access-token")
+}
+
+@Test func configStoreMigratesLegacyJSONTokensOutOfConfigFile() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    try FileManager.default.createDirectory(at: configURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try """
+    {
+      "baseURL" : "http://127.0.0.1:8080",
+      "authToken" : "legacy-access",
+      "refreshToken" : "legacy-refresh",
+      "refreshIntervalSeconds" : 15,
+      "language" : "auto",
+      "monitorMode" : "user",
+      "showsMenuBarText" : true
+    }
+    """.write(to: configURL, atomically: true, encoding: .utf8)
+    let tokenStore = MemoryTokenStore()
+    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+
+    let loaded = store.load()
+
+    #expect(loaded.authToken == "legacy-access")
+    #expect(loaded.refreshToken == "legacy-refresh")
+    #expect(tokenStore.tokens.authToken == "legacy-access")
+    #expect(tokenStore.tokens.refreshToken == "legacy-refresh")
+
+    let migratedJSON = try String(contentsOf: configURL, encoding: .utf8)
+    #expect(!migratedJSON.contains("legacy-access"))
+    #expect(!migratedJSON.contains("legacy-refresh"))
+    #expect(!migratedJSON.contains("authToken"))
+    #expect(!migratedJSON.contains("refreshToken"))
+}
+
 @Test func appConfigDefaultsToUserMode() {
     let config = AppConfig(baseURL: "http://127.0.0.1:8080")
 
     #expect(config.monitorMode == .user)
+}
+
+@Test func appConfigDecodesLegacyAdminModeAsUserMode() throws {
+    let data = """
+    {
+      "baseURL": "http://127.0.0.1:8080",
+      "monitorMode": "admin"
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.monitorMode == .user)
+}
+
+@Test func appConfigClearsAuthTokens() {
+    var config = AppConfig(baseURL: "http://127.0.0.1:8080", authToken: "access", refreshToken: "refresh")
+
+    config.clearAuthTokens()
+
+    #expect(config.authToken.isEmpty)
+    #expect(config.refreshToken.isEmpty)
 }
 
 @Test func apiEnvelopeDecodesWrappedData() throws {
@@ -255,7 +349,7 @@ import Testing
 
 @Test func monitorSnapshotEscalatesSeverityFromSignals() {
     let healthy = MonitorSnapshot(
-        mode: .admin,
+        mode: .user,
         connected: true,
         stats: DashboardStats(todayRequests: 20, todayActualCost: 1.2, rpm: 4),
         realtime: RealtimeMetrics(errorRate: 0.01),
@@ -266,7 +360,7 @@ import Testing
     )
 
     let warned = MonitorSnapshot(
-        mode: .admin,
+        mode: .user,
         connected: true,
         stats: DashboardStats(todayRequests: 20, todayActualCost: 1.2, rpm: 4),
         realtime: RealtimeMetrics(errorRate: 0.01),
@@ -279,7 +373,7 @@ import Testing
     )
 
     let failed = MonitorSnapshot(
-        mode: .admin,
+        mode: .user,
         connected: false,
         stats: nil,
         realtime: nil,
@@ -324,7 +418,7 @@ import Testing
 
 @Test func monitorSnapshotBuildsMenuBarSummaryFromDashboardStats() {
     let snapshot = MonitorSnapshot(
-        mode: .admin,
+        mode: .user,
         connected: true,
         stats: DashboardStats(todayRequests: 1119, todayActualCost: 113.3052, rpm: 3),
         realtime: nil,

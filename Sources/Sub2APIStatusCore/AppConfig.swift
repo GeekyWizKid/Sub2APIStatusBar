@@ -35,18 +35,21 @@ public enum AppLanguage: String, Codable, CaseIterable, Identifiable, Sendable {
 }
 
 public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
-    case admin
     case user
 
     public var id: String { rawValue }
 
     public var displayName: String {
-        switch self {
-        case .admin:
-            "Admin"
-        case .user:
-            "User"
-        }
+        "User"
+    }
+
+    public init(from _: Decoder) throws {
+        self = .user
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
     }
 }
 
@@ -100,6 +103,15 @@ public struct AppConfig: Codable, Equatable, Sendable {
         normalize()
     }
 
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(baseURL, forKey: .baseURL)
+        try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
+        try container.encode(language, forKey: .language)
+        try container.encode(monitorMode, forKey: .monitorMode)
+        try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
+    }
+
     public static func defaults() -> AppConfig {
         let env = ProcessInfo.processInfo.environment
         return AppConfig(
@@ -108,7 +120,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
             refreshToken: env["SUB2API_REFRESH_TOKEN"] ?? "",
             refreshIntervalSeconds: Double(env["SUB2API_REFRESH_SECONDS"] ?? "") ?? 15,
             language: AppLanguage.fromEnvironment(env["SUB2API_LANGUAGE"]),
-            monitorMode: MonitorMode(rawValue: env["SUB2API_MONITOR_MODE"] ?? "") ?? .user,
+            monitorMode: .user,
             showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased())
         )
     }
@@ -128,6 +140,11 @@ public struct AppConfig: Codable, Equatable, Sendable {
         monitorMode = .user
     }
 
+    public mutating func clearAuthTokens() {
+        authToken = ""
+        refreshToken = ""
+    }
+
     public var apiBaseURL: URL? {
         var normalized = self
         normalized.normalize()
@@ -135,10 +152,31 @@ public struct AppConfig: Codable, Equatable, Sendable {
     }
 }
 
+public struct StoredAuthTokens: Equatable, Sendable {
+    public var authToken: String
+    public var refreshToken: String
+
+    public init(authToken: String = "", refreshToken: String = "") {
+        self.authToken = authToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public var isEmpty: Bool {
+        authToken.isEmpty && refreshToken.isEmpty
+    }
+}
+
+public protocol TokenStore: Sendable {
+    func loadTokens() -> StoredAuthTokens
+    func saveTokens(_ tokens: StoredAuthTokens) throws
+}
+
 public final class ConfigStore: Sendable {
     private let configURL: URL
+    private let tokenStore: any TokenStore
 
-    public init(configURL: URL? = nil) {
+    public init(configURL: URL? = nil, tokenStore: any TokenStore = KeychainTokenStore()) {
+        self.tokenStore = tokenStore
         if let configURL {
             self.configURL = configURL
             return
@@ -152,15 +190,56 @@ public final class ConfigStore: Sendable {
     }
 
     public func load() -> AppConfig {
+        let storedTokens = tokenStore.loadTokens()
         guard let data = try? Data(contentsOf: configURL),
               var decoded = try? JSONDecoder.sub2api.decode(AppConfig.self, from: data) else {
-            return AppConfig.defaults()
+            var defaults = AppConfig.defaults()
+            if !storedTokens.authToken.isEmpty {
+                defaults.authToken = storedTokens.authToken
+            }
+            if !storedTokens.refreshToken.isEmpty {
+                defaults.refreshToken = storedTokens.refreshToken
+            }
+            defaults.normalize()
+            return defaults
         }
+
+        let legacyTokens = StoredAuthTokens(authToken: decoded.authToken, refreshToken: decoded.refreshToken)
+        var runtimeTokens = storedTokens
+        if runtimeTokens.authToken.isEmpty {
+            runtimeTokens.authToken = legacyTokens.authToken
+        }
+        if runtimeTokens.refreshToken.isEmpty {
+            runtimeTokens.refreshToken = legacyTokens.refreshToken
+        }
+
+        if !legacyTokens.isEmpty {
+            do {
+                try tokenStore.saveTokens(runtimeTokens)
+                decoded.authToken = runtimeTokens.authToken
+                decoded.refreshToken = runtimeTokens.refreshToken
+                try writeConfig(decoded)
+            } catch {
+                decoded.authToken = legacyTokens.authToken
+                decoded.refreshToken = legacyTokens.refreshToken
+            }
+        } else if !runtimeTokens.isEmpty {
+            decoded.authToken = runtimeTokens.authToken
+            decoded.refreshToken = runtimeTokens.refreshToken
+        }
+
         decoded.normalize()
         return decoded
     }
 
     public func save(_ config: AppConfig) throws {
+        var normalized = config
+        normalized.normalize()
+        try tokenStore.saveTokens(StoredAuthTokens(authToken: normalized.authToken, refreshToken: normalized.refreshToken))
+        try writeConfig(normalized)
+    }
+
+    private func writeConfig(_ config: AppConfig) throws {
         var normalized = config
         normalized.normalize()
         try FileManager.default.createDirectory(at: configURL.deletingLastPathComponent(), withIntermediateDirectories: true)

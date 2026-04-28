@@ -10,7 +10,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Seven-day token trend and model distribution
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
 - First-run login and optional manual Bearer token setup
-- Local config storage only; no telemetry or third-party analytics
+- Keychain-backed token storage; no telemetry or third-party analytics
 
 ## Requirements
 
@@ -43,11 +43,15 @@ On first launch, click the menu bar icon and fill:
 - Account email
 - Password
 
-Configuration is saved at:
+Non-secret preferences are saved at:
 
 ```text
 ~/Library/Application Support/Sub2APIStatusBar/config.json
 ```
+
+Login tokens are stored in the macOS Keychain. Existing config files from older builds are migrated automatically on launch.
+
+To switch accounts or remove saved credentials, open Settings and choose **Disconnect**.
 
 Optional first-run environment variables:
 
@@ -61,7 +65,7 @@ swift run Sub2APIStatusBar
 ## Build A macOS App
 
 ```bash
-VERSION=v0.1.0 ./scripts/build-app.sh
+VERSION=v0.1.1 ./scripts/build-app.sh
 ```
 
 Output:
@@ -74,21 +78,34 @@ The build script generates the app icon, copies bundle resources, and applies ad
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.0 \
+VERSION=v0.1.1 \
 ./scripts/build-app.sh
 ```
 
 ## Package A Release
 
 ```bash
-VERSION=v0.1.0 ./scripts/package-release.sh
+VERSION=v0.1.1 ./scripts/package-release.sh
 ```
 
 Output:
 
 ```text
-dist/Sub2APIStatusBar-0.1.0-macOS.zip
-dist/Sub2APIStatusBar-0.1.0-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.1-macOS.zip
+dist/Sub2APIStatusBar-0.1.1-macOS.zip.sha256
+```
+
+## Notarize A Release
+
+After signing with a Developer ID Application certificate, notarize and staple the app with:
+
+```bash
+APPLE_ID="you@example.com" \
+TEAM_ID="TEAMID" \
+APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+VERSION=v0.1.1 \
+./scripts/notarize-release.sh
 ```
 
 ## Development Checks
@@ -97,10 +114,20 @@ dist/Sub2APIStatusBar-0.1.0-macOS.zip.sha256
 swift test
 swift build
 ./scripts/package-release.sh
+./scripts/verify-release.sh
 ```
 
 GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
 
+## Troubleshooting
+
+If Swift reports that a PCH was compiled with a different module cache path, the project was probably moved or renamed while `.build` still points at the old folder. Clean the local build cache and run again:
+
+```bash
+./scripts/clean-build-cache.sh
+swift run Sub2APIStatusBar
+```
+
 ## Privacy
 
-Sub2API Status Bar stores only the server URL, auth token, refresh token, display preferences, and refresh interval in the local Application Support config file. It does not send data anywhere except the configured Sub2API server.
+Sub2API Status Bar stores the server URL, display preferences, and refresh interval in the local Application Support config file. Auth and refresh tokens are stored in the macOS Keychain. It does not send data anywhere except the configured Sub2API server.
