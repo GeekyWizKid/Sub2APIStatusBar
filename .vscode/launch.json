@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Debug Sub2APIStatusBar",
+            "target": "Sub2APIStatusBar",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Sub2APIStatusBar"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Release Sub2APIStatusBar",
+            "target": "Sub2APIStatusBar",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Sub2APIStatusBar"
+        }
+    ]
+}
