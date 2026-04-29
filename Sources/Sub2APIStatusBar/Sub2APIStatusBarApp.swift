@@ -406,7 +406,7 @@ struct MonitorPanel: View {
                     MetricItem(title: "Today Requests", value: StatusFormatters.menuBarCount(stats.todayRequests), caption: "Total \(StatusFormatters.compactNumber(stats.totalRequests))", systemImage: "chart.bar", tint: .green),
                     MetricItem(title: "Today Cost", value: StatusFormatters.preciseCurrency(stats.todayActualCost), caption: "Total \(StatusFormatters.preciseCurrency(stats.totalActualCost))", systemImage: "dollarsign.circle", tint: .purple),
                     MetricItem(title: "Today Tokens", value: StatusFormatters.compactNumber(stats.todayTokens), caption: tokenBreakdown(input: stats.todayInputTokens, output: stats.todayOutputTokens), systemImage: "cube", tint: .orange),
-                    MetricItem(title: "Total Tokens", value: StatusFormatters.compactNumber(stats.totalTokens), caption: tokenBreakdown(input: stats.totalInputTokens, output: stats.totalOutputTokens), systemImage: "database", tint: .indigo),
+                    MetricItem(title: "Total Tokens", value: StatusFormatters.compactNumber(stats.totalTokens), caption: tokenBreakdown(input: stats.totalInputTokens, output: stats.totalOutputTokens), systemImage: "archivebox.fill", tint: .indigo),
                     MetricItem(title: "Performance", value: "\(StatusFormatters.menuBarRate(stats.rpm)) RPM", caption: "\(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM", systemImage: "bolt", tint: .purple),
                     MetricItem(title: "Avg Response", value: latencyText(milliseconds: stats.averageDurationMs), caption: "Average time", systemImage: "clock", tint: .pink),
                 ])
@@ -761,7 +761,7 @@ struct MetricGrid: View {
             ForEach(items) { item in
                 HStack(spacing: 10) {
                     if let systemImage = item.systemImage {
-                        Image(systemName: systemImage)
+                        SafeSystemImage(systemName: systemImage)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(item.tint)
                             .frame(width: 32, height: 32)
@@ -789,6 +789,21 @@ struct MetricGrid: View {
                 .padding(10)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             }
+        }
+    }
+}
+
+struct SafeSystemImage: View {
+    let systemName: String
+    var fallbackName = "circle.grid.3x3.fill"
+
+    var body: some View {
+        if let image = NSImage(systemSymbolName: systemName, accessibilityDescription: nil)
+            ?? NSImage(systemSymbolName: fallbackName, accessibilityDescription: nil) {
+            Image(nsImage: image)
+                .renderingMode(.template)
+        } else {
+            Image(systemName: "questionmark.circle")
         }
     }
 }
