@@ -138,3 +138,6 @@ swift run Sub2APIStatusBar
 ## Privacy
 
 Sub2API Status Bar stores the server URL, display preferences, and refresh interval in the local Application Support config file. Auth and refresh tokens are stored in the macOS Keychain. It does not send data anywhere except the configured Sub2API server.
+
+## Acknowledgements
+Thanks to the [LinuxDo](https://linux.do/) community for the discussions, sharing, and feedback.
