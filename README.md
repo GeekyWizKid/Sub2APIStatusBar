@@ -11,6 +11,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
 - First-run login and optional manual Bearer token setup
 - Keychain-backed token storage; no telemetry or third-party analytics
+- GitHub Releases update checking from Settings
 
 ## Requirements
 
@@ -65,7 +66,7 @@ swift run Sub2APIStatusBar
 ## Build A macOS App
 
 ```bash
-VERSION=v0.1.2 ./scripts/build-app.sh
+VERSION=v0.1.3 ./scripts/build-app.sh
 ```
 
 Output:
@@ -78,21 +79,21 @@ The build script generates the app icon, copies bundle resources, and applies ad
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.2 \
+VERSION=v0.1.3 \
 ./scripts/build-app.sh
 ```
 
 ## Package A Release
 
 ```bash
-VERSION=v0.1.2 ./scripts/package-release.sh
+VERSION=v0.1.3 ./scripts/package-release.sh
 ```
 
 Output:
 
 ```text
-dist/Sub2APIStatusBar-0.1.2-macOS.zip
-dist/Sub2APIStatusBar-0.1.2-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.3-macOS.zip
+dist/Sub2APIStatusBar-0.1.3-macOS.zip.sha256
 ```
 
 ## Notarize A Release
@@ -104,9 +105,15 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.2 \
+VERSION=v0.1.3 \
 ./scripts/notarize-release.sh
 ```
+
+## Updates
+
+The app checks GitHub Releases once on launch and lets users check manually from Settings > Updates. When a newer release is available, the popover shows a small update banner with a link to the download page.
+
+GitHub only exposes published releases through the public latest-release API. Draft releases are intentionally not shown to users.
 
 ## Development Checks
 

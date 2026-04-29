@@ -12,6 +12,7 @@
    - Added archive verification from a clean temporary extraction so macOS workspace metadata does not produce false signature failures.
    - Added ad-hoc signing by default and Developer ID signing hooks.
    - Added a notarization script that submits, staples, rezips, and rewrites the checksum when Apple credentials are available.
+   - Added GitHub Releases update detection with an in-app update banner and manual Settings check.
 
 3. GitHub delivery
    - Added CI for tests, debug build, packaged release artifact, and checksum.
@@ -136,3 +137,16 @@ The only meaningful blockers for public distribution are external materials and 
 
 3. 提升
    - The status bar can now run longer as a quiet monitor instead of becoming another thing the user has to babysit.
+
+### 2026-04-29 Cycle H
+
+1. 审视
+   - Distribution still lacked a user-visible way to know a newer build exists.
+
+2. 执行
+   - Added semantic version comparison and GitHub latest-release decoding.
+   - Added silent launch-time update detection, Settings > Updates manual checking, and an in-app update banner.
+   - Documented that GitHub only exposes published releases through the public latest-release API.
+
+3. 提升
+   - Once the app is notarized and the release is published, older builds can guide users to the newest download without requiring them to watch GitHub manually.

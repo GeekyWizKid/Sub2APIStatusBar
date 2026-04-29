@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.3
+
+- Added GitHub Releases update checking.
+- Added a silent launch-time update check and manual Settings > Updates check.
+- Added an in-app update banner when a newer release is available.
+- Added semantic version comparison and release payload tests.
+
 ## v0.1.2
 
 - Added automatic access-token refresh on `401` responses when a refresh token is available.

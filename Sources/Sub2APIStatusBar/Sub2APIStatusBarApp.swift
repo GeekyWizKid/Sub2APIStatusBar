@@ -87,10 +87,14 @@ final class MonitorViewModel: ObservableObject {
     @Published var loginPassword = ""
     @Published var settingsDraft: AppConfig
     @Published var settingsError: String?
+    @Published var updateInfo: UpdateInfo?
+    @Published var isCheckingForUpdates = false
+    @Published var updateStatusMessage: String?
 
     var onSnapshotChange: ((MonitorSnapshot) -> Void)?
 
     private let store = ConfigStore()
+    private let updateChecker = GitHubUpdateChecker()
     private var refreshTimer: Timer?
 
     init() {
@@ -103,6 +107,7 @@ final class MonitorViewModel: ObservableObject {
     func start() {
         refresh()
         scheduleTimer()
+        checkForUpdates(silent: true)
     }
 
     func refresh() {
@@ -260,6 +265,44 @@ final class MonitorViewModel: ObservableObject {
         openURL(config.baseURL)
     }
 
+    func checkForUpdates(silent: Bool = false) {
+        Task {
+            await checkForUpdatesNow(silent: silent)
+        }
+    }
+
+    func checkForUpdatesNow(silent: Bool = false) async {
+        guard !isCheckingForUpdates else {
+            return
+        }
+
+        isCheckingForUpdates = true
+        if !silent {
+            updateStatusMessage = nil
+        }
+        defer { isCheckingForUpdates = false }
+
+        do {
+            let info = try await updateChecker.check(currentVersion: currentAppVersion)
+            updateInfo = info
+            if info.isUpdateAvailable || !silent {
+                updateStatusMessage = info.statusText
+            }
+        } catch {
+            if !silent {
+                updateStatusMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func openLatestRelease() {
+        if let releaseURL = updateInfo?.latestRelease.releaseURL {
+            NSWorkspace.shared.open(releaseURL)
+            return
+        }
+        openURL("https://github.com/\(AppBuildInfo.repositoryOwner)/\(AppBuildInfo.repositoryName)/releases")
+    }
+
     func openURL(_ value: String) {
         guard let url = URL(string: value.trimmingCharacters(in: .whitespacesAndNewlines)) else {
             return
@@ -274,6 +317,11 @@ final class MonitorViewModel: ObservableObject {
     private func publish(_ next: MonitorSnapshot) {
         snapshot = next
         onSnapshotChange?(next)
+    }
+
+    private var currentAppVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? AppBuildInfo.fallbackVersion
     }
 
     private func scheduleTimer() {
@@ -314,6 +362,12 @@ struct MonitorPanel: View {
                         VStack(alignment: .leading, spacing: 14) {
                             statusSection
 
+                            if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
+                                UpdateAvailableBanner(info: updateInfo) {
+                                    model.openLatestRelease()
+                                }
+                            }
+
                             userSection
 
                             if let message = model.snapshot.message, !message.isEmpty {
@@ -331,7 +385,7 @@ struct MonitorPanel: View {
         .frame(width: 520, height: 680)
         .sheet(isPresented: $showingSettings) {
             SettingsView(model: model)
-                .frame(width: 430, height: 520)
+                .frame(width: 430, height: 610)
         }
     }
 
@@ -645,6 +699,10 @@ struct SettingsView: View {
 
             Divider()
 
+            UpdateSettingsSection(model: model)
+
+            Divider()
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("Login")
                     .font(.headline)
@@ -688,6 +746,95 @@ struct SettingsView: View {
             }
         }
         .padding(20)
+    }
+}
+
+struct UpdateSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Updates")
+                    .font(.headline)
+                Spacer()
+                if model.isCheckingForUpdates {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+
+            if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(updateInfo.statusText)
+                            .font(.callout.weight(.medium))
+                        Text(updateInfo.latestRelease.name)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            } else if let message = model.updateStatusMessage {
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Checks GitHub Releases for newer versions.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Button {
+                    model.checkForUpdates()
+                } label: {
+                    Label("Check Now", systemImage: "arrow.clockwise")
+                }
+                .disabled(model.isCheckingForUpdates)
+
+                if model.updateInfo?.isUpdateAvailable == true {
+                    Button {
+                        model.openLatestRelease()
+                    } label: {
+                        Label("Open Release", systemImage: "safari")
+                    }
+                }
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+}
+
+struct UpdateAvailableBanner: View {
+    let info: UpdateInfo
+    let openRelease: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(info.statusText)
+                    .font(.callout.weight(.semibold))
+                Text("Download the latest release from GitHub.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button {
+                openRelease()
+            } label: {
+                Image(systemName: "safari")
+            }
+            .buttonStyle(.borderless)
+            .help("Open release")
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 

@@ -156,6 +156,48 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     #expect(Sub2APIError.invalidBaseURL.isUnauthorized == false)
 }
 
+@Test func appVersionComparesSemanticVersions() {
+    #expect(AppVersion("v0.1.10") > AppVersion("0.1.2"))
+    #expect(AppVersion("1.0") == AppVersion("1.0.0"))
+    #expect(AppVersion("v2.0.0-beta") > AppVersion("1.9.9"))
+}
+
+@Test func githubReleaseDecodesLatestReleasePayload() throws {
+    let json = """
+    {
+      "tag_name": "v0.1.3",
+      "name": "Sub2API Status Bar v0.1.3",
+      "html_url": "https://github.com/GeekyWizKid/Sub2APIStatusBar/releases/tag/v0.1.3",
+      "draft": false,
+      "prerelease": false
+    }
+    """.data(using: .utf8)!
+
+    let release = try JSONDecoder().decode(GitHubRelease.self, from: json)
+
+    #expect(release.tagName == "v0.1.3")
+    #expect(release.version == AppVersion("0.1.3"))
+    #expect(release.releaseURL.absoluteString.hasSuffix("/v0.1.3"))
+}
+
+@Test func updateInfoDetectsAvailableRelease() {
+    let release = GitHubRelease(
+        tagName: "v0.1.3",
+        name: "Sub2API Status Bar v0.1.3",
+        releaseURL: URL(string: "https://github.com/GeekyWizKid/Sub2APIStatusBar/releases/tag/v0.1.3")!,
+        draft: false,
+        prerelease: false
+    )
+
+    let available = UpdateInfo(currentVersion: AppVersion("0.1.2"), release: release)
+    let current = UpdateInfo(currentVersion: AppVersion("0.1.3"), release: release)
+
+    #expect(available.isUpdateAvailable == true)
+    #expect(available.statusText == "Version 0.1.3 is available.")
+    #expect(current.isUpdateAvailable == false)
+    #expect(current.statusText == "You are up to date.")
+}
+
 @Test func currentUserResponseDecodesDirectUserPayload() throws {
     let json = """
     {

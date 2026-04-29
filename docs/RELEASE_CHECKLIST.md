@@ -19,11 +19,12 @@
 - [x] Unit tests for config, API decoding, quota progress, menu bar text, and status labels
 - [x] Keychain token storage with legacy config migration
 - [x] Automatic token refresh and dashboard retry on expired access tokens
+- [x] GitHub Releases update checking with launch-time and manual checks
 - [x] Troubleshooting path for stale Swift build cache errors
 
 ## Before Public Distribution
 
-- [x] Choose a public version tag, for example `v0.1.2`
+- [x] Choose a public version tag, for example `v0.1.3`
 - [ ] Build with a Developer ID Application certificate
 - [ ] Notarize the app with Apple
 - [x] Attach the release zip and checksum to a GitHub Release
@@ -35,15 +36,15 @@
 ```bash
 swift test
 swift build
-VERSION=v0.1.2 ./scripts/package-release.sh
-VERSION=v0.1.2 ./scripts/verify-release.sh
+VERSION=v0.1.3 ./scripts/package-release.sh
+VERSION=v0.1.3 ./scripts/verify-release.sh
 ```
 
 Developer ID signing:
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.2 \
+VERSION=v0.1.3 \
 ./scripts/package-release.sh
 ```
 
@@ -54,6 +55,6 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.2 \
+VERSION=v0.1.3 \
 ./scripts/notarize-release.sh
 ```
