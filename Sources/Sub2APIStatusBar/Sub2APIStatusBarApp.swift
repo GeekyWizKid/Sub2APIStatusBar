@@ -533,6 +533,8 @@ struct MonitorPanel: View {
                 Text("Set Base URL and token to start monitoring.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            } else if model.snapshot.connected {
+                UsageInsightsView(insights: usageInsights)
             }
         }
     }
@@ -644,6 +646,16 @@ struct MonitorPanel: View {
             return "--"
         }
         return StatusFormatters.currency(balance)
+    }
+
+    private var usageInsights: UsageInsights {
+        UsageInsights.make(
+            currentUser: model.snapshot.currentUser,
+            stats: model.snapshot.stats,
+            subscriptionSummary: model.snapshot.subscriptionSummary,
+            trend: model.snapshot.trend,
+            models: model.snapshot.modelDistribution
+        )
     }
 
     private func tokenBreakdown(input: Int64, output: Int64) -> String {
@@ -1224,6 +1236,83 @@ struct SafeSystemImage: View {
                 .renderingMode(.template)
         } else {
             Image(systemName: "questionmark.circle")
+        }
+    }
+}
+
+struct UsageInsightsView: View {
+    let insights: UsageInsights
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Usage Insights")
+                    .font(.headline)
+                Spacer()
+                Text(insights.headline)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                ForEach(insights.items) { item in
+                    HStack(spacing: 9) {
+                        SafeSystemImage(systemName: iconName(for: item.kind))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(color(for: item.severity))
+                            .frame(width: 28, height: 28)
+                            .background(color(for: item.severity).opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Text(item.value)
+                                .font(.callout.weight(.semibold).monospacedDigit())
+                                .lineLimit(1)
+                            Text(item.detail)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.8)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
+                    .padding(9)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                }
+            }
+        }
+    }
+
+    private func iconName(for kind: UsageInsightKind) -> String {
+        switch kind {
+        case .quota:
+            "gauge.with.dots.needle.67percent"
+        case .balance:
+            "banknote"
+        case .trend:
+            "chart.line.uptrend.xyaxis"
+        case .modelMix:
+            "square.stack.3d.up"
+        case .performance:
+            "speedometer"
+        }
+    }
+
+    private func color(for severity: MonitorSeverity) -> Color {
+        switch severity {
+        case .healthy:
+            .green
+        case .warning:
+            .orange
+        case .error:
+            .red
         }
     }
 }

@@ -41,6 +41,20 @@ public enum DiagnosticReport {
             lines.append("Visible Models: \(models.prefix(5).map(\.model).joined(separator: ", "))")
         }
 
+        if snapshot.connected {
+            let insights = UsageInsights.make(
+                currentUser: snapshot.currentUser,
+                stats: snapshot.stats,
+                subscriptionSummary: snapshot.subscriptionSummary,
+                trend: snapshot.trend,
+                models: snapshot.modelDistribution
+            )
+            lines.append("Usage Insight: \(insights.headline)")
+            for item in insights.items {
+                lines.append("Insight \(item.title): \(item.value) - \(item.detail)")
+            }
+        }
+
         if let lastUpdatedAt = snapshot.lastUpdatedAt {
             lines.append("Last Updated: \(ISO8601DateFormatter().string(from: lastUpdatedAt))")
         }

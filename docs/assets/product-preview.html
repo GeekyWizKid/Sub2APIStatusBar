@@ -18,6 +18,7 @@
       --orange: #f97316;
       --pink: #f472b6;
       --violet: #8b5cf6;
+      --red: #ef4444;
     }
 
     * {
@@ -186,7 +187,8 @@
 
     .account,
     .card,
-    .section {
+    .section,
+    .insight-card {
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.06);
@@ -198,6 +200,52 @@
       gap: 12px;
       padding: 12px;
       margin-bottom: 10px;
+    }
+
+    .insights {
+      margin-bottom: 12px;
+    }
+
+    .insights-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .insights-head strong {
+      font-size: 16px;
+    }
+
+    .insights-head span {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .insight-card {
+      min-height: 72px;
+      display: flex;
+      gap: 9px;
+      padding: 9px;
+    }
+
+    .insight-copy {
+      min-width: 0;
+    }
+
+    .insight-detail {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.25;
+      margin-top: 2px;
     }
 
     .avatar {
@@ -266,6 +314,11 @@
     .pink {
       background: rgba(244, 114, 182, 0.15);
       color: var(--pink);
+    }
+
+    .red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
     }
 
     .label {
@@ -452,6 +505,31 @@
         <div class="status-line">
           <strong>OK</strong>
           <span class="pill">User Usage</span>
+        </div>
+
+        <div class="insights">
+          <div class="insights-head">
+            <strong>Usage Insights</strong>
+            <span>Daily quota is at 93%</span>
+          </div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <div class="glyph orange">%</div>
+              <div class="insight-copy"><div class="label">Daily quota</div><div class="value">93%</div><div class="insight-detail">Watch today's reset window.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph orange">↗</div>
+              <div class="insight-copy"><div class="label">Token surge</div><div class="value">+80%</div><div class="insight-detail">Above recent average.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph green">$</div>
+              <div class="insight-copy"><div class="label">Balance runway</div><div class="value">3.1d</div><div class="insight-detail">At today's spend pace.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph violet">□</div>
+              <div class="insight-copy"><div class="label">Top model</div><div class="value">86%</div><div class="insight-detail">Cost concentrated in GPT.</div></div>
+            </div>
+          </div>
         </div>
 
         <div class="account">

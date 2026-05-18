@@ -834,6 +834,17 @@ public enum MonitorSeverity: String, Equatable, Sendable {
     case healthy
     case warning
     case error
+
+    public var sortRank: Int {
+        switch self {
+        case .error:
+            3
+        case .warning:
+            2
+        case .healthy:
+            1
+        }
+    }
 }
 
 public struct MonitorSnapshot: Equatable, Sendable {

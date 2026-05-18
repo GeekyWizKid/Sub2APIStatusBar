@@ -549,6 +549,69 @@ import Testing
     #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
 }
 
+@Test func usageInsightsPrioritizeQuotaBalanceTrendAndModelConcentration() {
+    let stats = DashboardStats(
+        totalRequests: 20_000,
+        totalTokens: 2_000_000,
+        totalActualCost: 420,
+        todayRequests: 1_200,
+        todayTokens: 210_000,
+        todayActualCost: 42,
+        rpm: 6,
+        tpm: 11_000
+    )
+    let currentUser = CurrentUser(
+        id: 1,
+        email: "user@example.com",
+        username: "User",
+        role: "user",
+        balance: 70,
+        status: "active"
+    )
+    let subscriptionSummary = SubscriptionSummary(activeCount: 1, subscriptions: [
+        SubscriptionSummaryItem(
+            id: 1,
+            groupName: "Codex",
+            status: "active",
+            dailyProgress: 0.93,
+            weeklyProgress: 0.66,
+            monthlyProgress: 0.45,
+            expiresAt: nil,
+            daysRemaining: 18
+        ),
+    ])
+    let trend = [
+        TrendDataPoint(date: "2026-05-12", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-13", totalTokens: 110_000, actualCost: 11),
+        TrendDataPoint(date: "2026-05-14", totalTokens: 120_000, actualCost: 12),
+        TrendDataPoint(date: "2026-05-15", totalTokens: 130_000, actualCost: 13),
+        TrendDataPoint(date: "2026-05-16", totalTokens: 140_000, actualCost: 14),
+        TrendDataPoint(date: "2026-05-17", totalTokens: 150_000, actualCost: 15),
+        TrendDataPoint(date: "2026-05-18", totalTokens: 270_000, actualCost: 42),
+    ]
+    let models = [
+        ModelUsageSummary(model: "gpt-5.5", requests: 900, totalTokens: 170_000, actualCost: 36),
+        ModelUsageSummary(model: "gpt-5.4", requests: 300, totalTokens: 40_000, actualCost: 6),
+    ]
+
+    let insights = UsageInsights.make(
+        currentUser: currentUser,
+        stats: stats,
+        subscriptionSummary: subscriptionSummary,
+        trend: trend,
+        models: models
+    )
+
+    #expect(insights.headline == "Daily quota is at 93%.")
+    #expect(insights.items.map(\.kind).contains(.quota))
+    #expect(insights.items.map(\.kind).contains(.balance))
+    #expect(insights.items.map(\.kind).contains(.trend))
+    #expect(insights.items.map(\.kind).contains(.modelMix))
+    #expect(insights.items.first?.severity == .warning)
+    #expect(insights.items.contains { $0.title == "Balance runway" && $0.value == "1.7d" })
+    #expect(insights.items.contains { $0.title == "Token surge" })
+}
+
 @Test func diagnosticReportRedactsStoredTokenValues() {
     let account = StoredAccount(
         id: "work",
@@ -570,7 +633,22 @@ import Testing
     let snapshot = MonitorSnapshot(
         mode: .user,
         connected: true,
+        currentUser: CurrentUser(
+            id: 1,
+            email: "das@example.com",
+            username: "Das",
+            role: "user",
+            balance: 12.34,
+            status: "active"
+        ),
         stats: DashboardStats(todayRequests: 42, todayActualCost: 3.14, rpm: 2),
+        trend: [
+            TrendDataPoint(date: "2026-05-17", totalTokens: 100),
+            TrendDataPoint(date: "2026-05-18", totalTokens: 110),
+        ],
+        modelDistribution: [
+            ModelUsageSummary(model: "gpt-5.5", totalTokens: 100, actualCost: 3.14),
+        ],
         realtime: nil,
         accountHealth: nil,
         subscriptionSummary: nil,
@@ -589,6 +667,7 @@ import Testing
     #expect(report.contains("Version: 0.1.5"))
     #expect(report.contains("Access Token: present"))
     #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("Usage Insight: Balance covers about 3.9 days at today's spend."))
     #expect(report.contains("secret-access-token") == false)
     #expect(report.contains("secret-refresh-token") == false)
 }

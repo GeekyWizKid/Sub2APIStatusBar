@@ -46,6 +46,43 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 - Apple Developer ID certificate for trusted signing.
 - Apple notarization credentials.
 
+## Competitive Direction
+
+### What the category teaches
+
+1. OpenAI usage dashboards
+   - Strong at filtering usage by project, user, service account, model, and API key.
+   - Strong at TPM-oriented activity views and cost/token drilldowns.
+   - Weak fit for a menu bar app if copied literally, because the full table/filter experience belongs in a browser.
+
+2. LiteLLM proxy dashboards
+   - Strong at virtual-key, user, team, and budget controls.
+   - Strong at rate-limit surfaces such as RPM/TPM and spend caps.
+   - Useful lesson: users care less about raw totals than whether a key/account is about to hit a limit.
+
+3. Helicone-style observability
+   - Strong at requests, cost, latency, token volume, errors, rate limits, caching, and alerting.
+   - Useful lesson: surface anomalies and next actions early, especially when something crosses a threshold.
+
+4. Langfuse-style observability
+   - Strong at token/cost breakdowns by usage type and model.
+   - Useful lesson: model mix and usage type matter when explaining why spend moved.
+
+### Product choice
+
+Sub2API Status Bar should not compete as a full analytics dashboard. The winning shape is a native, low-friction personal monitor that answers three questions faster than any browser tab:
+
+- Am I healthy right now?
+- What changed in usage or cost?
+- Which limit, model, or balance should I watch next?
+
+### First product-intelligence pass
+
+- Added a local Usage Insights engine.
+- Prioritizes quota pressure, balance runway, token trend changes, model spend concentration, and latency.
+- Shows the top insights directly in the popover.
+- Adds the same insight headline to support-safe diagnostics.
+
 ## MAGI Log
 
 ### 2026-04-28 Cycle A
