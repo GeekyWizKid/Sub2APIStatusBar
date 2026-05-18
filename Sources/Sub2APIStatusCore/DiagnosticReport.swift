@@ -8,12 +8,15 @@ public enum DiagnosticReport {
         notificationAuthorization: InsightNotificationAuthorization? = nil,
         osVersion: String = ProcessInfo.processInfo.operatingSystemVersionString
     ) -> String {
+        let now = Date()
+        let isStale = snapshot.isStale(now: now, refreshIntervalSeconds: config.refreshIntervalSeconds)
         var lines = [
             "Sub2API Status Bar Diagnostics",
             "Version: \(appVersion)",
             "OS: \(osVersion)",
-            "Status: \(snapshot.statusLabel)",
+            "Status: \(snapshot.statusLabel(now: now, refreshIntervalSeconds: config.refreshIntervalSeconds))",
             "Connected: \(snapshot.connected ? "yes" : "no")",
+            "Data Freshness: \(isStale ? "stale" : "fresh")",
             "Base URL: \(config.baseURL)",
             "Refresh Interval: \(Int(config.refreshIntervalSeconds))s",
             "Menu Bar Text: \(config.showsMenuBarText ? "shown" : "hidden")",

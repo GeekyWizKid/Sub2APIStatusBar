@@ -960,8 +960,16 @@ public struct MonitorSnapshot: Equatable, Sendable {
     }
 
     public var severity: MonitorSeverity {
+        severity(now: Date(), refreshIntervalSeconds: nil)
+    }
+
+    public func severity(now: Date, refreshIntervalSeconds: Double?) -> MonitorSeverity {
         if !connected {
             return .error
+        }
+
+        if isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return .warning
         }
 
         if (realtime?.errorRate ?? 0) >= 0.1 {
@@ -991,8 +999,16 @@ public struct MonitorSnapshot: Equatable, Sendable {
     }
 
     public var statusLabel: String {
+        statusLabel(now: Date(), refreshIntervalSeconds: nil)
+    }
+
+    public func statusLabel(now: Date, refreshIntervalSeconds: Double?) -> String {
         if !connected {
             return "Disconnected"
+        }
+
+        if isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return "Stale Data"
         }
 
         if let subscriptionSummary {
@@ -1007,7 +1023,7 @@ public struct MonitorSnapshot: Equatable, Sendable {
             }
         }
 
-        return switch severity {
+        return switch severity(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
         case .healthy:
             "OK"
         case .warning:
@@ -1018,18 +1034,31 @@ public struct MonitorSnapshot: Equatable, Sendable {
     }
 
     public var menuBarSummary: String {
+        menuBarSummary(now: Date(), refreshIntervalSeconds: nil)
+    }
+
+    public func menuBarSummary(now: Date, refreshIntervalSeconds: Double?) -> String {
         guard connected else {
-            return "Sub2API \(statusLabel)"
+            return "Sub2API \(statusLabel(now: now, refreshIntervalSeconds: refreshIntervalSeconds))"
         }
 
         if let stats {
-            return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
+            return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
         }
 
         if let subscriptionSummary {
-            return "\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
+            let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
+            return "\(prefix)\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
         }
 
-        return "Sub2API \(statusLabel)"
+        return "Sub2API \(statusLabel(now: now, refreshIntervalSeconds: refreshIntervalSeconds))"
+    }
+
+    public func isStale(now: Date, refreshIntervalSeconds: Double?) -> Bool {
+        guard connected, let lastUpdatedAt, let refreshIntervalSeconds, refreshIntervalSeconds > 0 else {
+            return false
+        }
+        return now.timeIntervalSince(lastUpdatedAt) > refreshIntervalSeconds * 3
     }
 }

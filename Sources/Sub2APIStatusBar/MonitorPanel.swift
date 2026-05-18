@@ -100,7 +100,7 @@ struct MonitorPanel: View {
     private var statusSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(model.snapshot.statusLabel)
+                Text(statusLabel)
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(iconColor)
                 Spacer()
@@ -188,7 +188,7 @@ struct MonitorPanel: View {
     }
 
     private var iconName: String {
-        switch model.snapshot.severity {
+        switch severity {
         case .healthy:
             "checkmark.circle.fill"
         case .warning:
@@ -199,7 +199,7 @@ struct MonitorPanel: View {
     }
 
     private var iconColor: Color {
-        switch model.snapshot.severity {
+        switch severity {
         case .healthy:
             .green
         case .warning:
@@ -213,7 +213,8 @@ struct MonitorPanel: View {
         guard let date = model.snapshot.lastUpdatedAt else {
             return "Waiting for first refresh"
         }
-        return "Updated \(date.formatted(date: .omitted, time: .shortened))"
+        let updated = "Updated \(date.formatted(date: .omitted, time: .shortened))"
+        return isStale ? "\(updated) · stale" : updated
     }
 
     private var activeAccountTitle: String {
@@ -236,6 +237,18 @@ struct MonitorPanel: View {
             models: model.snapshot.modelDistribution,
             thresholds: model.config.insightThresholds
         )
+    }
+
+    private var severity: MonitorSeverity {
+        model.snapshot.severity(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+    }
+
+    private var statusLabel: String {
+        model.snapshot.statusLabel(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+    }
+
+    private var isStale: Bool {
+        model.snapshot.isStale(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
     }
 
     private func tokenBreakdown(input: Int64, output: Int64) -> String {

@@ -379,3 +379,18 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The release pipeline now has a real path from source to notarized public artifact; the remaining blocker is supplying Apple credentials, not missing automation.
+
+### 2026-05-19 Cycle W
+
+1. 审视
+   - A monitoring product must distinguish fresh data from old-but-still-visible data.
+   - The app showed the last successful values indefinitely if refreshes stopped succeeding, which could make the menu bar look healthier than reality.
+
+2. 执行
+   - Added stale-data detection based on the last successful refresh time and the configured refresh interval.
+   - Updated status labels, menu bar summaries, and tooltips to show `Stale Data` / `Stale` when cached data is too old.
+   - Added a lightweight clock tick so the UI can become stale even without a new network response.
+   - Added diagnostics output for data freshness and regression coverage for stale behavior.
+
+3. 提升
+   - The app now behaves more like a trustworthy monitor: old usage numbers remain visible, but they are clearly labeled as old instead of masquerading as current state.

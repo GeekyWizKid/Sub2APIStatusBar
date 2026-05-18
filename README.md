@@ -9,6 +9,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Native macOS menu bar app with a compact SwiftUI popover
 - Usage Insights that turn balance, quotas, monthly budget, spend trend, usage trend, model concentration, and latency into prioritized signals
 - Local proactive alerts for warning/error insights, with severity and quiet-period controls
+- Stale-data guardrail so the menu bar warns when the last successful refresh is too old
 - Notification permission status inside Settings, including quick access to macOS notification settings
 - Custom insight thresholds for quota pressure, balance runway, monthly budget, token surge, model concentration, and latency
 - User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
@@ -83,6 +84,8 @@ Settings also includes:
 - **Launch at login** so the monitor starts with macOS
 - **Copy Diagnostics** for support-safe status details with tokens redacted
 - **Show Config** to reveal the local `config.json`
+
+If refreshes stop succeeding, the menu bar and popover mark the data as stale after roughly three refresh intervals so old usage numbers are not mistaken for current state.
 
 Optional first-run environment variables:
 

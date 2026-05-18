@@ -20,6 +20,7 @@ final class MonitorViewModel: ObservableObject {
     @Published var launchAtLoginError: String?
     @Published var focusesManualToken = false
     @Published var notificationAuthorization: InsightNotificationAuthorization = .notDetermined
+    @Published var now = Date()
 
     var onSnapshotChange: ((MonitorSnapshot) -> Void)?
 
@@ -27,6 +28,7 @@ final class MonitorViewModel: ObservableObject {
     private let updateChecker = GitHubUpdateChecker()
     private let insightNotifier = InsightNotifier()
     private var refreshTimer: Timer?
+    private var clockTimer: Timer?
 
     init() {
         let loaded = store.load()
@@ -40,6 +42,7 @@ final class MonitorViewModel: ObservableObject {
     func start() {
         refresh()
         scheduleTimer()
+        scheduleClock()
         checkForUpdates(silent: true)
         refreshNotificationAuthorization()
     }
@@ -380,6 +383,7 @@ final class MonitorViewModel: ObservableObject {
     }
 
     private func publish(_ next: MonitorSnapshot) {
+        now = Date()
         snapshot = next
         onSnapshotChange?(next)
         notifyIfNeeded(for: next)
@@ -411,6 +415,19 @@ final class MonitorViewModel: ObservableObject {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: config.refreshIntervalSeconds, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.refresh()
+            }
+        }
+    }
+
+    private func scheduleClock() {
+        clockTimer?.invalidate()
+        clockTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else {
+                    return
+                }
+                self.now = Date()
+                self.onSnapshotChange?(self.snapshot)
             }
         }
     }

@@ -58,7 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        switch snapshot.severity {
+        let severity = snapshot.severity(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+        let statusLabel = snapshot.statusLabel(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+
+        switch severity {
         case .healthy:
             button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Sub2API OK")
         case .warning:
@@ -68,12 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         button.image?.isTemplate = true
         button.imagePosition = .imageLeading
-        button.title = snapshot.connected && model.config.showsMenuBarText ? " \(snapshot.menuBarSummary)" : ""
+        button.title = snapshot.connected && model.config.showsMenuBarText
+            ? " \(snapshot.menuBarSummary(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds))"
+            : ""
 
         if let stats = snapshot.stats, snapshot.connected {
-            button.toolTip = "Sub2API \(snapshot.statusLabel) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm))"
+            button.toolTip = "Sub2API \(statusLabel) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm))"
         } else {
-            button.toolTip = "Sub2API \(snapshot.statusLabel)"
+            button.toolTip = "Sub2API \(statusLabel)"
         }
     }
 }

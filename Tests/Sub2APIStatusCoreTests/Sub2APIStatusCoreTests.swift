@@ -780,6 +780,27 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
 }
 
+@Test func monitorSnapshotWarnsWhenDataIsStale() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 1119, todayActualCost: 113.3052, rpm: 3),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+        message: nil
+    )
+    let freshDate = Date(timeIntervalSince1970: 1_050)
+    let staleDate = Date(timeIntervalSince1970: 1_220)
+
+    #expect(snapshot.isStale(now: freshDate, refreshIntervalSeconds: 60) == false)
+    #expect(snapshot.isStale(now: staleDate, refreshIntervalSeconds: 60) == true)
+    #expect(snapshot.severity(now: staleDate, refreshIntervalSeconds: 60) == .warning)
+    #expect(snapshot.statusLabel(now: staleDate, refreshIntervalSeconds: 60) == "Stale Data")
+    #expect(snapshot.menuBarSummary(now: staleDate, refreshIntervalSeconds: 60).hasPrefix("Stale · $113.31"))
+}
+
 @Test func usageInsightsPrioritizeQuotaBalanceTrendAndModelConcentration() {
     let stats = DashboardStats(
         totalRequests: 20_000,
@@ -1146,6 +1167,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(report.contains("Version: 0.1.5"))
     #expect(report.contains("Access Token: present"))
     #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("Data Freshness: stale"))
     #expect(report.contains("Today Cost per MTok: --"))
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
