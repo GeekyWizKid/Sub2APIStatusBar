@@ -29,6 +29,12 @@ struct MonitorPanel: View {
                             if let message = model.snapshot.message, !message.isEmpty {
                                 MessageRow(message: message)
                             }
+
+                            if let suggestion = model.snapshotRecoverySuggestion {
+                                RecoverySuggestionCard(suggestion: suggestion) { action in
+                                    model.performRecoveryAction(action)
+                                }
+                            }
                         }
                         .padding(16)
                     }

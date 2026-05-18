@@ -3,6 +3,7 @@ import Sub2APIStatusCore
 
 struct LoginPanel: View {
     @ObservedObject var model: MonitorViewModel
+    @FocusState private var focusedField: FocusedLoginField?
 
     private var formState: LoginFormState {
         LoginFormState(
@@ -35,12 +36,15 @@ struct LoginPanel: View {
             VStack(alignment: .leading, spacing: 12) {
                 TextField("Server URL", text: $model.settingsDraft.baseURL)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .serverURL)
 
                 TextField("Account", text: $model.loginEmail)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .email)
 
                 SecureField("Password", text: $model.loginPassword)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .password)
 
                 HStack {
                     Text("Refresh")
@@ -51,6 +55,10 @@ struct LoginPanel: View {
                         .font(.callout.monospacedDigit())
                         .frame(width: 42, alignment: .trailing)
                 }
+            }
+
+            RecoverySuggestionCard(suggestion: model.loginRecoverySuggestion) { action in
+                performRecoveryAction(action)
             }
 
             if let error = model.settingsError {
@@ -82,6 +90,7 @@ struct LoginPanel: View {
                     .font(.headline)
                 SecureField("Bearer Token", text: $model.settingsDraft.authToken)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .token)
                 Button {
                     model.settingsDraft.upsertAccount(
                         name: model.loginEmail,
@@ -117,7 +126,34 @@ struct LoginPanel: View {
             .buttonStyle(.borderless)
         }
         .padding(20)
+        .onChange(of: model.focusesManualToken) { shouldFocus in
+            if shouldFocus {
+                focusedField = .token
+                model.focusesManualToken = false
+            }
+        }
     }
+
+    private func performRecoveryAction(_ action: RecoveryActionKind) {
+        model.performRecoveryAction(action)
+        switch action {
+        case .enterURL, .openServer:
+            focusedField = .serverURL
+        case .login:
+            focusedField = model.loginEmail.isEmpty ? .email : .password
+        case .replaceToken:
+            focusedField = .token
+        case .retry:
+            break
+        }
+    }
+}
+
+private enum FocusedLoginField: Hashable {
+    case serverURL
+    case email
+    case password
+    case token
 }
 
 struct AccountListSection: View {

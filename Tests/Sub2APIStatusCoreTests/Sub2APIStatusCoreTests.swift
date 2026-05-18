@@ -240,6 +240,31 @@ import Testing
     #expect(Sub2APIError.invalidBaseURL.isUnauthorized == false)
 }
 
+@Test func recoverySuggestionMapsCommonConnectionFailures() {
+    let invalidURL = RecoverySuggestion.make(
+        message: Sub2APIError.invalidBaseURL.localizedDescription,
+        hasBaseURL: false,
+        hasToken: false
+    )
+    let unauthorized = RecoverySuggestion.make(
+        message: Sub2APIError.badStatus(401, "expired").localizedDescription,
+        hasBaseURL: true,
+        hasToken: true
+    )
+    let serverDown = RecoverySuggestion.make(
+        message: "The request timed out.",
+        hasBaseURL: true,
+        hasToken: true
+    )
+
+    #expect(invalidURL.title == "Add your server URL")
+    #expect(invalidURL.actions.map(\.label) == ["Enter URL", "Open Server"])
+    #expect(unauthorized.title == "Sign in again")
+    #expect(unauthorized.actions.map(\.label) == ["Login", "Replace Token"])
+    #expect(serverDown.title == "Check server reachability")
+    #expect(serverDown.actions.map(\.label) == ["Open Server", "Retry"])
+}
+
 @Test func appVersionComparesSemanticVersions() {
     #expect(AppVersion("v0.1.10") > AppVersion("0.1.2"))
     #expect(AppVersion("1.0") == AppVersion("1.0.0"))

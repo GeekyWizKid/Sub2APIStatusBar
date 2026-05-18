@@ -230,3 +230,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The codebase is now friendlier to deeper product work: future passes can improve settings, charts, alerts, and onboarding without crowding a single file.
+
+### 2026-05-18 Cycle L
+
+1. 审视
+   - First-run and failure states still behaved like a demo: users saw a form or raw error text, but not a clear next action.
+   - Mature monitoring tools should recover gracefully from bad URLs, expired sessions, token replacement, and unreachable servers.
+
+2. 执行
+   - Added a core `RecoverySuggestion` model that maps common connection and authentication failures to short explanations and actions.
+   - Added guided recovery cards to the login panel and disconnected dashboard state.
+   - Kept the guidance local and deterministic so diagnostics and UI can share the same recovery language later.
+
+3. 提升
+   - The app now helps users recover without reading logs or guessing whether they should retry, replace a token, open the server, or sign in again.

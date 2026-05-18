@@ -14,6 +14,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Seven-day token trend and model distribution
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
 - First-run login and optional manual Bearer token setup
+- Guided recovery cards for missing URLs, expired sessions, token replacement, and server reachability problems
 - Multiple saved accounts with quick switching
 - Launch at Login, manual refresh, copied diagnostics, and config-file reveal actions
 - Local config storage; no telemetry or third-party analytics

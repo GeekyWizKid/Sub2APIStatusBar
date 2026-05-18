@@ -18,6 +18,7 @@ final class MonitorViewModel: ObservableObject {
     @Published var updateStatusMessage: String?
     @Published var launchAtLoginEnabled = false
     @Published var launchAtLoginError: String?
+    @Published var focusesManualToken = false
 
     var onSnapshotChange: ((MonitorSnapshot) -> Void)?
 
@@ -319,6 +320,40 @@ final class MonitorViewModel: ObservableObject {
 
     func quit() {
         NSApp.terminate(nil)
+    }
+
+    var loginRecoverySuggestion: RecoverySuggestion {
+        RecoverySuggestion.make(
+            message: settingsError,
+            hasBaseURL: !settingsDraft.baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            hasToken: !settingsDraft.authToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        )
+    }
+
+    var snapshotRecoverySuggestion: RecoverySuggestion? {
+        guard !snapshot.connected else {
+            return nil
+        }
+        return RecoverySuggestion.make(
+            message: snapshot.message,
+            hasBaseURL: !config.baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            hasToken: !config.authToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        )
+    }
+
+    func performRecoveryAction(_ action: RecoveryActionKind) {
+        switch action {
+        case .enterURL:
+            settingsDraft.baseURL = settingsDraft.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        case .openServer:
+            openURL(settingsDraft.baseURL.isEmpty ? config.baseURL : settingsDraft.baseURL)
+        case .login:
+            loginPassword = ""
+        case .replaceToken:
+            focusesManualToken = true
+        case .retry:
+            refresh()
+        }
     }
 
     private func publish(_ next: MonitorSnapshot) {
