@@ -450,3 +450,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The menu bar now acts more like a personal instrument: users can choose the one signal they care about most without opening the popover.
+
+### 2026-05-19 Cycle AB
+
+1. 审视
+   - Marketable utilities need a crisp first-run path; a blank login form feels like a developer tool even if the dashboard is strong.
+   - New users need to know whether they are missing a server URL, account login, password, or manual token.
+
+2. 执行
+   - Added a tested onboarding checklist model that summarizes connection readiness.
+   - Added a Connection Checklist to the login panel with completion icons and short field-level guidance.
+   - Kept manual token setup visible while making it clear that password or token can complete the credential step.
+
+3. 提升
+   - The first launch now gives users a visible path to success before any network request happens.

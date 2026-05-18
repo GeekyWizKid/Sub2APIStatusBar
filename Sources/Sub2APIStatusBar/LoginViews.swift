@@ -33,6 +33,8 @@ struct LoginPanel: View {
                 AccountListSection(model: model)
             }
 
+            OnboardingChecklistView(checklist: checklist)
+
             VStack(alignment: .leading, spacing: 12) {
                 TextField("Server URL", text: $model.settingsDraft.baseURL)
                     .textFieldStyle(.roundedBorder)
@@ -134,6 +136,13 @@ struct LoginPanel: View {
         }
     }
 
+    private var checklist: OnboardingChecklist {
+        OnboardingChecklist.make(
+            form: formState,
+            manualToken: model.settingsDraft.authToken
+        )
+    }
+
     private func performRecoveryAction(_ action: RecoveryActionKind) {
         model.performRecoveryAction(action)
         switch action {
@@ -146,6 +155,46 @@ struct LoginPanel: View {
         case .retry:
             break
         }
+    }
+}
+
+struct OnboardingChecklistView: View {
+    let checklist: OnboardingChecklist
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack {
+                Text("Connection Checklist")
+                    .font(.headline)
+                Spacer()
+                Text(checklist.summary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+
+            ForEach(checklist.steps) { step in
+                HStack(alignment: .top, spacing: 9) {
+                    Image(systemName: step.isComplete ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(step.isComplete ? Color.green : .secondary)
+                        .frame(width: 18)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(step.title)
+                            .font(.callout.weight(.medium))
+                        Text(step.detail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding(10)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 

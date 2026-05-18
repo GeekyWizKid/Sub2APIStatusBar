@@ -1361,3 +1361,26 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(LoginFormState(baseURL: "http://127.0.0.1:8080", email: "a@example.com", password: "").canSubmit == false)
     #expect(LoginFormState(baseURL: "http://127.0.0.1:8080", email: "a@example.com", password: "secret").canSubmit == true)
 }
+
+@Test func onboardingChecklistExplainsConnectionReadiness() {
+    let empty = OnboardingChecklist.make(
+        form: LoginFormState(baseURL: "", email: "", password: ""),
+        manualToken: ""
+    )
+    let tokenReady = OnboardingChecklist.make(
+        form: LoginFormState(baseURL: "https://sub2api.example.com", email: "", password: ""),
+        manualToken: "token"
+    )
+    let loginReady = OnboardingChecklist.make(
+        form: LoginFormState(baseURL: "https://sub2api.example.com", email: "das@example.com", password: "secret"),
+        manualToken: ""
+    )
+
+    #expect(empty.steps.map(\.title) == ["Server URL", "Account", "Password or token"])
+    #expect(empty.steps.map(\.isComplete) == [false, false, false])
+    #expect(empty.summary == "Add server URL, account, password or token.")
+    #expect(tokenReady.steps.map(\.isComplete) == [true, true, true])
+    #expect(tokenReady.summary == "Ready to save token.")
+    #expect(loginReady.steps.map(\.isComplete) == [true, true, true])
+    #expect(loginReady.summary == "Ready to login.")
+}
