@@ -1213,6 +1213,92 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(report.contains("secret-refresh-token") == false)
 }
 
+@Test func usageReportSummarizesShareableUsageWithoutSecrets() {
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token",
+        refreshIntervalSeconds: 30
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        currentUser: CurrentUser(
+            id: 1,
+            email: "das@example.com",
+            username: "Das",
+            role: "user",
+            balance: 300,
+            status: "active"
+        ),
+        stats: DashboardStats(
+            totalRequests: 5_476,
+            totalTokens: 598_896_155,
+            totalActualCost: 498.6904,
+            todayRequests: 1_186,
+            todayTokens: 126_386_167,
+            todayInputTokens: 7_657_045,
+            todayOutputTokens: 536_098,
+            todayCacheReadTokens: 118_193_024,
+            todayActualCost: 117.5668,
+            averageDurationMs: 14_514,
+            rpm: 1,
+            tpm: 10_752
+        ),
+        trend: [
+            TrendDataPoint(date: "2026-05-12", requests: 800, totalTokens: 80_000_000, actualCost: 80),
+            TrendDataPoint(date: "2026-05-13", requests: 900, totalTokens: 90_000_000, actualCost: 90),
+            TrendDataPoint(date: "2026-05-14", requests: 1_000, totalTokens: 100_000_000, actualCost: 100),
+            TrendDataPoint(date: "2026-05-15", requests: 1_100, totalTokens: 110_000_000, actualCost: 110),
+            TrendDataPoint(date: "2026-05-16", requests: 1_000, totalTokens: 100_000_000, actualCost: 100),
+            TrendDataPoint(date: "2026-05-17", requests: 900, totalTokens: 90_000_000, actualCost: 90),
+            TrendDataPoint(date: "2026-05-18", requests: 1_186, totalTokens: 126_386_167, actualCost: 117.5668),
+        ],
+        modelDistribution: [
+            ModelUsageSummary(model: "gpt-5.5", requests: 900, totalTokens: 170_000_000, actualCost: 86),
+            ModelUsageSummary(model: "gpt-5.4", requests: 286, totalTokens: 40_000_000, actualCost: 31.5668),
+        ],
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: SubscriptionSummary(activeCount: 1, subscriptions: [
+            SubscriptionSummaryItem(
+                id: 1,
+                groupName: "Codex",
+                status: "active",
+                dailyResetInSeconds: 7_200,
+                dailyProgress: 0.93,
+                weeklyProgress: 0.66,
+                monthlyProgress: 0.45,
+                expiresAt: nil,
+                daysRemaining: 18
+            ),
+        ]),
+        lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+        message: nil
+    )
+
+    let report = UsageReport.make(
+        config: config,
+        snapshot: snapshot,
+        now: Date(timeIntervalSince1970: 1_060)
+    )
+
+    #expect(report.contains("Sub2API Usage Report"))
+    #expect(report.contains("Status: High Usage"))
+    #expect(report.contains("Account: Das <das@example.com>"))
+    #expect(report.contains("Balance: $300.00"))
+    #expect(report.contains("Today Spend: $117.5668"))
+    #expect(report.contains("Today Tokens: 126.4M"))
+    #expect(report.contains("Input 7.7M / Output 536.1K / Cache Read 118.2M"))
+    #expect(report.contains("Cost / MTok: $0.9302/MTok"))
+    #expect(report.contains("Codex daily quota: 93%, resets in 2h"))
+    #expect(report.contains("Trend 2026-05-18: 1186 requests, 126.4M tokens, $117.5668"))
+    #expect(report.contains("Top Models: gpt-5.5 $86.0000 (170.0M tokens), gpt-5.4 $31.5668 (40.0M tokens)"))
+    #expect(report.contains("Insight: Codex daily quota is at 93% and resets in 2h."))
+    #expect(report.contains("secret-access-token") == false)
+    #expect(report.contains("secret-refresh-token") == false)
+}
+
 @Test func loginFormStateRequiresURLAccountAndPassword() {
     #expect(LoginFormState(baseURL: "", email: "a@example.com", password: "secret").canSubmit == false)
     #expect(LoginFormState(baseURL: "http://127.0.0.1:8080", email: "", password: "secret").canSubmit == false)

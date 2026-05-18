@@ -322,6 +322,17 @@ final class MonitorViewModel: ObservableObject {
         updateStatusMessage = "Diagnostics copied."
     }
 
+    func copyUsageReport() {
+        let report = UsageReport.make(
+            config: config,
+            snapshot: snapshot,
+            now: now
+        )
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(report, forType: .string)
+        updateStatusMessage = "Usage report copied."
+    }
+
     func revealConfigFile() {
         NSWorkspace.shared.activateFileViewerSelecting([store.configurationFileURL])
     }

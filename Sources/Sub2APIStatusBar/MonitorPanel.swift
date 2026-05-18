@@ -22,6 +22,23 @@ struct MonitorPanel: View {
                                 SectionBlock(title: "Usage Trend") {
                                     UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
                                 }
+
+                                HStack {
+                                    Button {
+                                        model.copyUsageReport()
+                                    } label: {
+                                        Label("Copy Usage Report", systemImage: "doc.on.doc")
+                                    }
+
+                                    if let message = model.updateStatusMessage, message == "Usage report copied." {
+                                        Text(message)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+                                }
+                                .buttonStyle(.borderless)
                             }
 
                             if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {

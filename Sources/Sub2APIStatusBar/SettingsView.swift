@@ -392,6 +392,13 @@ struct DiagnosticsSettingsSection: View {
                 .font(.headline)
             HStack {
                 Button {
+                    model.copyUsageReport()
+                } label: {
+                    Label("Copy Usage Report", systemImage: "chart.line.text.clipboard")
+                }
+                .disabled(!model.snapshot.connected)
+
+                Button {
                     model.copyDiagnostics()
                 } label: {
                     Label("Copy Diagnostics", systemImage: "doc.on.doc")

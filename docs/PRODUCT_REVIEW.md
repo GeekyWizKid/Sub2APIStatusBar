@@ -408,3 +408,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The app now guards the monitor itself: if usage visibility stops updating, the user can be notified before making decisions from stale numbers.
+
+### 2026-05-19 Cycle Y
+
+1. 审视
+   - Competitive usage products expose exports or shareable summaries so users can reconcile spend, discuss spikes, or ask for help without stitching screenshots together.
+   - For this menu bar product, a full export system would be too heavy; the best fit is a clean local usage report that omits credentials.
+
+2. 执行
+   - Added a core Usage Report generator covering account, balance, spend, requests, tokens, token mix, quota, latest trend, model spend, and prioritized insights.
+   - Added a Copy Usage Report action in the connected popover and Settings diagnostics area.
+   - Kept support diagnostics separate from user-facing reports: diagnostics help debug the app, while usage reports help explain usage.
+
+3. 提升
+   - The product now has a lightweight reporting loop: see usage, understand risk, and share a safe summary without opening the web dashboard.
