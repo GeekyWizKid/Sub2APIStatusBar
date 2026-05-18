@@ -364,3 +364,18 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The product now protects against quota exhaustion, balance exhaustion, spend spikes, and budget overrun, covering the main usage-risk loop without becoming an admin dashboard.
+
+### 2026-05-19 Cycle V
+
+1. 审视
+   - Local notarization was documented, but tag builds on GitHub still produced ad-hoc artifacts unless someone manually ran the Apple signing flow.
+   - For public distribution, silently publishing an unnotarized tag artifact is worse than failing loudly.
+
+2. 执行
+   - Added a GitHub Actions signing gate that detects whether the complete Apple signing and notarization secret set is present.
+   - Added a temporary-keychain Developer ID certificate import step for CI.
+   - Changed tag packaging to run `scripts/notarize-release.sh` when signing is configured, and to fail tagged releases when signing secrets are absent or partial.
+   - Documented the required GitHub secrets in README and the release checklist.
+
+3. 提升
+   - The release pipeline now has a real path from source to notarized public artifact; the remaining blocker is supplying Apple credentials, not missing automation.

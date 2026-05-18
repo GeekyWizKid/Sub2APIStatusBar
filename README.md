@@ -139,6 +139,20 @@ VERSION=v0.1.6 \
 ./scripts/notarize-release.sh
 ```
 
+## GitHub Release Signing
+
+Tagged GitHub Actions releases require Apple signing and notarization secrets. Add all of these repository secrets before pushing a `v*` tag:
+
+- `APPLE_CERTIFICATE_BASE64`: base64-encoded `.p12` Developer ID Application certificate
+- `APPLE_CERTIFICATE_PASSWORD`: password for that `.p12`
+- `APPLE_KEYCHAIN_PASSWORD`: temporary CI keychain password
+- `DEVELOPER_ID_APPLICATION`: certificate identity, for example `Developer ID Application: Your Name (TEAMID)`
+- `APPLE_ID`: Apple ID email used by `notarytool`
+- `TEAM_ID`: Apple Developer Team ID
+- `APP_SPECIFIC_PASSWORD`: app-specific password for notarization
+
+If no signing secrets are configured, branch and pull-request builds still produce ad-hoc signed artifacts. Tagged releases fail until the full signing set is present, so public downloads are not accidentally shipped as unnotarized builds.
+
 ## Updates
 
 The app checks GitHub Releases once on launch and lets users check manually from Settings > Updates. When a newer release is available, the popover shows a small update banner with a link to the download page.

@@ -15,6 +15,7 @@
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
 - [x] GitHub Actions preview-asset verification
+- [x] GitHub Actions Developer ID signing and notarization path for tagged releases
 - [x] Product-oriented README
 - [x] Changelog
 - [x] Unit tests for config, API decoding, quota progress, menu bar text, and status labels
@@ -58,6 +59,18 @@ VERSION=v0.1.6 \
 ```
 
 Notarization requires Apple Developer account credentials and is intentionally not automated until those secrets are available in GitHub Actions or the local keychain.
+
+GitHub tag signing requires repository secrets:
+
+- `APPLE_CERTIFICATE_BASE64`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_KEYCHAIN_PASSWORD`
+- `DEVELOPER_ID_APPLICATION`
+- `APPLE_ID`
+- `TEAM_ID`
+- `APP_SPECIFIC_PASSWORD`
+
+When all secrets are present, `v*` tag builds import the Developer ID certificate into a temporary keychain, run `scripts/notarize-release.sh`, and upload the notarized zip and checksum. If a tag is pushed without the full secret set, the workflow fails instead of publishing an unnotarized release artifact.
 
 ```bash
 APPLE_ID="you@example.com" \

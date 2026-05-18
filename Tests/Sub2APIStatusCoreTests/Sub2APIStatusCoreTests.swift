@@ -40,6 +40,21 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     return (width, height)
 }
 
+@Test func githubWorkflowNotarizesTaggedReleasesWhenAppleSecretsExist() throws {
+    let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let workflow = try String(contentsOf: root.appending(path: ".github/workflows/build.yml"), encoding: .utf8)
+
+    #expect(workflow.contains("APPLE_CERTIFICATE_BASE64"))
+    #expect(workflow.contains("security import"))
+    #expect(workflow.contains("scripts/notarize-release.sh"))
+    #expect(workflow.contains("Release signing is partially configured"))
+    #expect(workflow.contains("signing_ready=true"))
+    #expect(workflow.contains("SIGN_IDENTITY=\"$DEVELOPER_ID_APPLICATION\""))
+    #expect(workflow.contains("Import Developer ID Certificate\n        if: github.ref_type == 'tag' && steps.signing.outputs.signing_ready == 'true'"))
+    #expect(workflow.contains("if [[ \"${GITHUB_REF_TYPE:-}\" == \"tag\" && \"${{ steps.signing.outputs.signing_ready }}\" == \"true\" ]]"))
+    #expect(workflow.contains("elif [[ \"${GITHUB_REF_TYPE:-}\" == \"tag\" ]]"))
+}
+
 @Test func appConfigPersistsMenuBarTextPreference() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)

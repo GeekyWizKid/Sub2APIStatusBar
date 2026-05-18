@@ -34,14 +34,88 @@ jobs:
           ./scripts/capture-product-preview.swift
           git diff --exit-code docs/assets/product-preview.png
 
-      - name: Package App
+      - name: Resolve Release Signing
+        id: signing
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
         run: |
+          set -euo pipefail
+          required=(
+            APPLE_CERTIFICATE_BASE64
+            APPLE_CERTIFICATE_PASSWORD
+            APPLE_KEYCHAIN_PASSWORD
+            DEVELOPER_ID_APPLICATION
+            APPLE_ID
+            TEAM_ID
+            APP_SPECIFIC_PASSWORD
+          )
+          present=0
+          for name in "${required[@]}"; do
+            if [[ -n "${!name:-}" ]]; then
+              present=$((present + 1))
+            fi
+          done
+          if [[ "$present" -eq "${#required[@]}" ]]; then
+            echo "signing_ready=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$present" -eq 0 ]]; then
+            echo "signing_ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release signing is partially configured. Provide all Apple signing and notarization secrets, or remove them all for ad-hoc builds." >&2
+            exit 1
+          fi
+
+      - name: Import Developer ID Certificate
+        if: github.ref_type == 'tag' && steps.signing.outputs.signing_ready == 'true'
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Package App
+        env:
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: |
+          set -euo pipefail
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
           else
             VERSION="v0.1.6"
           fi
-          VERSION="$VERSION" ./scripts/package-release.sh
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${{ steps.signing.outputs.signing_ready }}" == "true" ]]; then
+            VERSION="$VERSION" \
+              SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION" \
+              APPLE_ID="$APPLE_ID" \
+              TEAM_ID="$TEAM_ID" \
+              APP_SPECIFIC_PASSWORD="$APP_SPECIFIC_PASSWORD" \
+              ./scripts/notarize-release.sh
+          elif [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            echo "Tagged releases require Apple signing and notarization secrets." >&2
+            exit 1
+          else
+            VERSION="$VERSION" ./scripts/package-release.sh
+          fi
           VERSION="$VERSION" ./scripts/verify-release.sh
 
       - name: Upload App Archive
