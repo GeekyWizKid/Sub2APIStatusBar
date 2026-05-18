@@ -130,7 +130,11 @@ Output:
 ```text
 dist/Sub2APIStatusBar-0.1.6-macOS.zip
 dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.6-macOS.dmg
+dist/Sub2APIStatusBar-0.1.6-macOS.dmg.sha256
 ```
+
+The `.dmg` is the user-facing installer image with an Applications shortcut. The `.zip` remains available for automation and release verification.
 
 ## Notarize A Release
 
@@ -157,7 +161,7 @@ Tagged GitHub Actions releases require Apple signing and notarization secrets. A
 - `TEAM_ID`: Apple Developer Team ID
 - `APP_SPECIFIC_PASSWORD`: app-specific password for notarization
 
-If no signing secrets are configured, branch and pull-request builds still produce ad-hoc signed artifacts. Tagged releases fail until the full signing set is present, so public downloads are not accidentally shipped as unnotarized builds.
+If no signing secrets are configured, branch and pull-request builds still produce ad-hoc signed artifacts. Tagged releases fail until the full signing set is present, so public downloads are not accidentally shipped as unnotarized builds. CI uploads both `.dmg` and `.zip` artifacts with SHA-256 checksum files.
 
 ## Updates
 
@@ -175,7 +179,7 @@ swift build
 ./scripts/verify-release.sh
 ```
 
-GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
+GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches. Release verification checks both the zip archive and DMG installer image from clean temporary locations.
 
 Regenerate the README product preview after visual changes:
 

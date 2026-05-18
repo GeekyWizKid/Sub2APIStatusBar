@@ -55,6 +55,25 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(workflow.contains("elif [[ \"${GITHUB_REF_TYPE:-}\" == \"tag\" ]]"))
 }
 
+@Test func releaseScriptsBuildAndVerifyDMGArtifacts() throws {
+    let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let packageScript = try String(contentsOf: root.appending(path: "scripts/package-release.sh"), encoding: .utf8)
+    let verifyScript = try String(contentsOf: root.appending(path: "scripts/verify-release.sh"), encoding: .utf8)
+    let workflow = try String(contentsOf: root.appending(path: ".github/workflows/build.yml"), encoding: .utf8)
+
+    #expect(packageScript.contains("DMG_PATH="))
+    #expect(packageScript.contains("hdiutil create"))
+    #expect(packageScript.contains("ln -s /Applications"))
+    #expect(packageScript.contains("xattr -cr \"$DMG_STAGING_DIR/$APP_NAME.app\""))
+    #expect(packageScript.contains("shasum -a 256 \"$DMG_PATH\""))
+    #expect(verifyScript.contains("DMG_PATH="))
+    #expect(verifyScript.contains("hdiutil attach"))
+    #expect(verifyScript.contains("hdiutil detach"))
+    #expect(verifyScript.contains("ditto \"$DMG_MOUNT_DIR/$APP_NAME.app\" \"$VERIFY_DIR/$APP_NAME-dmg.app\""))
+    #expect(verifyScript.contains("xattr -cr \"$VERIFY_DIR/$APP_NAME-dmg.app\""))
+    #expect(workflow.contains("dist/*.dmg"))
+}
+
 @Test func appConfigPersistsMenuBarTextPreference() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)

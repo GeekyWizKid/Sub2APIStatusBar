@@ -492,3 +492,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Model Distribution now answers "which model is driving spend, and is it expensive per token?" without opening the web dashboard.
+
+### 2026-05-19 Cycle AE
+
+1. 审视
+   - The release path produced a zip archive, which is useful for automation but less familiar for ordinary macOS users.
+   - A marketable macOS utility should provide a DMG installer image with an Applications shortcut while keeping zip artifacts for CI and verification.
+
+2. 执行
+   - Extended release packaging to produce both zip and DMG artifacts with SHA-256 checksums.
+   - Extended release verification to validate the zip from clean extraction and the DMG from a clean temporary mount.
+   - Updated GitHub Actions artifact upload and release documentation to include DMG output.
+
+3. 提升
+   - Distribution now looks more like a real macOS product: users get a familiar installer image, while maintainers keep deterministic verification.

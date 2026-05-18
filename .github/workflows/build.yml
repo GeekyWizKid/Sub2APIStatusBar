@@ -124,5 +124,6 @@ jobs:
           name: Sub2APIStatusBar-macOS
           path: |
             dist/*.zip
+            dist/*.dmg
             dist/*.sha256
           if-no-files-found: error

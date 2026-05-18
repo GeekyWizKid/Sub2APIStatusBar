@@ -10,7 +10,9 @@
 - [x] App icon generation and `AppIcon.icns`
 - [x] macOS `.app` bundle script
 - [x] Release zip and SHA-256 checksum script
+- [x] Release DMG and SHA-256 checksum script
 - [x] Release verification script that checks the zip from a clean temporary extraction
+- [x] Release verification script that checks the DMG from a clean temporary mount
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
@@ -48,7 +50,7 @@ VERSION=v0.1.6 ./scripts/package-release.sh
 VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
 
-`verify-release.sh` checks checksum integrity, zip structure, `Info.plist`, notification-purpose metadata, and code signature validity from a clean temporary extraction.
+`verify-release.sh` checks checksum integrity, zip structure, DMG structure, `Info.plist`, notification-purpose metadata, and code signature validity from clean temporary extraction/mount locations.
 
 Developer ID signing:
 
