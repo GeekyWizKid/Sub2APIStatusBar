@@ -394,3 +394,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The app now behaves more like a trustworthy monitor: old usage numbers remain visible, but they are clearly labeled as old instead of masquerading as current state.
+
+### 2026-05-19 Cycle X
+
+1. 审视
+   - Mature monitoring tools do not only label stale data; they notify when the monitor itself stops receiving fresh data.
+   - The app had stale labels, but a user could still miss the problem unless they opened the popover or looked closely at the menu bar.
+
+2. 执行
+   - Added stale-data alerts to the same local notification policy used by Usage Insights.
+   - Reused the existing alert cooldown map so stale refresh warnings do not repeat noisily.
+   - Triggered stale alert checks from the lightweight clock tick, so the warning can appear without another network response.
+
+3. 提升
+   - The app now guards the monitor itself: if usage visibility stops updating, the user can be notified before making decisions from stale numbers.

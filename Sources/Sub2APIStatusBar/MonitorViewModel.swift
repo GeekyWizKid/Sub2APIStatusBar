@@ -428,8 +428,18 @@ final class MonitorViewModel: ObservableObject {
                 }
                 self.now = Date()
                 self.onSnapshotChange?(self.snapshot)
+                self.notifyIfStale(self.snapshot, now: self.now)
             }
         }
+    }
+
+    private func notifyIfStale(_ snapshot: MonitorSnapshot, now: Date) {
+        insightNotifier.handleStaleSnapshot(
+            snapshot,
+            refreshIntervalSeconds: config.refreshIntervalSeconds,
+            settings: config.insightAlertSettings,
+            now: now
+        )
     }
 
     private static func lastSevenDayRange() -> (start: String, end: String) {

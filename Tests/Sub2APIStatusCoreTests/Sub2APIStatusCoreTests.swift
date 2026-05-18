@@ -1059,6 +1059,39 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(allowed?.fingerprint == firstAlert?.fingerprint)
 }
 
+@Test func insightAlertPolicyWarnsWhenConnectedSnapshotBecomesStale() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 1119, todayActualCost: 113.3052, rpm: 3),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+        message: nil
+    )
+    let policy = InsightAlertPolicy(settings: InsightAlertSettings(isEnabled: true, minimumSeverity: .warning, cooldownMinutes: 60))
+    let staleTime = Date(timeIntervalSince1970: 1_220)
+    let firstAlert = policy.staleDataAlert(
+        from: snapshot,
+        refreshIntervalSeconds: 60,
+        lastAlertedAtByFingerprint: [:],
+        now: staleTime
+    )
+    let suppressed = policy.staleDataAlert(
+        from: snapshot,
+        refreshIntervalSeconds: 60,
+        lastAlertedAtByFingerprint: [firstAlert?.fingerprint ?? "": staleTime],
+        now: staleTime.addingTimeInterval(30 * 60)
+    )
+
+    #expect(firstAlert?.fingerprint == "monitor-Stale Data-warning")
+    #expect(firstAlert?.title == "Stale Data")
+    #expect(firstAlert?.body == "Sub2API usage has not refreshed for 3m. Check the server or retry refresh.")
+    #expect(firstAlert?.severity == .warning)
+    #expect(suppressed == nil)
+}
+
 @Test func insightAlertPolicySuppressesSameSignalWhenValueChangesInsideCooldown() {
     let firstInsights = UsageInsights(headline: "Daily quota is at 93%.", items: [
         UsageInsightItem(

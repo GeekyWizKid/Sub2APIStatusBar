@@ -23,6 +23,29 @@ final class InsightNotifier {
         }
     }
 
+    func handleStaleSnapshot(
+        _ snapshot: MonitorSnapshot,
+        refreshIntervalSeconds: Double,
+        settings: InsightAlertSettings,
+        now: Date = Date()
+    ) {
+        let policy = InsightAlertPolicy(settings: settings)
+        guard let alert = policy.staleDataAlert(
+            from: snapshot,
+            refreshIntervalSeconds: refreshIntervalSeconds,
+            lastAlertedAtByFingerprint: lastAlertedAtByFingerprint,
+            now: now
+        ) else {
+            return
+        }
+
+        Task {
+            if await deliver(alert) {
+                lastAlertedAtByFingerprint[alert.fingerprint] = Date()
+            }
+        }
+    }
+
     func resetCooldowns() {
         lastAlertedAtByFingerprint.removeAll()
     }

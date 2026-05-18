@@ -54,6 +54,33 @@ public struct InsightAlertPolicy: Equatable, Sendable {
             }
             .first
     }
+
+    public func staleDataAlert(
+        from snapshot: MonitorSnapshot,
+        refreshIntervalSeconds: Double,
+        lastAlertedAtByFingerprint: [String: Date],
+        now: Date
+    ) -> InsightAlert? {
+        guard settings.isEnabled,
+              MonitorSeverity.warning.sortRank >= settings.minimumSeverity.sortRank,
+              snapshot.isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds),
+              let lastUpdatedAt = snapshot.lastUpdatedAt else {
+            return nil
+        }
+
+        let fingerprint = "monitor-Stale Data-warning"
+        if let lastAlertedAt = lastAlertedAtByFingerprint[fingerprint],
+           now.timeIntervalSince(lastAlertedAt) < settings.cooldownMinutes * 60 {
+            return nil
+        }
+
+        return InsightAlert(
+            fingerprint: fingerprint,
+            title: "Stale Data",
+            body: "Sub2API usage has not refreshed for \(StatusFormatters.duration(seconds: now.timeIntervalSince(lastUpdatedAt))). Check the server or retry refresh.",
+            severity: .warning
+        )
+    }
 }
 
 public enum InsightNotificationAuthorization: String, Equatable, Sendable {
