@@ -54,6 +54,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>NSUserNotificationsUsageDescription</key>
+  <string>Sub2API Status Bar sends local alerts when usage, quota, or balance signals need attention.</string>
   <key>NSSupportsAutomaticTermination</key>
   <true/>
   <key>NSSupportsSuddenTermination</key>

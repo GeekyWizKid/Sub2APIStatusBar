@@ -272,3 +272,16 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Usage alerts are now closer to the decision a user needs to make: which subscription needs attention, and whether it is about to reset soon enough to keep working.
+
+### 2026-05-18 Cycle O
+
+1. 审视
+   - Proactive notifications add a release-trust requirement: the distributed app bundle should explain why it requests notification permission, and release verification should catch missing metadata.
+
+2. 执行
+   - Added a notification-purpose string to the generated `Info.plist`.
+   - Extended release verification to assert that notification metadata is present in the packaged app.
+   - Ran the package and verification scripts successfully against `v0.1.5`.
+
+3. 提升
+   - Release validation now covers the new proactive-alert capability, reducing the chance that a polished feature ships with incomplete macOS metadata.

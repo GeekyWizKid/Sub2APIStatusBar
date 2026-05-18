@@ -19,6 +19,7 @@ shasum -a 256 -c "$CHECKSUM_PATH"
 unzip -t "$ZIP_PATH" >/dev/null
 unzip -q "$ZIP_PATH" -d "$VERIFY_DIR"
 plutil -lint "$VERIFY_DIR/$APP_NAME.app/Contents/Info.plist" >/dev/null
+plutil -extract NSUserNotificationsUsageDescription raw "$VERIFY_DIR/$APP_NAME.app/Contents/Info.plist" >/dev/null
 codesign --verify --deep --strict "$VERIFY_DIR/$APP_NAME.app"
 
 echo "Release archive verified."

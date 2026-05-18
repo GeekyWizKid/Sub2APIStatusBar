@@ -24,6 +24,7 @@
 - [x] Launch at Login setting
 - [x] Support-safe diagnostics copy action with token redaction
 - [x] Local config reveal action
+- [x] Notification permission purpose string included in the app bundle and checked by release verification
 
 ## Before Public Distribution
 
@@ -42,6 +43,8 @@ swift build
 VERSION=v0.1.5 ./scripts/package-release.sh
 VERSION=v0.1.5 ./scripts/verify-release.sh
 ```
+
+`verify-release.sh` checks checksum integrity, zip structure, `Info.plist`, notification-purpose metadata, and code signature validity from a clean temporary extraction.
 
 Developer ID signing:
 
