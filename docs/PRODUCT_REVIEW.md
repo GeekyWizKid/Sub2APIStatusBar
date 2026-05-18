@@ -217,3 +217,16 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The next product pass should notarize once Apple Developer credentials are available.
+
+### 2026-05-18 Cycle K
+
+1. 审视
+   - The status bar target had grown into one 1,679-line Swift file mixing lifecycle, refresh state, login, settings, dashboard cards, quota UI, charts, and shared components.
+   - That shape slows down product iteration because every UI change requires navigating unrelated app, networking, and settings code.
+
+2. 执行
+   - Split the app into focused files for app lifecycle, monitor state, main panel, login views, settings views, dashboard components, quota views, chart views, and shared view primitives.
+   - Kept the split mechanical and behavior-preserving, with Swift build verification after each major move.
+
+3. 提升
+   - The codebase is now friendlier to deeper product work: future passes can improve settings, charts, alerts, and onboarding without crowding a single file.

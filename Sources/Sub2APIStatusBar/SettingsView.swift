@@ -1,0 +1,359 @@
+import SwiftUI
+import Sub2APIStatusCore
+
+struct SettingsView: View {
+    @ObservedObject var model: MonitorViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Settings")
+                .font(.title2.bold())
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    AccountSettingsSection(model: model)
+                    GeneralSettingsSection(model: model)
+                    InsightSettingsSection(model: model)
+                    UpdateSettingsSection(model: model)
+                    LoginSettingsSection(model: model, dismiss: dismiss)
+                    DiagnosticsSettingsSection(model: model)
+                }
+            }
+
+            if let error = model.settingsError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .lineLimit(3)
+            }
+
+            Spacer()
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    dismiss()
+                }
+                Button("Save") {
+                    model.saveSettings()
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(20)
+    }
+}
+
+struct AccountSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        if !model.config.accounts.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Accounts")
+                    .font(.headline)
+                Picker("Active Account", selection: Binding(
+                    get: { model.config.selectedAccountID ?? "" },
+                    set: { id in
+                        if let account = model.config.accounts.first(where: { $0.id == id }) {
+                            model.selectAccount(account)
+                            model.settingsDraft = model.config
+                        }
+                    }
+                )) {
+                    ForEach(model.config.accounts) { account in
+                        Text(account.displayName).tag(account.id)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct GeneralSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("General")
+                .font(.headline)
+
+            VStack(spacing: 8) {
+                SettingsControlRow(title: "Base URL") {
+                    TextField("https://sub2api.example.com", text: $model.settingsDraft.baseURL)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                SettingsControlRow(title: "Menu Bar") {
+                    Toggle("Show text", isOn: $model.settingsDraft.showsMenuBarText)
+                }
+
+                SettingsControlRow(title: "Startup") {
+                    Toggle("Launch at login", isOn: Binding(
+                        get: { model.launchAtLoginEnabled },
+                        set: { model.setLaunchAtLogin($0) }
+                    ))
+                }
+
+                SettingsControlRow(title: "Refresh") {
+                    Slider(value: $model.settingsDraft.refreshIntervalSeconds, in: 5...300, step: 5)
+                    Text("\(Int(model.settingsDraft.refreshIntervalSeconds))s")
+                        .font(.callout.monospacedDigit())
+                        .frame(width: 42, alignment: .trailing)
+                }
+
+                SettingsControlRow(title: "Token") {
+                    SecureField("Bearer Token", text: $model.settingsDraft.authToken)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+
+            if let error = model.launchAtLoginError {
+                MessageRow(message: error)
+            }
+        }
+    }
+}
+
+struct InsightSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Insights")
+                .font(.headline)
+
+            VStack(spacing: 8) {
+                ThresholdSliderRow(
+                    title: "Quota warn",
+                    value: $model.settingsDraft.insightThresholds.quotaWarningProgress,
+                    range: 0.5...0.95,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.quotaWarningProgress)
+                )
+
+                ThresholdSliderRow(
+                    title: "Quota critical",
+                    value: $model.settingsDraft.insightThresholds.quotaCriticalProgress,
+                    range: 0.75...1,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.quotaCriticalProgress)
+                )
+
+                ThresholdSliderRow(
+                    title: "Balance warn",
+                    value: $model.settingsDraft.insightThresholds.lowBalanceDays,
+                    range: 1...14,
+                    step: 1,
+                    valueText: "\(Int(model.settingsDraft.insightThresholds.lowBalanceDays))d"
+                )
+
+                ThresholdSliderRow(
+                    title: "Token surge",
+                    value: $model.settingsDraft.insightThresholds.tokenSurgeRatio,
+                    range: 1.1...3,
+                    step: 0.05,
+                    valueText: "\(Int(model.settingsDraft.insightThresholds.tokenSurgeRatio * 100))%"
+                )
+
+                ThresholdSliderRow(
+                    title: "Model share",
+                    value: $model.settingsDraft.insightThresholds.modelConcentrationShare,
+                    range: 0.5...0.95,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.modelConcentrationShare)
+                )
+
+                ThresholdSliderRow(
+                    title: "Latency",
+                    value: $model.settingsDraft.insightThresholds.latencyWarningMs,
+                    range: 5_000...60_000,
+                    step: 1_000,
+                    valueText: latencyThresholdText
+                )
+            }
+        }
+    }
+
+    private var latencyThresholdText: String {
+        String(format: "%.0fs", model.settingsDraft.insightThresholds.latencyWarningMs / 1_000)
+    }
+}
+
+struct ThresholdSliderRow: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let valueText: String
+
+    var body: some View {
+        SettingsControlRow(title: title) {
+            Slider(value: $value, in: range, step: step)
+            Text(valueText)
+                .font(.callout.monospacedDigit())
+                .frame(width: 48, alignment: .trailing)
+        }
+    }
+}
+
+struct SettingsControlRow<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(width: 76, alignment: .leading)
+            HStack(spacing: 8) {
+                content
+            }
+        }
+    }
+}
+
+struct LoginSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+    let dismiss: DismissAction
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Login")
+                .font(.headline)
+            TextField("Email", text: $model.loginEmail)
+            SecureField("Password", text: $model.loginPassword)
+            Button {
+                model.loginAndSave()
+            } label: {
+                Label("Login and Save Account", systemImage: "person.crop.circle.badge.plus")
+            }
+            .disabled(!LoginFormState(baseURL: model.settingsDraft.baseURL, email: model.loginEmail, password: model.loginPassword).canSubmit || model.isLoggingIn)
+
+            Button(role: .destructive) {
+                model.disconnect()
+                dismiss()
+            } label: {
+                Label("Remove Current Account", systemImage: "person.crop.circle.badge.xmark")
+            }
+            .disabled(model.config.selectedAccountID == nil && model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
+        }
+    }
+}
+
+struct DiagnosticsSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Diagnostics")
+                .font(.headline)
+            HStack {
+                Button {
+                    model.copyDiagnostics()
+                } label: {
+                    Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    model.revealConfigFile()
+                } label: {
+                    Label("Show Config", systemImage: "folder")
+                }
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+}
+
+struct UpdateSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Updates")
+                    .font(.headline)
+                Spacer()
+                if model.isCheckingForUpdates {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+
+            if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(updateInfo.statusText)
+                            .font(.callout.weight(.medium))
+                        Text(updateInfo.latestRelease.name)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            } else if let message = model.updateStatusMessage {
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Checks GitHub Releases for newer versions.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Button {
+                    model.checkForUpdates()
+                } label: {
+                    Label("Check Now", systemImage: "arrow.clockwise")
+                }
+                .disabled(model.isCheckingForUpdates)
+
+                if model.updateInfo?.isUpdateAvailable == true {
+                    Button {
+                        model.openLatestRelease()
+                    } label: {
+                        Label("Open Release", systemImage: "safari")
+                    }
+                }
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+}
+
+struct UpdateAvailableBanner: View {
+    let info: UpdateInfo
+    let openRelease: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(info.statusText)
+                    .font(.callout.weight(.semibold))
+                Text("Download the latest release from GitHub.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button {
+                openRelease()
+            } label: {
+                Image(systemName: "safari")
+            }
+            .buttonStyle(.borderless)
+            .help("Open release")
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+}
