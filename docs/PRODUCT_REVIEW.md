@@ -350,3 +350,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Trend is now a core product surface instead of a trailing chart: the user can compare volume, money, and request activity without opening the web dashboard.
+
+### 2026-05-19 Cycle U
+
+1. 审视
+   - LiteLLM-style products make budget protection a first-class guardrail, but this app only inferred risk from balance and spend spikes.
+   - For a personal menu bar monitor, the useful slice is not team budget administration; it is a local monthly budget warning that stays private and simple.
+
+2. 执行
+   - Added an optional monthly budget threshold to local insight settings.
+   - Added a Monthly budget Usage Insight that projects 30-day spend from recent daily actual cost.
+   - Added Settings and diagnostics surfaces so the budget is user-editable and support-visible without exposing tokens.
+
+3. 提升
+   - The product now protects against quota exhaustion, balance exhaustion, spend spikes, and budget overrun, covering the main usage-risk loop without becoming an admin dashboard.

@@ -63,6 +63,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     thresholds.quotaWarningProgress = 0.7
     thresholds.quotaCriticalProgress = 0.9
     thresholds.lowBalanceDays = 5
+    thresholds.monthlyBudgetUSD = 150
     thresholds.tokenSurgeRatio = 1.25
     thresholds.spendSurgeRatio = 1.6
     thresholds.modelConcentrationShare = 0.65
@@ -74,10 +75,33 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(loaded.insightThresholds.quotaWarningProgress == 0.7)
     #expect(loaded.insightThresholds.quotaCriticalProgress == 0.9)
     #expect(loaded.insightThresholds.lowBalanceDays == 5)
+    #expect(loaded.insightThresholds.monthlyBudgetUSD == 150)
     #expect(loaded.insightThresholds.tokenSurgeRatio == 1.25)
     #expect(loaded.insightThresholds.spendSurgeRatio == 1.6)
     #expect(loaded.insightThresholds.modelConcentrationShare == 0.65)
     #expect(loaded.insightThresholds.latencyWarningMs == 18_000)
+}
+
+@Test func appConfigDecodesLegacyInsightThresholdsWithoutBudgetFields() throws {
+    let data = """
+    {
+      "baseURL": "https://sub2api.example.com",
+      "insightThresholds": {
+        "quotaWarningProgress": 0.7,
+        "quotaCriticalProgress": 0.9,
+        "lowBalanceDays": 5,
+        "tokenSurgeRatio": 1.25,
+        "modelConcentrationShare": 0.65,
+        "latencyWarningMs": 18000
+      }
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.insightThresholds.monthlyBudgetUSD == 0)
+    #expect(config.insightThresholds.spendSurgeRatio == 1.25)
+    #expect(config.insightThresholds.modelConcentrationShare == 0.65)
 }
 
 @Test func appConfigPersistsInsightAlertSettings() throws {
@@ -142,6 +166,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
         quotaWarningProgress: 1.4,
         quotaCriticalProgress: 0.2,
         lowBalanceDays: -5,
+        monthlyBudgetUSD: -20,
         tokenSurgeRatio: 0.9,
         spendSurgeRatio: 0.9,
         modelConcentrationShare: 2,
@@ -153,6 +178,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(thresholds.quotaWarningProgress == 0.8)
     #expect(thresholds.quotaCriticalProgress == 0.95)
     #expect(thresholds.lowBalanceDays == 1)
+    #expect(thresholds.monthlyBudgetUSD == 0)
     #expect(thresholds.tokenSurgeRatio == 1.1)
     #expect(thresholds.spendSurgeRatio == 1.1)
     #expect(thresholds.modelConcentrationShare == 0.8)
@@ -857,6 +883,35 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(tokenTrend?.severity == .healthy)
 }
 
+@Test func usageInsightsDetectBudgetRunwayFromMonthlySpendPace() {
+    let trend = [
+        TrendDataPoint(date: "2026-05-12", actualCost: 10),
+        TrendDataPoint(date: "2026-05-13", actualCost: 10),
+        TrendDataPoint(date: "2026-05-14", actualCost: 10),
+        TrendDataPoint(date: "2026-05-15", actualCost: 10),
+        TrendDataPoint(date: "2026-05-16", actualCost: 10),
+        TrendDataPoint(date: "2026-05-17", actualCost: 10),
+        TrendDataPoint(date: "2026-05-18", actualCost: 10),
+    ]
+    var thresholds = InsightThresholds.defaults
+    thresholds.monthlyBudgetUSD = 200
+
+    let insights = UsageInsights.make(
+        currentUser: nil,
+        stats: DashboardStats(totalActualCost: 120, todayActualCost: 10),
+        subscriptionSummary: nil,
+        trend: trend,
+        models: nil,
+        thresholds: thresholds
+    )
+
+    let budget = insights.items.first { $0.kind == .budget }
+    #expect(budget?.title == "Monthly budget")
+    #expect(budget?.value == "$300.00")
+    #expect(budget?.severity == .warning)
+    #expect(budget?.detail == "Projected monthly spend is $300.00 against a $200.00 budget.")
+}
+
 @Test func usageInsightsRespectCustomThresholds() {
     let stats = DashboardStats(todayTokens: 210_000, todayActualCost: 15, averageDurationMs: 16_000)
     let currentUser = CurrentUser(
@@ -1080,6 +1135,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
     #expect(report.contains("Insight Alert Cooldown: 90m"))
+    #expect(report.contains("Monthly Budget: $0.00"))
     #expect(report.contains("Spend Surge Threshold: 150%"))
     #expect(report.contains("Notification Permission: denied"))
     #expect(report.contains("Usage Insight: Balance covers about 3.9 days at today's spend."))

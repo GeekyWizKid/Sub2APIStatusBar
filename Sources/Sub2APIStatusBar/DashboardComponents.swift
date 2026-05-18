@@ -175,6 +175,8 @@ struct UsageInsightsView: View {
             "gauge.with.dots.needle.67percent"
         case .balance:
             "banknote"
+        case .budget:
+            "calendar.badge.clock"
         case .spend:
             "dollarsign.arrow.circlepath"
         case .trend:

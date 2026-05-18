@@ -4,10 +4,10 @@ This release turns Sub2API Status Bar from a passive menu bar dashboard into a p
 
 ## What's New
 
-- Added Usage Insights for quota pressure, balance runway, token trend, spend surge, model concentration, and latency.
+- Added Usage Insights for quota pressure, balance runway, monthly budget runway, token trend, spend surge, model concentration, and latency.
 - Added local macOS alerts for important insights, with warning/error level and quiet-period controls.
 - Added notification permission status in Settings, including a quick path to macOS notification settings when alerts are blocked.
-- Added configurable insight thresholds for quota, balance, token surge, spend surge, model concentration, and latency.
+- Added configurable insight thresholds for quota, balance, monthly budget, token surge, spend surge, model concentration, and latency.
 - Added a blended Cost / MTok metric so users can see when the same token volume becomes more expensive.
 - Improved quota insight text with subscription names and reset timing when available.
 - Added guided recovery cards for setup and connection failures.

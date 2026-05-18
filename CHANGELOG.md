@@ -4,10 +4,10 @@
 
 ## v0.1.6
 
-- Added Usage Insights for quota pressure, balance runway, token trend changes, model cost concentration, and latency.
+- Added Usage Insights for quota pressure, balance runway, monthly budget runway, token trend changes, model cost concentration, and latency.
 - Added local proactive alerts for important Usage Insights, with Settings controls for severity and cooldown.
 - Added visible notification-permission status and diagnostics so blocked macOS alerts are easier to identify.
-- Added configurable Usage Insight thresholds in Settings.
+- Added configurable Usage Insight thresholds in Settings, including optional monthly budget protection.
 - Added spend-surge Usage Insights so cost spikes are caught even when token volume is steady.
 - Added a blended Cost / MTok dashboard metric and diagnostics line.
 - Improved quota insights to name the subscription and show reset timing when the server provides it.

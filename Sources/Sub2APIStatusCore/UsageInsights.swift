@@ -3,6 +3,7 @@ import Foundation
 public enum UsageInsightKind: String, Equatable, Sendable {
     case quota
     case balance
+    case budget
     case spend
     case trend
     case modelMix
@@ -14,14 +15,16 @@ public enum UsageInsightKind: String, Equatable, Sendable {
             0
         case .balance:
             1
-        case .spend:
+        case .budget:
             2
-        case .trend:
+        case .spend:
             3
-        case .modelMix:
+        case .trend:
             4
-        case .performance:
+        case .modelMix:
             5
+        case .performance:
+            6
         }
     }
 }
@@ -77,6 +80,10 @@ public struct UsageInsights: Equatable, Sendable {
 
         if let balance = balanceInsight(currentUser: currentUser, stats: stats, thresholds: thresholds) {
             items.append(balance)
+        }
+
+        if let budget = budgetInsight(stats: stats, trend: trend, thresholds: thresholds) {
+            items.append(budget)
         }
 
         if let spend = spendInsight(trend, thresholds: thresholds) {
@@ -169,6 +176,41 @@ public struct UsageInsights: Equatable, Sendable {
             title: "Balance runway",
             value: String(format: "%.1fd", days),
             detail: "Balance covers about \(String(format: "%.1f", days)) days at today's spend."
+        )
+    }
+
+    private static func budgetInsight(stats: DashboardStats?, trend: [TrendDataPoint]?, thresholds: InsightThresholds) -> UsageInsightItem? {
+        guard thresholds.monthlyBudgetUSD > 0 else {
+            return nil
+        }
+
+        let dailyCosts = trend?.map(\.actualCost).filter { $0 > 0 } ?? []
+        let averageDailyCost: Double
+        if !dailyCosts.isEmpty {
+            averageDailyCost = dailyCosts.reduce(0, +) / Double(dailyCosts.count)
+        } else if let todayCost = stats?.todayActualCost, todayCost > 0 {
+            averageDailyCost = todayCost
+        } else {
+            return nil
+        }
+
+        let projectedSpend = averageDailyCost * 30
+        let budget = thresholds.monthlyBudgetUSD
+        let progress = projectedSpend / budget
+        let severity: MonitorSeverity = if progress >= 1 {
+            .warning
+        } else if progress >= 0.85 {
+            .healthy
+        } else {
+            .healthy
+        }
+
+        return UsageInsightItem(
+            kind: .budget,
+            severity: severity,
+            title: "Monthly budget",
+            value: StatusFormatters.currency(projectedSpend),
+            detail: "Projected monthly spend is \(StatusFormatters.currency(projectedSpend)) against a \(StatusFormatters.currency(budget)) budget."
         )
     }
 

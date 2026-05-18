@@ -20,6 +20,7 @@ public enum DiagnosticReport {
             "Insight Alerts: \(config.insightAlertSettings.isEnabled ? "enabled" : "disabled")",
             "Insight Alert Level: \(config.insightAlertSettings.minimumSeverity.rawValue)",
             "Insight Alert Cooldown: \(Int(config.insightAlertSettings.cooldownMinutes))m",
+            "Monthly Budget: \(StatusFormatters.currency(config.insightThresholds.monthlyBudgetUSD))",
             "Spend Surge Threshold: \(Int(config.insightThresholds.spendSurgeRatio * 100))%",
             "Notification Permission: \(notificationAuthorization?.rawValue ?? "unknown")",
             "Accounts: \(config.accounts.count)",

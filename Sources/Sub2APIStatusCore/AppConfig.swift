@@ -57,15 +57,28 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
     public var quotaWarningProgress: Double
     public var quotaCriticalProgress: Double
     public var lowBalanceDays: Double
+    public var monthlyBudgetUSD: Double
     public var tokenSurgeRatio: Double
     public var spendSurgeRatio: Double
     public var modelConcentrationShare: Double
     public var latencyWarningMs: Double
 
+    private enum CodingKeys: String, CodingKey {
+        case quotaWarningProgress
+        case quotaCriticalProgress
+        case lowBalanceDays
+        case monthlyBudgetUSD
+        case tokenSurgeRatio
+        case spendSurgeRatio
+        case modelConcentrationShare
+        case latencyWarningMs
+    }
+
     public init(
         quotaWarningProgress: Double,
         quotaCriticalProgress: Double,
         lowBalanceDays: Double,
+        monthlyBudgetUSD: Double = 0,
         tokenSurgeRatio: Double,
         spendSurgeRatio: Double? = nil,
         modelConcentrationShare: Double,
@@ -74,6 +87,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         self.quotaWarningProgress = quotaWarningProgress
         self.quotaCriticalProgress = quotaCriticalProgress
         self.lowBalanceDays = lowBalanceDays
+        self.monthlyBudgetUSD = monthlyBudgetUSD
         self.tokenSurgeRatio = tokenSurgeRatio
         self.spendSurgeRatio = spendSurgeRatio ?? tokenSurgeRatio
         self.modelConcentrationShare = modelConcentrationShare
@@ -85,11 +99,25 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         quotaWarningProgress: 0.8,
         quotaCriticalProgress: 0.95,
         lowBalanceDays: 3,
+        monthlyBudgetUSD: 0,
         tokenSurgeRatio: 1.35,
         spendSurgeRatio: 1.5,
         modelConcentrationShare: 0.8,
         latencyWarningMs: 30_000
     )
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        quotaWarningProgress = try container.decodeIfPresent(Double.self, forKey: .quotaWarningProgress) ?? Self.defaults.quotaWarningProgress
+        quotaCriticalProgress = try container.decodeIfPresent(Double.self, forKey: .quotaCriticalProgress) ?? Self.defaults.quotaCriticalProgress
+        lowBalanceDays = try container.decodeIfPresent(Double.self, forKey: .lowBalanceDays) ?? Self.defaults.lowBalanceDays
+        monthlyBudgetUSD = try container.decodeIfPresent(Double.self, forKey: .monthlyBudgetUSD) ?? Self.defaults.monthlyBudgetUSD
+        tokenSurgeRatio = try container.decodeIfPresent(Double.self, forKey: .tokenSurgeRatio) ?? Self.defaults.tokenSurgeRatio
+        spendSurgeRatio = try container.decodeIfPresent(Double.self, forKey: .spendSurgeRatio) ?? tokenSurgeRatio
+        modelConcentrationShare = try container.decodeIfPresent(Double.self, forKey: .modelConcentrationShare) ?? Self.defaults.modelConcentrationShare
+        latencyWarningMs = try container.decodeIfPresent(Double.self, forKey: .latencyWarningMs) ?? Self.defaults.latencyWarningMs
+        normalize()
+    }
 
     public mutating func normalize() {
         quotaWarningProgress = Self.clamped(quotaWarningProgress, min: 0.1, max: 0.98)
@@ -100,6 +128,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         }
 
         lowBalanceDays = Self.clamped(lowBalanceDays, min: 1, max: 60)
+        monthlyBudgetUSD = Self.clamped(monthlyBudgetUSD, min: 0, max: 1_000_000)
         tokenSurgeRatio = Self.clamped(tokenSurgeRatio, min: 1.1, max: 5)
         spendSurgeRatio = Self.clamped(spendSurgeRatio, min: 1.1, max: 5)
         if !(0.2...0.95).contains(modelConcentrationShare) {

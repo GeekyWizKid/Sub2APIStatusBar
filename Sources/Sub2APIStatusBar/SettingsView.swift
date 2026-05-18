@@ -185,6 +185,18 @@ struct InsightSettingsSection: View {
                     valueText: "\(Int(model.settingsDraft.insightThresholds.lowBalanceDays))d"
                 )
 
+                SettingsControlRow(title: "Monthly budget") {
+                    TextField(
+                        "0",
+                        value: $model.settingsDraft.insightThresholds.monthlyBudgetUSD,
+                        format: .number.precision(.fractionLength(0...2))
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    Text("USD")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+
                 ThresholdSliderRow(
                     title: "Token surge",
                     value: $model.settingsDraft.insightThresholds.tokenSurgeRatio,
