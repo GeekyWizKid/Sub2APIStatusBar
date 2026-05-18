@@ -1130,6 +1130,14 @@ public struct MonitorSnapshot: Equatable, Sendable {
                 return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
             case .spend:
                 return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req"
+            case .balance:
+                if let balance = currentUser?.balance {
+                    if stats.todayActualCost > 0 {
+                        return "\(prefix)\(StatusFormatters.currency(balance)) · \(String(format: "%.1fd", balance / stats.todayActualCost))"
+                    }
+                    return "\(prefix)\(StatusFormatters.currency(balance)) · no spend"
+                }
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · no balance"
             case .quota:
                 if let subscriptionSummary {
                     return "\(prefix)\(StatusFormatters.percent(subscriptionSummary.highestProgress)) quota · \(subscriptionSummary.activeCount) subs"

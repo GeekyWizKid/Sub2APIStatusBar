@@ -56,6 +56,7 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
 public enum MenuBarMetric: String, Codable, CaseIterable, Identifiable, Sendable {
     case automatic
     case spend
+    case balance
     case quota
     case tokens
     case requests
@@ -68,6 +69,8 @@ public enum MenuBarMetric: String, Codable, CaseIterable, Identifiable, Sendable
             "Auto"
         case .spend:
             "Spend"
+        case .balance:
+            "Balance"
         case .quota:
             "Quota"
         case .tokens:

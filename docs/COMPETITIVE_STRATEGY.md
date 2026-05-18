@@ -87,7 +87,7 @@ What to avoid:
 
 - User-account focus.
 - Local JSON config storage by design.
-- Menu bar text as optional, compact status.
+- Menu bar text as optional, compact status with spend, balance, quota, tokens, and request modes.
 - Usage trend across Tokens, Spend, and Requests.
 - Quota cards with remaining amount and reset time.
 - Local alerts with quiet periods.

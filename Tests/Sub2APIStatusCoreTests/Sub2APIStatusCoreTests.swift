@@ -798,6 +798,14 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     let snapshot = MonitorSnapshot(
         mode: .user,
         connected: true,
+        currentUser: CurrentUser(
+            id: 1,
+            email: "das@example.com",
+            username: "Das",
+            role: "user",
+            balance: 300,
+            status: "active"
+        ),
         stats: DashboardStats(todayRequests: 1119, todayActualCost: 113.3052, rpm: 3),
         realtime: nil,
         accountHealth: nil,
@@ -821,6 +829,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
 
     #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
     #expect(snapshot.menuBarSummary(metric: .spend, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "$113.31 · 1119 req")
+    #expect(snapshot.menuBarSummary(metric: .balance, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "$300.00 · 2.6d")
     #expect(snapshot.menuBarSummary(metric: .requests, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "1119 req · 3 RPM")
     #expect(snapshot.menuBarSummary(metric: .tokens, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "0 tok · 0 TPM")
     #expect(MonitorSnapshot(

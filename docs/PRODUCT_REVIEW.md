@@ -464,3 +464,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The first launch now gives users a visible path to success before any network request happens.
+
+### 2026-05-19 Cycle AC
+
+1. 审视
+   - Competitive strategy called out balance/runway as a first-class personal monitoring signal, but the menu bar metric picker did not include it.
+   - For a user-owned account, "how many days can I keep spending like today?" is often more actionable than raw spend alone.
+
+2. 执行
+   - Added Balance as a menu bar metric option.
+   - Added a compact balance summary that shows available balance and estimated runway from today's spend.
+   - Updated README and competitive strategy docs so the documented product surface matches the implemented choices.
+
+3. 提升
+   - The menu bar can now act as a runway monitor, not only a spend or quota monitor.
