@@ -458,6 +458,18 @@ public struct DashboardModelsResponse: Decodable, Equatable, Sendable {
     }
 }
 
+public enum TokenTrendDisplayState: Equatable, Sendable {
+    case chart([TrendDataPoint])
+    case unavailable(String)
+
+    public static func make(points: [TrendDataPoint]?) -> TokenTrendDisplayState {
+        guard let points, points.count > 1 else {
+            return .unavailable("Trend data is not available yet.")
+        }
+        return .chart(points)
+    }
+}
+
 public struct DashboardSnapshot: Decodable, Equatable, Sendable {
     public let generatedAt: String?
     public let stats: DashboardStats?

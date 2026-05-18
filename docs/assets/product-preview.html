@@ -232,7 +232,7 @@
       display: flex;
       gap: 10px;
       padding: 10px;
-      min-height: 78px;
+      min-height: 66px;
     }
 
     .glyph {
@@ -293,8 +293,8 @@
     }
 
     .section {
-      padding: 12px;
-      margin-bottom: 14px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
     }
 
     .quota-head,
@@ -378,6 +378,49 @@
       font-size: 13px;
       font-weight: 700;
     }
+
+    .trend {
+      height: 118px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 6px;
+    }
+
+    .trend svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .trend-legend {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .trend-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
   </style>
 </head>
 <body>
@@ -437,14 +480,6 @@
             <div class="glyph violet">$</div>
             <div><div class="label">Today Cost</div><div class="value">$117.57</div><div class="caption">Total $921.45</div></div>
           </div>
-          <div class="card">
-            <div class="glyph violet">⚡</div>
-            <div><div class="label">Performance</div><div class="value">3 RPM</div><div class="caption">10.8K TPM</div></div>
-          </div>
-          <div class="card">
-            <div class="glyph pink">◷</div>
-            <div><div class="label">Avg Response</div><div class="value">14.51s</div><div class="caption">Average time</div></div>
-          </div>
         </div>
 
         <h2 class="section-title">Subscriptions</h2>
@@ -458,6 +493,21 @@
           <div class="quota-row"><span>Daily</span><div class="bar"><div class="fill orange" style="width:74%"></div></div><span class="amount">$92.35 / $125</span></div>
           <div class="quota-row"><span>Weekly</span><div class="bar"><div class="fill" style="width:77%"></div></div><span class="amount">$386.42 / $500</span></div>
           <div class="quota-row"><span>Monthly</span><div class="bar"><div class="fill" style="width:31%"></div></div><span class="amount">$612.34 / $2K</span></div>
+        </div>
+
+        <h2 class="section-title">Token Trend</h2>
+        <div class="trend">
+          <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
+            <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
+            <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 52 L93 60 L170 80 L246 83 L322 60 L399 20 L472 82" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 70 L93 48 L170 78 L246 83 L322 61 L399 20 L472 80" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <div class="trend-legend">
+            <span><i class="legend-dot"></i>Input</span>
+            <span><i class="legend-dot" style="background: var(--green)"></i>Output</span>
+            <span><i class="legend-dot" style="background: #06b6d4"></i>Cache Read</span>
+          </div>
         </div>
       </div>
 

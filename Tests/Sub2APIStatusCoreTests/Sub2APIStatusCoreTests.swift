@@ -372,6 +372,36 @@ import Testing
     #expect(models.models.first?.standardCost == 222.61852)
 }
 
+@Test func tokenTrendDisplayShowsChartOnlyWhenEnoughPointsExist() {
+    let first = TrendDataPoint(
+        date: "2026-05-17",
+        requests: 10,
+        inputTokens: 100,
+        outputTokens: 20,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 40,
+        totalTokens: 160,
+        cost: 0.1,
+        actualCost: 0.1
+    )
+    let second = TrendDataPoint(
+        date: "2026-05-18",
+        requests: 20,
+        inputTokens: 200,
+        outputTokens: 30,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 80,
+        totalTokens: 310,
+        cost: 0.2,
+        actualCost: 0.2
+    )
+
+    #expect(TokenTrendDisplayState.make(points: nil) == .unavailable("Trend data is not available yet."))
+    #expect(TokenTrendDisplayState.make(points: []) == .unavailable("Trend data is not available yet."))
+    #expect(TokenTrendDisplayState.make(points: [first]) == .unavailable("Trend data is not available yet."))
+    #expect(TokenTrendDisplayState.make(points: [first, second]) == .chart([first, second]))
+}
+
 @Test func accountHealthSummaryCountsRuntimeStates() {
     let accounts = [
         AccountSummary(id: 1, name: "ok", platform: "openai", type: "oauth", status: "active", schedulable: true, quotaLimit: 100, quotaUsed: 30, quotaDailyLimit: nil, quotaDailyUsed: nil, quotaWeeklyLimit: nil, quotaWeeklyUsed: nil, errorMessage: "", rateLimitResetAt: nil),

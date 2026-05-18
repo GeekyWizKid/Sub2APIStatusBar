@@ -579,11 +579,8 @@ struct MonitorPanel: View {
                 ModelDistributionView(models: models)
             }
 
-            if let trend = model.snapshot.trend, trend.count > 1 {
-                SectionBlock(title: "Token Trend") {
-                    TokenTrendView(points: trend)
-                        .frame(height: 150)
-                }
+            SectionBlock(title: "Token Trend") {
+                TokenTrendSection(state: TokenTrendDisplayState.make(points: model.snapshot.trend))
             }
         }
     }
@@ -1373,6 +1370,29 @@ struct ModelDistributionView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+struct TokenTrendSection: View {
+    let state: TokenTrendDisplayState
+
+    var body: some View {
+        switch state {
+        case let .chart(points):
+            TokenTrendView(points: points)
+                .frame(height: 150)
+        case let .unavailable(message):
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundStyle(.secondary)
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, minHeight: 58, alignment: .topLeading)
         }
     }
 }
