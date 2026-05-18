@@ -5,6 +5,8 @@ import Testing
 final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     var tokens = StoredAuthTokens()
     var saves: [StoredAuthTokens] = []
+    var accountTokens: [String: StoredAuthTokens] = [:]
+    var accountSaves: [String: [StoredAuthTokens]] = [:]
 
     func loadTokens() -> StoredAuthTokens {
         tokens
@@ -13,6 +15,19 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     func saveTokens(_ tokens: StoredAuthTokens) throws {
         self.tokens = tokens
         saves.append(tokens)
+    }
+
+    func loadTokens(for accountID: String) -> StoredAuthTokens {
+        accountTokens[accountID] ?? StoredAuthTokens()
+    }
+
+    func saveTokens(_ tokens: StoredAuthTokens, for accountID: String) throws {
+        accountTokens[accountID] = tokens
+        accountSaves[accountID, default: []].append(tokens)
+    }
+
+    func deleteTokens(for accountID: String) throws {
+        accountTokens[accountID] = StoredAuthTokens()
     }
 }
 
@@ -62,8 +77,10 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     #expect(!rawJSON.contains("refresh-token"))
     #expect(!rawJSON.contains("authToken"))
     #expect(!rawJSON.contains("refreshToken"))
-    #expect(tokenStore.tokens.authToken == "access-token")
-    #expect(tokenStore.tokens.refreshToken == "refresh-token")
+    let accountID = try #require(tokenStore.accountTokens.first?.key)
+    #expect(tokenStore.accountTokens[accountID]?.authToken == "access-token")
+    #expect(tokenStore.accountTokens[accountID]?.refreshToken == "refresh-token")
+    #expect(tokenStore.tokens.isEmpty)
     #expect(store.load().authToken == "access-token")
 }
 
@@ -90,14 +107,55 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
 
     #expect(loaded.authToken == "legacy-access")
     #expect(loaded.refreshToken == "legacy-refresh")
-    #expect(tokenStore.tokens.authToken == "legacy-access")
-    #expect(tokenStore.tokens.refreshToken == "legacy-refresh")
+    let accountID = try #require(loaded.selectedAccountID)
+    #expect(tokenStore.accountTokens[accountID]?.authToken == "legacy-access")
+    #expect(tokenStore.accountTokens[accountID]?.refreshToken == "legacy-refresh")
+    #expect(tokenStore.tokens.isEmpty)
 
     let migratedJSON = try String(contentsOf: configURL, encoding: .utf8)
     #expect(!migratedJSON.contains("legacy-access"))
     #expect(!migratedJSON.contains("legacy-refresh"))
     #expect(!migratedJSON.contains("authToken"))
     #expect(!migratedJSON.contains("refreshToken"))
+    #expect(loaded.accounts.count == 1)
+    #expect(loaded.accounts.first?.baseURL == "http://127.0.0.1:8080")
+}
+
+@Test func configStoreSwitchesBetweenAccountTokens() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let first = StoredAccount(id: "first", name: "First", email: "first@example.com", baseURL: "http://one.example.com")
+    let second = StoredAccount(id: "second", name: "Second", email: "second@example.com", baseURL: "http://two.example.com/api/v1")
+    let tokenStore = MemoryTokenStore()
+    tokenStore.accountTokens = [
+        first.id: StoredAuthTokens(authToken: "first-access", refreshToken: "first-refresh"),
+        second.id: StoredAuthTokens(authToken: "second-access", refreshToken: "second-refresh"),
+    ]
+    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+    try store.save(AppConfig(
+        baseURL: first.baseURL,
+        authToken: "first-access",
+        refreshToken: "first-refresh",
+        refreshIntervalSeconds: 30,
+        accounts: [first, second],
+        selectedAccountID: first.id
+    ))
+
+    var loaded = store.load()
+    #expect(loaded.selectedAccountID == first.id)
+    #expect(loaded.baseURL == "http://one.example.com")
+    #expect(loaded.authToken == "first-access")
+
+    loaded.selectAccount(id: second.id, tokens: tokenStore.loadTokens(for: second.id))
+    try store.save(loaded)
+    let switched = store.load()
+
+    #expect(switched.selectedAccountID == second.id)
+    #expect(switched.baseURL == "http://two.example.com")
+    #expect(switched.authToken == "second-access")
+    #expect(switched.refreshToken == "second-refresh")
+    #expect(switched.accounts.count == 2)
 }
 
 @Test func appConfigDefaultsToUserMode() {

@@ -101,6 +101,7 @@ final class MonitorViewModel: ObservableObject {
         let loaded = store.load()
         config = loaded
         settingsDraft = loaded
+        loginEmail = loaded.selectedAccount?.email ?? ""
         snapshot = .idle(mode: loaded.monitorMode)
     }
 
@@ -188,8 +189,9 @@ final class MonitorViewModel: ObservableObject {
             next.authToken = response.accessToken
             next.refreshToken = response.refreshToken ?? config.refreshToken
             try store.save(next)
-            config = next
-            settingsDraft = next
+            let loaded = store.load()
+            config = loaded
+            settingsDraft = loaded
             return true
         } catch {
             return false
@@ -215,8 +217,9 @@ final class MonitorViewModel: ObservableObject {
         next.normalize()
         do {
             try store.save(next)
-            config = next
-            settingsDraft = next
+            let loaded = store.load()
+            config = loaded
+            settingsDraft = loaded
             scheduleTimer()
             onSnapshotChange?(snapshot)
             refresh()
@@ -228,14 +231,53 @@ final class MonitorViewModel: ObservableObject {
     func disconnect() {
         settingsError = nil
         var next = config
-        next.clearAuthTokens()
+        let accountID = next.selectedAccountID
+        next.accounts.removeAll { $0.id == accountID }
+        next.selectedAccountID = next.accounts.first?.id
+        if let selectedAccountID = next.selectedAccountID {
+            let tokens = store.loadTokens(for: selectedAccountID)
+            next.selectAccount(id: selectedAccountID, tokens: tokens)
+        } else {
+            next.clearAuthTokens()
+        }
+        do {
+            if let accountID {
+                try store.deleteTokens(for: accountID)
+            }
+            try store.save(next)
+            let loaded = store.load()
+            config = loaded
+            settingsDraft = loaded
+            loginEmail = loaded.selectedAccount?.email ?? ""
+            loginPassword = ""
+            if loaded.authToken.isEmpty {
+                publish(.idle(mode: loaded.monitorMode))
+            } else {
+                refresh()
+            }
+        } catch {
+            settingsError = error.localizedDescription
+        }
+    }
+
+    func selectAccount(_ account: StoredAccount) {
+        settingsError = nil
+        var next = config
+        let tokens = store.loadTokens(for: account.id)
+        next.selectAccount(id: account.id, tokens: tokens)
         do {
             try store.save(next)
-            config = next
-            settingsDraft = next
-            loginEmail = ""
+            let loaded = store.load()
+            config = loaded
+            settingsDraft = loaded
+            loginEmail = loaded.selectedAccount?.email ?? ""
             loginPassword = ""
-            publish(.idle(mode: next.monitorMode))
+            onSnapshotChange?(snapshot)
+            if loaded.authToken.isEmpty {
+                publish(.idle(mode: loaded.monitorMode))
+            } else {
+                refresh()
+            }
         } catch {
             settingsError = error.localizedDescription
         }
@@ -251,8 +293,14 @@ final class MonitorViewModel: ObservableObject {
             defer { isLoggingIn = false }
             do {
                 let response = try await client.login(email: loginEmail, password: loginPassword)
-                settingsDraft.authToken = response.accessToken
-                settingsDraft.refreshToken = response.refreshToken ?? ""
+                let tokens = StoredAuthTokens(authToken: response.accessToken, refreshToken: response.refreshToken ?? "")
+                let displayName = response.user?.username ?? loginEmail
+                settingsDraft.upsertAccount(
+                    name: displayName,
+                    email: response.user?.email ?? loginEmail,
+                    baseURL: draft.baseURL,
+                    tokens: tokens
+                )
                 loginPassword = ""
                 saveSettings()
             } catch {
@@ -396,7 +444,7 @@ struct MonitorPanel: View {
                 .foregroundStyle(iconColor)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Sub2API")
+                Text(activeAccountTitle)
                     .font(.headline)
                 Text(model.snapshot.connected ? lastUpdatedText : "Disconnected")
                     .font(.caption)
@@ -404,6 +452,10 @@ struct MonitorPanel: View {
             }
 
             Spacer()
+
+            if !model.config.accounts.isEmpty {
+                AccountSwitcher(model: model)
+            }
 
             Button {
                 model.refresh()
@@ -548,6 +600,10 @@ struct MonitorPanel: View {
         return "Updated \(date.formatted(date: .omitted, time: .shortened))"
     }
 
+    private var activeAccountTitle: String {
+        model.config.selectedAccount?.displayName ?? "Sub2API"
+    }
+
     private var balanceText: String {
         guard let balance = model.snapshot.currentUser?.balance else {
             return "--"
@@ -566,6 +622,26 @@ struct MonitorPanel: View {
         return "\(Int(milliseconds))ms"
     }
 
+}
+
+struct AccountSwitcher: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        Menu {
+            ForEach(model.config.accounts) { account in
+                Button {
+                    model.selectAccount(account)
+                } label: {
+                    Label(account.displayName, systemImage: account.id == model.config.selectedAccountID ? "checkmark.circle.fill" : "person.crop.circle")
+                }
+            }
+        } label: {
+            Image(systemName: "person.2")
+        }
+        .menuStyle(.borderlessButton)
+        .help("Switch account")
+    }
 }
 
 struct LoginPanel: View {
@@ -593,6 +669,10 @@ struct LoginPanel: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            if !model.config.accounts.isEmpty {
+                AccountListSection(model: model)
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -646,6 +726,12 @@ struct LoginPanel: View {
                 SecureField("Bearer Token", text: $model.settingsDraft.authToken)
                     .textFieldStyle(.roundedBorder)
                 Button {
+                    model.settingsDraft.upsertAccount(
+                        name: model.loginEmail,
+                        email: model.loginEmail,
+                        baseURL: model.settingsDraft.baseURL,
+                        tokens: StoredAuthTokens(authToken: model.settingsDraft.authToken, refreshToken: model.settingsDraft.refreshToken)
+                    )
                     model.saveSettings()
                 } label: {
                     Label("Save Token", systemImage: "square.and.arrow.down")
@@ -677,6 +763,45 @@ struct LoginPanel: View {
     }
 }
 
+struct AccountListSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Accounts")
+                .font(.headline)
+
+            ForEach(model.config.accounts) { account in
+                Button {
+                    model.selectAccount(account)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: account.id == model.config.selectedAccountID ? "checkmark.circle.fill" : "person.crop.circle")
+                            .foregroundStyle(account.id == model.config.selectedAccountID ? Color.accentColor : .secondary)
+                            .frame(width: 20)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(account.displayName)
+                                .font(.callout.weight(.medium))
+                                .lineLimit(1)
+                            Text(account.detailText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var model: MonitorViewModel
     @Environment(\.dismiss) private var dismiss
@@ -685,6 +810,26 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Settings")
                 .font(.title2.bold())
+
+            if !model.config.accounts.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Accounts")
+                        .font(.headline)
+                    Picker("Active Account", selection: Binding(
+                        get: { model.config.selectedAccountID ?? "" },
+                        set: { id in
+                            if let account = model.config.accounts.first(where: { $0.id == id }) {
+                                model.selectAccount(account)
+                                model.settingsDraft = model.config
+                            }
+                        }
+                    )) {
+                        ForEach(model.config.accounts) { account in
+                            Text(account.displayName).tag(account.id)
+                        }
+                    }
+                }
+            }
 
             Form {
                 TextField("Base URL", text: $model.settingsDraft.baseURL)
@@ -711,7 +856,7 @@ struct SettingsView: View {
                 Button {
                     model.loginAndSave()
                 } label: {
-                    Label("Login and Save Token", systemImage: "key")
+                    Label("Login and Save Account", systemImage: "person.crop.circle.badge.plus")
                 }
                 .disabled(!LoginFormState(baseURL: model.settingsDraft.baseURL, email: model.loginEmail, password: model.loginPassword).canSubmit || model.isLoggingIn)
 
@@ -719,9 +864,9 @@ struct SettingsView: View {
                     model.disconnect()
                     dismiss()
                 } label: {
-                    Label("Disconnect", systemImage: "person.crop.circle.badge.xmark")
+                    Label("Remove Current Account", systemImage: "person.crop.circle.badge.xmark")
                 }
-                .disabled(model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
+                .disabled(model.config.selectedAccountID == nil && model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
             }
 
             if let error = model.settingsError {

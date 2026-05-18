@@ -31,6 +31,22 @@ public final class KeychainTokenStore: TokenStore, Sendable {
         try save(tokens.refreshToken, account: "refreshToken")
     }
 
+    public func loadTokens(for accountID: String) -> StoredAuthTokens {
+        StoredAuthTokens(
+            authToken: read(account: accountKey("authToken", for: accountID)) ?? "",
+            refreshToken: read(account: accountKey("refreshToken", for: accountID)) ?? ""
+        )
+    }
+
+    public func saveTokens(_ tokens: StoredAuthTokens, for accountID: String) throws {
+        try save(tokens.authToken, account: accountKey("authToken", for: accountID))
+        try save(tokens.refreshToken, account: accountKey("refreshToken", for: accountID))
+    }
+
+    public func deleteTokens(for accountID: String) throws {
+        try saveTokens(StoredAuthTokens(), for: accountID)
+    }
+
     private func read(account: String) -> String? {
         var query = baseQuery(account: account)
         query[kSecReturnData as String] = true
@@ -84,5 +100,9 @@ public final class KeychainTokenStore: TokenStore, Sendable {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+    }
+
+    private func accountKey(_ tokenName: String, for accountID: String) -> String {
+        "account.\(accountID).\(tokenName)"
     }
 }

@@ -53,6 +53,54 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
+    public var id: String
+    public var name: String
+    public var email: String
+    public var baseURL: String
+
+    public init(
+        id: String = UUID().uuidString,
+        name: String = "",
+        email: String = "",
+        baseURL: String
+    ) {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.baseURL = baseURL
+        normalize()
+    }
+
+    public mutating func normalize() {
+        id = id.trimmingCharacters(in: .whitespacesAndNewlines)
+        if id.isEmpty {
+            id = UUID().uuidString
+        }
+
+        name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        baseURL = AppConfig.normalizedBaseURL(baseURL)
+    }
+
+    public var displayName: String {
+        if !name.isEmpty {
+            return name
+        }
+        if !email.isEmpty {
+            return email
+        }
+        return baseURL
+    }
+
+    public var detailText: String {
+        if !email.isEmpty, email != displayName {
+            return email
+        }
+        return baseURL
+    }
+}
+
 public struct AppConfig: Codable, Equatable, Sendable {
     public var baseURL: String
     public var authToken: String
@@ -61,6 +109,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var language: AppLanguage
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
+    public var accounts: [StoredAccount]
+    public var selectedAccountID: String?
 
     public init(
         baseURL: String,
@@ -69,7 +119,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         refreshIntervalSeconds: Double = 15,
         language: AppLanguage = .auto,
         monitorMode: MonitorMode = .user,
-        showsMenuBarText: Bool = false
+        showsMenuBarText: Bool = false,
+        accounts: [StoredAccount] = [],
+        selectedAccountID: String? = nil
     ) {
         self.baseURL = baseURL
         self.authToken = authToken
@@ -78,6 +130,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.language = language
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
+        self.accounts = accounts
+        self.selectedAccountID = selectedAccountID
         normalize()
     }
 
@@ -89,6 +143,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case language
         case monitorMode
         case showsMenuBarText
+        case accounts
+        case selectedAccountID
     }
 
     public init(from decoder: Decoder) throws {
@@ -100,6 +156,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .auto
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
+        accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
+        selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
     }
 
@@ -110,6 +168,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
+        try container.encode(accounts, forKey: .accounts)
+        try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
 
     public static func defaults() -> AppConfig {
@@ -126,23 +186,128 @@ public struct AppConfig: Codable, Equatable, Sendable {
     }
 
     public mutating func normalize() {
-        baseURL = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        while baseURL.hasSuffix("/") {
-            baseURL.removeLast()
-        }
-        if baseURL.hasSuffix("/api/v1") {
-            baseURL.removeLast("/api/v1".count)
-        }
-
+        baseURL = Self.normalizedBaseURL(baseURL)
         authToken = authToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshIntervalSeconds = min(max(refreshIntervalSeconds, 5), 300)
         monitorMode = .user
+
+        accounts = accounts.map { account in
+            var normalized = account
+            normalized.normalize()
+            return normalized
+        }
+
+        var seenAccountIDs = Set<String>()
+        accounts = accounts.filter { account in
+            guard !seenAccountIDs.contains(account.id) else {
+                return false
+            }
+            seenAccountIDs.insert(account.id)
+            return true
+        }
+
+        selectedAccountID = selectedAccountID?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let selectedAccountID, accounts.contains(where: { $0.id == selectedAccountID }) {
+            self.selectedAccountID = selectedAccountID
+        } else {
+            selectedAccountID = accounts.first?.id
+        }
     }
 
     public mutating func clearAuthTokens() {
         authToken = ""
         refreshToken = ""
+    }
+
+    public var selectedAccount: StoredAccount? {
+        guard let selectedAccountID else {
+            return nil
+        }
+        return accounts.first { $0.id == selectedAccountID }
+    }
+
+    public mutating func applySelectedAccountBaseURL() {
+        guard let selectedAccount else {
+            return
+        }
+        baseURL = selectedAccount.baseURL
+    }
+
+    public mutating func syncSelectedAccountFromRuntime() {
+        normalize()
+        guard let selectedAccountID,
+              let index = accounts.firstIndex(where: { $0.id == selectedAccountID }) else {
+            return
+        }
+        accounts[index].baseURL = baseURL
+        accounts[index].normalize()
+    }
+
+    @discardableResult
+    public mutating func upsertAccount(
+        name: String = "",
+        email: String = "",
+        baseURL: String? = nil,
+        tokens: StoredAuthTokens? = nil
+    ) -> String {
+        let accountBaseURL = Self.normalizedBaseURL(baseURL ?? self.baseURL)
+        let accountEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let accountName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let matchingIndex = accounts.firstIndex { account in
+            if !accountEmail.isEmpty {
+                return account.email.caseInsensitiveCompare(accountEmail) == .orderedSame
+                    && account.baseURL == accountBaseURL
+            }
+            return account.id == selectedAccountID || (account.email.isEmpty && account.baseURL == accountBaseURL)
+        }
+
+        let index: Int
+        if let matchingIndex {
+            index = matchingIndex
+            accounts[index].name = accountName.isEmpty ? accounts[index].name : accountName
+            accounts[index].email = accountEmail
+            accounts[index].baseURL = accountBaseURL
+            accounts[index].normalize()
+        } else {
+            var account = StoredAccount(
+                name: accountName.isEmpty ? accountEmail : accountName,
+                email: accountEmail,
+                baseURL: accountBaseURL
+            )
+            account.normalize()
+            accounts.append(account)
+            index = accounts.index(before: accounts.endIndex)
+        }
+
+        selectedAccountID = accounts[index].id
+        self.baseURL = accounts[index].baseURL
+        if let tokens {
+            authToken = tokens.authToken
+            refreshToken = tokens.refreshToken
+        }
+        normalize()
+        return accounts[index].id
+    }
+
+    public mutating func selectAccount(id: String, tokens: StoredAuthTokens) {
+        selectedAccountID = id
+        applySelectedAccountBaseURL()
+        authToken = tokens.authToken
+        refreshToken = tokens.refreshToken
+        normalize()
+        applySelectedAccountBaseURL()
+    }
+
+    public static func normalizedBaseURL(_ value: String) -> String {
+        var normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        while normalized.hasSuffix("/") {
+            normalized.removeLast()
+        }
+        if normalized.hasSuffix("/api/v1") {
+            normalized.removeLast("/api/v1".count)
+        }
+        return normalized
     }
 
     public var apiBaseURL: URL? {
@@ -169,6 +334,23 @@ public struct StoredAuthTokens: Equatable, Sendable {
 public protocol TokenStore: Sendable {
     func loadTokens() -> StoredAuthTokens
     func saveTokens(_ tokens: StoredAuthTokens) throws
+    func loadTokens(for accountID: String) -> StoredAuthTokens
+    func saveTokens(_ tokens: StoredAuthTokens, for accountID: String) throws
+    func deleteTokens(for accountID: String) throws
+}
+
+public extension TokenStore {
+    func loadTokens(for _: String) -> StoredAuthTokens {
+        loadTokens()
+    }
+
+    func saveTokens(_ tokens: StoredAuthTokens, for _: String) throws {
+        try saveTokens(tokens)
+    }
+
+    func deleteTokens(for accountID: String) throws {
+        try saveTokens(StoredAuthTokens(), for: accountID)
+    }
 }
 
 public final class ConfigStore: Sendable {
@@ -190,53 +372,89 @@ public final class ConfigStore: Sendable {
     }
 
     public func load() -> AppConfig {
-        let storedTokens = tokenStore.loadTokens()
+        let legacyKeychainTokens = tokenStore.loadTokens()
         guard let data = try? Data(contentsOf: configURL),
               var decoded = try? JSONDecoder.sub2api.decode(AppConfig.self, from: data) else {
             var defaults = AppConfig.defaults()
-            if !storedTokens.authToken.isEmpty {
-                defaults.authToken = storedTokens.authToken
-            }
-            if !storedTokens.refreshToken.isEmpty {
-                defaults.refreshToken = storedTokens.refreshToken
+            let envTokens = StoredAuthTokens(authToken: defaults.authToken, refreshToken: defaults.refreshToken)
+            if !legacyKeychainTokens.isEmpty {
+                let accountID = defaults.upsertAccount(name: "Default Account", baseURL: defaults.baseURL, tokens: legacyKeychainTokens)
+                do {
+                    try tokenStore.saveTokens(legacyKeychainTokens, for: accountID)
+                    try tokenStore.saveTokens(StoredAuthTokens())
+                    try writeConfig(defaults)
+                } catch {
+                    defaults.authToken = legacyKeychainTokens.authToken
+                    defaults.refreshToken = legacyKeychainTokens.refreshToken
+                }
+            } else if !envTokens.isEmpty {
+                defaults.upsertAccount(name: "Environment Account", baseURL: defaults.baseURL, tokens: envTokens)
             }
             defaults.normalize()
             return defaults
         }
 
         let legacyTokens = StoredAuthTokens(authToken: decoded.authToken, refreshToken: decoded.refreshToken)
-        var runtimeTokens = storedTokens
-        if runtimeTokens.authToken.isEmpty {
-            runtimeTokens.authToken = legacyTokens.authToken
-        }
-        if runtimeTokens.refreshToken.isEmpty {
-            runtimeTokens.refreshToken = legacyTokens.refreshToken
-        }
+        decoded.normalize()
+        let migrationTokens = Self.mergedTokens(primary: legacyKeychainTokens, fallback: legacyTokens)
 
-        if !legacyTokens.isEmpty {
+        if decoded.accounts.isEmpty, !migrationTokens.isEmpty {
+            let accountID = decoded.upsertAccount(name: "Default Account", baseURL: decoded.baseURL, tokens: migrationTokens)
             do {
-                try tokenStore.saveTokens(runtimeTokens)
-                decoded.authToken = runtimeTokens.authToken
-                decoded.refreshToken = runtimeTokens.refreshToken
+                try tokenStore.saveTokens(migrationTokens, for: accountID)
+                try tokenStore.saveTokens(StoredAuthTokens())
                 try writeConfig(decoded)
             } catch {
-                decoded.authToken = legacyTokens.authToken
-                decoded.refreshToken = legacyTokens.refreshToken
+                decoded.authToken = migrationTokens.authToken
+                decoded.refreshToken = migrationTokens.refreshToken
             }
-        } else if !runtimeTokens.isEmpty {
-            decoded.authToken = runtimeTokens.authToken
-            decoded.refreshToken = runtimeTokens.refreshToken
+            decoded.normalize()
+            return decoded
         }
 
-        decoded.normalize()
+        if let selectedAccountID = decoded.selectedAccountID {
+            let accountTokens = tokenStore.loadTokens(for: selectedAccountID)
+            let runtimeTokens = Self.mergedTokens(primary: accountTokens, fallback: migrationTokens)
+            decoded.selectAccount(id: selectedAccountID, tokens: runtimeTokens)
+
+            if accountTokens.isEmpty, !runtimeTokens.isEmpty {
+                try? tokenStore.saveTokens(runtimeTokens, for: selectedAccountID)
+                try? tokenStore.saveTokens(StoredAuthTokens())
+            }
+
+            if !legacyTokens.isEmpty {
+                try? writeConfig(decoded)
+            }
+        } else {
+            decoded.clearAuthTokens()
+        }
+
         return decoded
     }
 
     public func save(_ config: AppConfig) throws {
         var normalized = config
         normalized.normalize()
-        try tokenStore.saveTokens(StoredAuthTokens(authToken: normalized.authToken, refreshToken: normalized.refreshToken))
+        let tokens = StoredAuthTokens(authToken: normalized.authToken, refreshToken: normalized.refreshToken)
+        if normalized.selectedAccountID == nil, !tokens.isEmpty {
+            normalized.upsertAccount(name: "Default Account", baseURL: normalized.baseURL, tokens: tokens)
+        } else {
+            normalized.syncSelectedAccountFromRuntime()
+        }
+
+        if let accountID = normalized.selectedAccountID {
+            try tokenStore.saveTokens(tokens, for: accountID)
+        }
+        try tokenStore.saveTokens(StoredAuthTokens())
         try writeConfig(normalized)
+    }
+
+    public func loadTokens(for accountID: String) -> StoredAuthTokens {
+        tokenStore.loadTokens(for: accountID)
+    }
+
+    public func deleteTokens(for accountID: String) throws {
+        try tokenStore.deleteTokens(for: accountID)
     }
 
     private func writeConfig(_ config: AppConfig) throws {
@@ -246,5 +464,12 @@ public final class ConfigStore: Sendable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         try encoder.encode(normalized).write(to: configURL, options: .atomic)
+    }
+
+    private static func mergedTokens(primary: StoredAuthTokens, fallback: StoredAuthTokens) -> StoredAuthTokens {
+        StoredAuthTokens(
+            authToken: primary.authToken.isEmpty ? fallback.authToken : primary.authToken,
+            refreshToken: primary.refreshToken.isEmpty ? fallback.refreshToken : primary.refreshToken
+        )
     }
 }
