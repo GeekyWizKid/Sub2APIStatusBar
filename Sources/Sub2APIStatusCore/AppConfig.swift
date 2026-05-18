@@ -53,6 +53,31 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public enum MenuBarMetric: String, Codable, CaseIterable, Identifiable, Sendable {
+    case automatic
+    case spend
+    case quota
+    case tokens
+    case requests
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .automatic:
+            "Auto"
+        case .spend:
+            "Spend"
+        case .quota:
+            "Quota"
+        case .tokens:
+            "Tokens"
+        case .requests:
+            "Requests"
+        }
+    }
+}
+
 public struct InsightThresholds: Codable, Equatable, Sendable {
     public var quotaWarningProgress: Double
     public var quotaCriticalProgress: Double
@@ -240,6 +265,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var language: AppLanguage
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
+    public var menuBarMetric: MenuBarMetric
     public var insightThresholds: InsightThresholds
     public var insightAlertSettings: InsightAlertSettings
     public var accounts: [StoredAccount]
@@ -253,6 +279,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language: AppLanguage = .auto,
         monitorMode: MonitorMode = .user,
         showsMenuBarText: Bool = false,
+        menuBarMetric: MenuBarMetric = .automatic,
         insightThresholds: InsightThresholds = .defaults,
         insightAlertSettings: InsightAlertSettings = .defaults,
         accounts: [StoredAccount] = [],
@@ -265,6 +292,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.language = language
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
+        self.menuBarMetric = menuBarMetric
         self.insightThresholds = insightThresholds
         self.insightAlertSettings = insightAlertSettings
         self.accounts = accounts
@@ -280,6 +308,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case language
         case monitorMode
         case showsMenuBarText
+        case menuBarMetric
         case insightThresholds
         case insightAlertSettings
         case accounts
@@ -295,6 +324,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .auto
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
+        menuBarMetric = try container.decodeIfPresent(MenuBarMetric.self, forKey: .menuBarMetric) ?? .automatic
         insightThresholds = try container.decodeIfPresent(InsightThresholds.self, forKey: .insightThresholds) ?? .defaults
         insightAlertSettings = try container.decodeIfPresent(InsightAlertSettings.self, forKey: .insightAlertSettings) ?? .defaults
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
@@ -311,6 +341,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
+        try container.encode(menuBarMetric, forKey: .menuBarMetric)
         try container.encode(insightThresholds, forKey: .insightThresholds)
         try container.encode(insightAlertSettings, forKey: .insightAlertSettings)
         try container.encode(accounts, forKey: .accounts)
@@ -326,7 +357,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
             refreshIntervalSeconds: Double(env["SUB2API_REFRESH_SECONDS"] ?? "") ?? 15,
             language: AppLanguage.fromEnvironment(env["SUB2API_LANGUAGE"]),
             monitorMode: .user,
-            showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased())
+            showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased()),
+            menuBarMetric: MenuBarMetric(rawValue: (env["SUB2API_MENU_BAR_METRIC"] ?? "").lowercased()) ?? .automatic
         )
     }
 

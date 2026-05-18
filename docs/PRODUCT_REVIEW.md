@@ -436,3 +436,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The quota card now answers the user's real question faster: how close am I to the limit, how much is left, and when does it recover?
+
+### 2026-05-19 Cycle AA
+
+1. 审视
+   - Users have different monitoring priorities: some watch spend, some watch quota, some watch token volume or request pressure.
+   - The app already had optional menu bar text, but the content was fixed to one blended summary.
+
+2. 执行
+   - Added a persisted menu bar metric preference with Auto, Spend, Quota, Tokens, and Requests modes.
+   - Updated menu bar summary generation so each mode has a compact purpose-built string while preserving stale-data prefixes.
+   - Added the metric picker in Settings and surfaced the selected metric in diagnostics.
+
+3. 提升
+   - The menu bar now acts more like a personal instrument: users can choose the one signal they care about most without opening the popover.

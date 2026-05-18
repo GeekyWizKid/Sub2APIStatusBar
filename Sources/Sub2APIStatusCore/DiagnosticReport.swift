@@ -20,6 +20,7 @@ public enum DiagnosticReport {
             "Base URL: \(config.baseURL)",
             "Refresh Interval: \(Int(config.refreshIntervalSeconds))s",
             "Menu Bar Text: \(config.showsMenuBarText ? "shown" : "hidden")",
+            "Menu Bar Metric: \(config.menuBarMetric.rawValue)",
             "Insight Alerts: \(config.insightAlertSettings.isEnabled ? "enabled" : "disabled")",
             "Insight Alert Level: \(config.insightAlertSettings.minimumSeverity.rawValue)",
             "Insight Alert Cooldown: \(Int(config.insightAlertSettings.cooldownMinutes))m",

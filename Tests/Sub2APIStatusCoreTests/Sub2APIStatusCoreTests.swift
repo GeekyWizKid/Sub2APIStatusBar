@@ -60,13 +60,14 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
         .appendingPathComponent(UUID().uuidString)
         .appendingPathComponent("config.json")
     let store = ConfigStore(configURL: configURL)
-    let config = AppConfig(baseURL: "http://127.0.0.1:8080", showsMenuBarText: true)
+    let config = AppConfig(baseURL: "http://127.0.0.1:8080", showsMenuBarText: true, menuBarMetric: .quota)
 
     try store.save(config)
     let loaded = store.load()
 
     #expect(loaded.baseURL == "http://127.0.0.1:8080")
     #expect(loaded.showsMenuBarText == true)
+    #expect(loaded.menuBarMetric == .quota)
 }
 
 @Test func appConfigPersistsInsightThresholds() throws {
@@ -805,7 +806,33 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
         message: nil
     )
 
+    let subscriptionSummary = SubscriptionSummary(activeCount: 1, subscriptions: [
+        SubscriptionSummaryItem(
+            id: 1,
+            groupName: "Codex",
+            status: "active",
+            dailyProgress: 0.91,
+            weeklyProgress: 0.6,
+            monthlyProgress: 0.4,
+            expiresAt: nil,
+            daysRemaining: 12
+        ),
+    ])
+
     #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
+    #expect(snapshot.menuBarSummary(metric: .spend, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "$113.31 · 1119 req")
+    #expect(snapshot.menuBarSummary(metric: .requests, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "1119 req · 3 RPM")
+    #expect(snapshot.menuBarSummary(metric: .tokens, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "0 tok · 0 TPM")
+    #expect(MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 22, todayActualCost: 11),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: subscriptionSummary,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    ).menuBarSummary(metric: .quota, now: Date(timeIntervalSince1970: 30), refreshIntervalSeconds: 60) == "91% quota · 1 subs")
 }
 
 @Test func monitorSnapshotWarnsWhenDataIsStale() {
@@ -1233,6 +1260,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
     #expect(report.contains("Insight Alert Cooldown: 90m"))
+    #expect(report.contains("Menu Bar Metric: automatic"))
     #expect(report.contains("Monthly Budget: $0.00"))
     #expect(report.contains("Spend Surge Threshold: 150%"))
     #expect(report.contains("Notification Permission: denied"))

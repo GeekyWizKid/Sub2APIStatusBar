@@ -91,6 +91,16 @@ struct GeneralSettingsSection: View {
                     Toggle("Show text", isOn: $model.settingsDraft.showsMenuBarText)
                 }
 
+                SettingsControlRow(title: "Metric") {
+                    Picker("", selection: $model.settingsDraft.menuBarMetric) {
+                        ForEach(MenuBarMetric.allCases) { metric in
+                            Text(metric.displayName).tag(metric)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(!model.settingsDraft.showsMenuBarText)
+                }
+
                 SettingsControlRow(title: "Startup") {
                     Toggle("Launch at login", isOn: Binding(
                         get: { model.launchAtLoginEnabled },

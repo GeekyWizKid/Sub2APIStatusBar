@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.image?.isTemplate = true
         button.imagePosition = .imageLeading
         button.title = snapshot.connected && model.config.showsMenuBarText
-            ? " \(snapshot.menuBarSummary(now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds))"
+            ? " \(snapshot.menuBarSummary(metric: model.config.menuBarMetric, now: model.now, refreshIntervalSeconds: model.config.refreshIntervalSeconds))"
             : ""
 
         if let stats = snapshot.stats, snapshot.connected {

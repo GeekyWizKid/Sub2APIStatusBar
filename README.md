@@ -17,7 +17,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Subscription quota card with separate daily, weekly, and monthly progress bars
 - Seven-day usage trend with Tokens, Spend, and Requests views
 - Model distribution with cost and token share
-- Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
+- Optional menu bar text summary with Auto, Spend, Quota, Tokens, and Requests modes
 - First-run login and optional manual Bearer token setup
 - Guided recovery cards for missing URLs, expired sessions, token replacement, and server reachability problems
 - Multiple saved accounts with quick switching
@@ -79,6 +79,7 @@ To switch accounts or remove saved credentials, open Settings and choose **Disco
 Settings also includes:
 
 - **Show text in menu bar** for a compact always-visible usage summary
+- **Metric** to choose whether the menu bar emphasizes Auto, Spend, Quota, Tokens, or Requests
 - **Notify on insights** to receive local macOS alerts when important usage signals cross the configured level
 - **Notification status** to confirm alerts are ready or open macOS settings when permissions are blocked
 - **Insights thresholds** to tune when quota, balance, spend surge, token surge, model-share, and latency warnings appear

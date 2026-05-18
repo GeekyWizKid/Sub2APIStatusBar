@@ -1106,17 +1106,43 @@ public struct MonitorSnapshot: Equatable, Sendable {
     }
 
     public func menuBarSummary(now: Date, refreshIntervalSeconds: Double?) -> String {
+        menuBarSummary(metric: .automatic, now: now, refreshIntervalSeconds: refreshIntervalSeconds)
+    }
+
+    public func menuBarSummary(
+        metric: MenuBarMetric,
+        now: Date,
+        refreshIntervalSeconds: Double?
+    ) -> String {
         guard connected else {
             return "Sub2API \(statusLabel(now: now, refreshIntervalSeconds: refreshIntervalSeconds))"
         }
 
+        let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
+
+        if metric == .quota, let subscriptionSummary {
+            return "\(prefix)\(StatusFormatters.percent(subscriptionSummary.highestProgress)) quota · \(subscriptionSummary.activeCount) subs"
+        }
+
         if let stats {
-            let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
-            return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            switch metric {
+            case .automatic:
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            case .spend:
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req"
+            case .quota:
+                if let subscriptionSummary {
+                    return "\(prefix)\(StatusFormatters.percent(subscriptionSummary.highestProgress)) quota · \(subscriptionSummary.activeCount) subs"
+                }
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · no quota"
+            case .tokens:
+                return "\(prefix)\(StatusFormatters.compactNumber(stats.todayTokens)) tok · \(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM"
+            case .requests:
+                return "\(prefix)\(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            }
         }
 
         if let subscriptionSummary {
-            let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
             return "\(prefix)\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
         }
 
