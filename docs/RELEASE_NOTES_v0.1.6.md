@@ -8,6 +8,8 @@ This release turns Sub2API Status Bar from a passive menu bar dashboard into a p
 - Added local macOS alerts for important insights, with warning/error level and quiet-period controls.
 - Added notification permission status in Settings, including a quick path to macOS notification settings when alerts are blocked.
 - Added configurable insight thresholds for quota, balance, monthly budget, token surge, spend surge, model concentration, and latency.
+- Added Copy Share Card for an anonymous visual token/spend snapshot with social post text fallback.
+- Added a one-click X draft from the connected popover for sharing usage wins without account details.
 - Added a blended Cost / MTok metric so users can see when the same token volume becomes more expensive.
 - Improved quota insight text with subscription names and reset timing when available.
 - Added guided recovery cards for setup and connection failures.

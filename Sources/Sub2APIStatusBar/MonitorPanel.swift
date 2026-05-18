@@ -23,20 +23,34 @@ struct MonitorPanel: View {
                                     UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
                                 }
 
-                                HStack {
-                                    Button {
-                                        model.copyUsageReport()
-                                    } label: {
-                                        Label("Copy Usage Report", systemImage: "doc.on.doc")
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack {
+                                        Button {
+                                            model.copySocialShareCard()
+                                        } label: {
+                                            Label("Copy Share Card", systemImage: "square.and.arrow.up")
+                                        }
+
+                                        Button {
+                                            model.copyUsageReport()
+                                        } label: {
+                                            Label("Copy Usage Report", systemImage: "doc.on.doc")
+                                        }
+
+                                        Button {
+                                            model.openSocialShareDraft()
+                                        } label: {
+                                            Label("Post to X", systemImage: "paperplane")
+                                        }
+
+                                        Spacer()
                                     }
 
-                                    if let message = model.updateStatusMessage, message == "Usage report copied." {
+                                    if let message = model.updateStatusMessage, message.hasPrefix("Share") || message == "Usage report copied." {
                                         Text(message)
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
-
-                                    Spacer()
                                 }
                                 .buttonStyle(.borderless)
                             }

@@ -506,3 +506,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Distribution now looks more like a real macOS product: users get a familiar installer image, while maintainers keep deterministic verification.
+
+### 2026-05-19 Cycle AF
+
+1. 审视
+   - Usage tools become more marketable when users can share a tasteful snapshot of their work, not only copy a support-style report.
+   - The existing Usage Report is useful and safe, but it is too dense for social posts and does not create a recognizable product loop.
+
+2. 执行
+   - Added a tested `SocialShareSummary` model that turns today's tokens, spend, requests, top model, Cost/MTok, quota pressure, and trend into a short anonymous share summary.
+   - Added a SwiftUI-rendered social card copied to the pasteboard with text fallback, plus a one-click X draft from the connected popover.
+   - Kept the share payload free of auth tokens, refresh tokens, server URL, email, and account display name.
+
+3. 提升
+   - The app now has a small growth loop: people can share impressive token days without exposing credentials or personal account details, while the card carries the Sub2API Status Bar name.

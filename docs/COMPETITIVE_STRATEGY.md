@@ -54,6 +54,7 @@ Useful patterns:
 
 - Cost, latency, errors, cache impact, model concentration, and alerts.
 - Anomaly detection that turns raw telemetry into action.
+- Recent source check: Helicone alerts cover cost, latency, token metrics, cache reads/writes, and request count; Portkey emphasizes real-time request cost, token usage, provider/model breakdowns, budget utilization, and analytics dashboards.
 
 What to copy:
 
@@ -71,6 +72,7 @@ Useful patterns:
 
 - Model-level cost and usage breakdown.
 - Separation between high-level dashboard and deeper investigation.
+- Recent source check: Langfuse tracks model usage and costs by usage type, supports custom model pricing, and exposes aggregated metrics that can be sliced by user, model, feature, tags, and other dimensions.
 
 What to copy:
 
@@ -91,6 +93,7 @@ What to avoid:
 - Usage trend across Tokens, Spend, and Requests.
 - Quota cards with remaining amount and reset time.
 - Local alerts with quiet periods.
+- Anonymous social share cards for token/spend wins and public build-in-public posts.
 - Copy Usage Report and Copy Diagnostics as separate actions.
 - GitHub Releases update checks.
 
@@ -108,10 +111,17 @@ What to avoid:
 - Storing credentials in Keychain for this release, per product constraint.
 - Heavy browser-style filter tables in the popover.
 
+## Source Checks
+
+- Helicone Alerts: https://docs.helicone.ai/features/alerts
+- Portkey Model Pricing and Cost Management: https://portkey.ai/docs/product/observability/cost-management
+- Langfuse Token and Cost Tracking: https://langfuse.com/docs/observability/features/token-and-cost-tracking
+- Langfuse Metrics Overview: https://langfuse.com/docs/metrics/overview
+
 ## Next Bets
 
-1. Onboarding polish: clearer first-run state, sample screenshots, and install instructions for non-developers.
-2. Menu bar intelligence: let users choose the primary compact metric, such as spend, quota, balance, or RPM.
+1. Social share refinement: add a native save-to-PNG path if users want to collect or schedule usage cards.
+2. Onboarding polish: clearer first-run state, sample screenshots, and install instructions for non-developers.
 3. Visual refinement: make the dashboard denser but calmer, with quota and trend above lower-priority cards.
 4. Release trust: publish notarized artifacts once Apple Developer credentials exist.
 5. Lightweight export: add CSV only if Usage Report proves insufficient.

@@ -333,6 +333,38 @@ final class MonitorViewModel: ObservableObject {
         updateStatusMessage = "Usage report copied."
     }
 
+    func copySocialShareCard() {
+        let summary = SocialShareSummary.make(
+            config: config,
+            snapshot: snapshot,
+            now: now
+        )
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        if let image = SocialShareCardRenderer.image(for: summary) {
+            pasteboard.writeObjects([image, NSString(string: summary.shareText)])
+            updateStatusMessage = "Share card copied."
+        } else {
+            pasteboard.setString(summary.shareText, forType: .string)
+            updateStatusMessage = "Share text copied."
+        }
+    }
+
+    func openSocialShareDraft() {
+        let summary = SocialShareSummary.make(
+            config: config,
+            snapshot: snapshot,
+            now: now
+        )
+        var components = URLComponents(string: "https://twitter.com/intent/tweet")
+        components?.queryItems = [
+            URLQueryItem(name: "text", value: summary.shareText),
+        ]
+        if let url = components?.url {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     func revealConfigFile() {
         NSWorkspace.shared.activateFileViewerSelecting([store.configurationFileURL])
     }

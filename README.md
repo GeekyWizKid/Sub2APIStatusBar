@@ -11,6 +11,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Local proactive alerts for warning/error insights, with severity and quiet-period controls
 - Stale-data guardrail so the menu bar and local alerts warn when the last successful refresh is too old
 - Notification permission status inside Settings, including quick access to macOS notification settings
+- Copy Share Card for a social-ready anonymous usage card plus text fallback, with a one-click X draft
 - Copy Usage Report for a shareable, credential-free summary of balance, spend, tokens, quotas, trend, models, and insights
 - Custom insight thresholds for quota pressure, balance runway, monthly budget, token surge, model concentration, and latency
 - User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
@@ -84,6 +85,7 @@ Settings also includes:
 - **Notification status** to confirm alerts are ready or open macOS settings when permissions are blocked
 - **Insights thresholds** to tune when quota, balance, spend surge, token surge, model-share, and latency warnings appear
 - **Launch at login** so the monitor starts with macOS
+- **Copy Share Card** for an anonymous visual usage card and social post text without account details
 - **Copy Usage Report** for a shareable usage summary with credentials omitted
 - **Copy Diagnostics** for support-safe status details with tokens redacted
 - **Show Config** to reveal the local `config.json`

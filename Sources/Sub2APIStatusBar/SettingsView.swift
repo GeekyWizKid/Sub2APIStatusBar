@@ -400,24 +400,35 @@ struct DiagnosticsSettingsSection: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Diagnostics")
                 .font(.headline)
-            HStack {
-                Button {
-                    model.copyUsageReport()
-                } label: {
-                    Label("Copy Usage Report", systemImage: "chart.line.text.clipboard")
-                }
-                .disabled(!model.snapshot.connected)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Button {
+                        model.copySocialShareCard()
+                    } label: {
+                        Label("Copy Share Card", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(!model.snapshot.connected)
 
-                Button {
-                    model.copyDiagnostics()
-                } label: {
-                    Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                    Button {
+                        model.copyUsageReport()
+                    } label: {
+                        Label("Copy Usage Report", systemImage: "chart.line.text.clipboard")
+                    }
+                    .disabled(!model.snapshot.connected)
                 }
 
-                Button {
-                    model.revealConfigFile()
-                } label: {
-                    Label("Show Config", systemImage: "folder")
+                HStack {
+                    Button {
+                        model.copyDiagnostics()
+                    } label: {
+                        Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                    }
+
+                    Button {
+                        model.revealConfigFile()
+                    } label: {
+                        Label("Show Config", systemImage: "folder")
+                    }
                 }
             }
             .buttonStyle(.borderless)
