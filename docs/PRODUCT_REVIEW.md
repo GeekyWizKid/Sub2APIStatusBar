@@ -298,3 +298,15 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The product now treats money as a first-class signal, closer to the way mature usage dashboards and LLM observability tools protect users.
+
+### 2026-05-18 Cycle Q
+
+1. 审视
+   - Spend totals show absolute burn, but users also need unit economics to notice when the same token volume becomes more expensive.
+
+2. 执行
+   - Added a Cost / MTok formatter with low-cost precision and zero-token fallback.
+   - Added the blended Cost / MTok metric to the dashboard and diagnostics.
+
+3. 提升
+   - Users can now see whether today's workload is merely larger or actually more expensive per token, which makes the app more useful for model-mix decisions.

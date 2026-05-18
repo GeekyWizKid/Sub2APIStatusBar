@@ -11,7 +11,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Local proactive alerts for warning/error insights, with severity and quiet-period controls
 - Notification permission status inside Settings, including quick access to macOS notification settings
 - Custom insight thresholds for quota pressure, balance runway, token surge, model concentration, and latency
-- User dashboard cards for balance, API keys, requests, spend, token totals, RPM/TPM, and response time
+- User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
 - Seven-day token trend and model distribution
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`

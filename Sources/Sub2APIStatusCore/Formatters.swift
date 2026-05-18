@@ -37,6 +37,18 @@ public enum StatusFormatters {
         String(format: "$%.4f", value)
     }
 
+    public static func costPerMillionTokens(cost: Double, tokens: Int64) -> String {
+        guard tokens > 0 else {
+            return "--"
+        }
+
+        let value = cost / (Double(tokens) / 1_000_000)
+        if value < 1, value > 0 {
+            return String(format: "$%.4f/MTok", value)
+        }
+        return String(format: "$%.2f/MTok", value)
+    }
+
     public static func percent(_ value: Double) -> String {
         String(format: "%.0f%%", min(max(value, 0), 1) * 100)
     }

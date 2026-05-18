@@ -532,6 +532,12 @@ import Testing
     #expect(TokenTrendDisplayState.make(points: [first, second]) == .chart([first, second]))
 }
 
+@Test func costPerMillionTokensFormatsUnitEconomics() {
+    #expect(StatusFormatters.costPerMillionTokens(cost: 12.5, tokens: 2_500_000) == "$5.00/MTok")
+    #expect(StatusFormatters.costPerMillionTokens(cost: 0.0123, tokens: 1_000_000) == "$0.0123/MTok")
+    #expect(StatusFormatters.costPerMillionTokens(cost: 12.5, tokens: 0) == "--")
+}
+
 @Test func accountHealthSummaryCountsRuntimeStates() {
     let accounts = [
         AccountSummary(id: 1, name: "ok", platform: "openai", type: "oauth", status: "active", schedulable: true, quotaLimit: 100, quotaUsed: 30, quotaDailyLimit: nil, quotaDailyUsed: nil, quotaWeeklyLimit: nil, quotaWeeklyUsed: nil, errorMessage: "", rateLimitResetAt: nil),
@@ -1016,6 +1022,7 @@ import Testing
     #expect(report.contains("Version: 0.1.5"))
     #expect(report.contains("Access Token: present"))
     #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("Today Cost per MTok: --"))
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
     #expect(report.contains("Insight Alert Cooldown: 90m"))

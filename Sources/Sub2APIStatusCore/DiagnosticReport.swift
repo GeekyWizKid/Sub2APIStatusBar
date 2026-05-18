@@ -32,6 +32,7 @@ public enum DiagnosticReport {
             lines.append("Today Requests: \(stats.todayRequests)")
             lines.append("Today Cost: \(StatusFormatters.preciseCurrency(stats.todayActualCost))")
             lines.append("Today Tokens: \(stats.todayTokens)")
+            lines.append("Today Cost per MTok: \(StatusFormatters.costPerMillionTokens(cost: stats.todayActualCost, tokens: stats.todayTokens))")
             lines.append("Total Tokens: \(stats.totalTokens)")
             lines.append("RPM: \(StatusFormatters.menuBarRate(stats.rpm))")
             lines.append("TPM: \(StatusFormatters.compactNumber(Int64(stats.tpm)))")
