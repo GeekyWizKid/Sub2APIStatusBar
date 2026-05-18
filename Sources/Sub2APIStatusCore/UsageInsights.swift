@@ -61,27 +61,30 @@ public struct UsageInsights: Equatable, Sendable {
         stats: DashboardStats?,
         subscriptionSummary: SubscriptionSummary?,
         trend: [TrendDataPoint]?,
-        models: [ModelUsageSummary]?
+        models: [ModelUsageSummary]?,
+        thresholds: InsightThresholds = .defaults
     ) -> UsageInsights {
+        var thresholds = thresholds
+        thresholds.normalize()
         var items: [UsageInsightItem] = []
 
-        if let quota = quotaInsight(subscriptionSummary) {
+        if let quota = quotaInsight(subscriptionSummary, thresholds: thresholds) {
             items.append(quota)
         }
 
-        if let balance = balanceInsight(currentUser: currentUser, stats: stats) {
+        if let balance = balanceInsight(currentUser: currentUser, stats: stats, thresholds: thresholds) {
             items.append(balance)
         }
 
-        if let trend = trendInsight(trend) {
+        if let trend = trendInsight(trend, thresholds: thresholds) {
             items.append(trend)
         }
 
-        if let modelMix = modelMixInsight(models) {
+        if let modelMix = modelMixInsight(models, thresholds: thresholds) {
             items.append(modelMix)
         }
 
-        if let performance = performanceInsight(stats) {
+        if let performance = performanceInsight(stats, thresholds: thresholds) {
             items.append(performance)
         }
 
@@ -93,10 +96,10 @@ public struct UsageInsights: Equatable, Sendable {
         }
 
         let headline = items.first?.detail ?? "Usage is steady."
-        return UsageInsights(headline: headline, items: Array(items.prefix(4)))
+        return UsageInsights(headline: headline, items: Array(items.prefix(5)))
     }
 
-    private static func quotaInsight(_ summary: SubscriptionSummary?) -> UsageInsightItem? {
+    private static func quotaInsight(_ summary: SubscriptionSummary?, thresholds: InsightThresholds) -> UsageInsightItem? {
         guard let summary else {
             return nil
         }
@@ -120,9 +123,9 @@ public struct UsageInsights: Equatable, Sendable {
             return nil
         }
 
-        let severity: MonitorSeverity = if peak.progress >= 0.95 {
+        let severity: MonitorSeverity = if peak.progress >= thresholds.quotaCriticalProgress {
             .error
-        } else if peak.progress >= 0.8 {
+        } else if peak.progress >= thresholds.quotaWarningProgress {
             .warning
         } else {
             .healthy
@@ -137,7 +140,7 @@ public struct UsageInsights: Equatable, Sendable {
         )
     }
 
-    private static func balanceInsight(currentUser: CurrentUser?, stats: DashboardStats?) -> UsageInsightItem? {
+    private static func balanceInsight(currentUser: CurrentUser?, stats: DashboardStats?, thresholds: InsightThresholds) -> UsageInsightItem? {
         guard let balance = currentUser?.balance, balance > 0, let stats, stats.todayActualCost > 0 else {
             return nil
         }
@@ -145,7 +148,7 @@ public struct UsageInsights: Equatable, Sendable {
         let days = balance / stats.todayActualCost
         let severity: MonitorSeverity = if days < 1 {
             .error
-        } else if days < 3 {
+        } else if days < thresholds.lowBalanceDays {
             .warning
         } else {
             .healthy
@@ -160,7 +163,7 @@ public struct UsageInsights: Equatable, Sendable {
         )
     }
 
-    private static func trendInsight(_ trend: [TrendDataPoint]?) -> UsageInsightItem? {
+    private static func trendInsight(_ trend: [TrendDataPoint]?, thresholds: InsightThresholds) -> UsageInsightItem? {
         guard let trend, trend.count >= 4, let latest = trend.last else {
             return nil
         }
@@ -172,7 +175,8 @@ public struct UsageInsights: Equatable, Sendable {
         }
 
         let ratio = Double(latest.totalTokens) / average
-        guard ratio >= 1.35 || ratio <= 0.65 else {
+        let dipRatio = max(0, 2 - thresholds.tokenSurgeRatio)
+        guard ratio >= thresholds.tokenSurgeRatio || ratio <= dipRatio else {
             return UsageInsightItem(
                 kind: .trend,
                 severity: .healthy,
@@ -186,7 +190,7 @@ public struct UsageInsights: Equatable, Sendable {
         let change = abs(ratio - 1)
         return UsageInsightItem(
             kind: .trend,
-            severity: isSpike && ratio >= 1.75 ? .warning : .healthy,
+            severity: isSpike ? .warning : .healthy,
             title: isSpike ? "Token surge" : "Token dip",
             value: StatusFormatters.percent(change),
             detail: isSpike
@@ -195,7 +199,7 @@ public struct UsageInsights: Equatable, Sendable {
         )
     }
 
-    private static func modelMixInsight(_ models: [ModelUsageSummary]?) -> UsageInsightItem? {
+    private static func modelMixInsight(_ models: [ModelUsageSummary]?, thresholds: InsightThresholds) -> UsageInsightItem? {
         guard let models, models.count > 1 else {
             return nil
         }
@@ -206,7 +210,7 @@ public struct UsageInsights: Equatable, Sendable {
         }
 
         let share = top.actualCost / totalCost
-        let severity: MonitorSeverity = share >= 0.8 ? .warning : .healthy
+        let severity: MonitorSeverity = share >= thresholds.modelConcentrationShare ? .warning : .healthy
         return UsageInsightItem(
             kind: .modelMix,
             severity: severity,
@@ -216,12 +220,12 @@ public struct UsageInsights: Equatable, Sendable {
         )
     }
 
-    private static func performanceInsight(_ stats: DashboardStats?) -> UsageInsightItem? {
+    private static func performanceInsight(_ stats: DashboardStats?, thresholds: InsightThresholds) -> UsageInsightItem? {
         guard let stats else {
             return nil
         }
 
-        if stats.averageDurationMs >= 30_000 {
+        if stats.averageDurationMs >= thresholds.latencyWarningMs {
             return UsageInsightItem(
                 kind: .performance,
                 severity: .warning,

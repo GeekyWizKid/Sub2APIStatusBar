@@ -47,7 +47,8 @@ public enum DiagnosticReport {
                 stats: snapshot.stats,
                 subscriptionSummary: snapshot.subscriptionSummary,
                 trend: snapshot.trend,
-                models: snapshot.modelDistribution
+                models: snapshot.modelDistribution,
+                thresholds: config.insightThresholds
             )
             lines.append("Usage Insight: \(insights.headline)")
             for item in insights.items {

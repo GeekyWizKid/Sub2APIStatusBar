@@ -53,6 +53,61 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public struct InsightThresholds: Codable, Equatable, Sendable {
+    public var quotaWarningProgress: Double
+    public var quotaCriticalProgress: Double
+    public var lowBalanceDays: Double
+    public var tokenSurgeRatio: Double
+    public var modelConcentrationShare: Double
+    public var latencyWarningMs: Double
+
+    public init(
+        quotaWarningProgress: Double,
+        quotaCriticalProgress: Double,
+        lowBalanceDays: Double,
+        tokenSurgeRatio: Double,
+        modelConcentrationShare: Double,
+        latencyWarningMs: Double
+    ) {
+        self.quotaWarningProgress = quotaWarningProgress
+        self.quotaCriticalProgress = quotaCriticalProgress
+        self.lowBalanceDays = lowBalanceDays
+        self.tokenSurgeRatio = tokenSurgeRatio
+        self.modelConcentrationShare = modelConcentrationShare
+        self.latencyWarningMs = latencyWarningMs
+        normalize()
+    }
+
+    public static let defaults = InsightThresholds(
+        quotaWarningProgress: 0.8,
+        quotaCriticalProgress: 0.95,
+        lowBalanceDays: 3,
+        tokenSurgeRatio: 1.35,
+        modelConcentrationShare: 0.8,
+        latencyWarningMs: 30_000
+    )
+
+    public mutating func normalize() {
+        quotaWarningProgress = Self.clamped(quotaWarningProgress, min: 0.1, max: 0.98)
+        quotaCriticalProgress = Self.clamped(quotaCriticalProgress, min: 0.2, max: 1)
+        if quotaCriticalProgress <= quotaWarningProgress {
+            quotaWarningProgress = Self.defaults.quotaWarningProgress
+            quotaCriticalProgress = Self.defaults.quotaCriticalProgress
+        }
+
+        lowBalanceDays = Self.clamped(lowBalanceDays, min: 1, max: 60)
+        tokenSurgeRatio = Self.clamped(tokenSurgeRatio, min: 1.1, max: 5)
+        if !(0.2...0.95).contains(modelConcentrationShare) {
+            modelConcentrationShare = Self.defaults.modelConcentrationShare
+        }
+        latencyWarningMs = Self.clamped(latencyWarningMs, min: 1_000, max: 120_000)
+    }
+
+    private static func clamped(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Swift.min(Swift.max(value, minimum), maximum)
+    }
+}
+
 public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
@@ -121,6 +176,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var language: AppLanguage
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
+    public var insightThresholds: InsightThresholds
     public var accounts: [StoredAccount]
     public var selectedAccountID: String?
 
@@ -132,6 +188,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language: AppLanguage = .auto,
         monitorMode: MonitorMode = .user,
         showsMenuBarText: Bool = false,
+        insightThresholds: InsightThresholds = .defaults,
         accounts: [StoredAccount] = [],
         selectedAccountID: String? = nil
     ) {
@@ -142,6 +199,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.language = language
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
+        self.insightThresholds = insightThresholds
         self.accounts = accounts
         self.selectedAccountID = selectedAccountID
         normalize()
@@ -155,6 +213,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case language
         case monitorMode
         case showsMenuBarText
+        case insightThresholds
         case accounts
         case selectedAccountID
     }
@@ -168,6 +227,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .auto
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
+        insightThresholds = try container.decodeIfPresent(InsightThresholds.self, forKey: .insightThresholds) ?? .defaults
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
@@ -182,6 +242,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
+        try container.encode(insightThresholds, forKey: .insightThresholds)
         try container.encode(accounts, forKey: .accounts)
         try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
@@ -204,6 +265,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         authToken = authToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshIntervalSeconds = min(max(refreshIntervalSeconds, 5), 300)
+        insightThresholds.normalize()
         monitorMode = .user
 
         accounts = accounts.map { account in

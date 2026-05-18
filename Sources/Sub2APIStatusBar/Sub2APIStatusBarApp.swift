@@ -654,7 +654,8 @@ struct MonitorPanel: View {
             stats: model.snapshot.stats,
             subscriptionSummary: model.snapshot.subscriptionSummary,
             trend: model.snapshot.trend,
-            models: model.snapshot.modelDistribution
+            models: model.snapshot.modelDistribution,
+            thresholds: model.config.insightThresholds
         )
     }
 
@@ -862,6 +863,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     AccountSettingsSection(model: model)
                     GeneralSettingsSection(model: model)
+                    InsightSettingsSection(model: model)
                     UpdateSettingsSection(model: model)
                     LoginSettingsSection(model: model, dismiss: dismiss)
                     DiagnosticsSettingsSection(model: model)
@@ -960,6 +962,88 @@ struct GeneralSettingsSection: View {
             if let error = model.launchAtLoginError {
                 MessageRow(message: error)
             }
+        }
+    }
+}
+
+struct InsightSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Insights")
+                .font(.headline)
+
+            VStack(spacing: 8) {
+                ThresholdSliderRow(
+                    title: "Quota warn",
+                    value: $model.settingsDraft.insightThresholds.quotaWarningProgress,
+                    range: 0.5...0.95,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.quotaWarningProgress)
+                )
+
+                ThresholdSliderRow(
+                    title: "Quota critical",
+                    value: $model.settingsDraft.insightThresholds.quotaCriticalProgress,
+                    range: 0.75...1,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.quotaCriticalProgress)
+                )
+
+                ThresholdSliderRow(
+                    title: "Balance warn",
+                    value: $model.settingsDraft.insightThresholds.lowBalanceDays,
+                    range: 1...14,
+                    step: 1,
+                    valueText: "\(Int(model.settingsDraft.insightThresholds.lowBalanceDays))d"
+                )
+
+                ThresholdSliderRow(
+                    title: "Token surge",
+                    value: $model.settingsDraft.insightThresholds.tokenSurgeRatio,
+                    range: 1.1...3,
+                    step: 0.05,
+                    valueText: "\(Int(model.settingsDraft.insightThresholds.tokenSurgeRatio * 100))%"
+                )
+
+                ThresholdSliderRow(
+                    title: "Model share",
+                    value: $model.settingsDraft.insightThresholds.modelConcentrationShare,
+                    range: 0.5...0.95,
+                    step: 0.05,
+                    valueText: StatusFormatters.percent(model.settingsDraft.insightThresholds.modelConcentrationShare)
+                )
+
+                ThresholdSliderRow(
+                    title: "Latency",
+                    value: $model.settingsDraft.insightThresholds.latencyWarningMs,
+                    range: 5_000...60_000,
+                    step: 1_000,
+                    valueText: latencyThresholdText
+                )
+            }
+        }
+    }
+
+    private var latencyThresholdText: String {
+        String(format: "%.0fs", model.settingsDraft.insightThresholds.latencyWarningMs / 1_000)
+    }
+}
+
+struct ThresholdSliderRow: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let valueText: String
+
+    var body: some View {
+        SettingsControlRow(title: title) {
+            Slider(value: $value, in: range, step: step)
+            Text(valueText)
+                .font(.callout.monospacedDigit())
+                .frame(width: 48, alignment: .trailing)
         }
     }
 }

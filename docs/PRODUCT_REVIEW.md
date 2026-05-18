@@ -82,6 +82,7 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 - Prioritizes quota pressure, balance runway, token trend changes, model spend concentration, and latency.
 - Shows the top insights directly in the popover.
 - Adds the same insight headline to support-safe diagnostics.
+- Added Settings controls for insight thresholds so cautious and tolerant users can tune warnings without editing config JSON.
 
 ## MAGI Log
 

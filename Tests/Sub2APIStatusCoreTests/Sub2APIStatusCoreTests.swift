@@ -28,6 +28,50 @@ import Testing
     #expect(loaded.showsMenuBarText == true)
 }
 
+@Test func appConfigPersistsInsightThresholds() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    var thresholds = InsightThresholds.defaults
+    thresholds.quotaWarningProgress = 0.7
+    thresholds.quotaCriticalProgress = 0.9
+    thresholds.lowBalanceDays = 5
+    thresholds.tokenSurgeRatio = 1.25
+    thresholds.modelConcentrationShare = 0.65
+    thresholds.latencyWarningMs = 18_000
+
+    try store.save(AppConfig(baseURL: "https://sub2api.example.com", insightThresholds: thresholds))
+    let loaded = store.load()
+
+    #expect(loaded.insightThresholds.quotaWarningProgress == 0.7)
+    #expect(loaded.insightThresholds.quotaCriticalProgress == 0.9)
+    #expect(loaded.insightThresholds.lowBalanceDays == 5)
+    #expect(loaded.insightThresholds.tokenSurgeRatio == 1.25)
+    #expect(loaded.insightThresholds.modelConcentrationShare == 0.65)
+    #expect(loaded.insightThresholds.latencyWarningMs == 18_000)
+}
+
+@Test func insightThresholdsNormalizeUnsafeValues() {
+    var thresholds = InsightThresholds(
+        quotaWarningProgress: 1.4,
+        quotaCriticalProgress: 0.2,
+        lowBalanceDays: -5,
+        tokenSurgeRatio: 0.9,
+        modelConcentrationShare: 2,
+        latencyWarningMs: 500
+    )
+
+    thresholds.normalize()
+
+    #expect(thresholds.quotaWarningProgress == 0.8)
+    #expect(thresholds.quotaCriticalProgress == 0.95)
+    #expect(thresholds.lowBalanceDays == 1)
+    #expect(thresholds.tokenSurgeRatio == 1.1)
+    #expect(thresholds.modelConcentrationShare == 0.8)
+    #expect(thresholds.latencyWarningMs == 1_000)
+}
+
 @Test func configStoreSavesTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
@@ -610,6 +654,61 @@ import Testing
     #expect(insights.items.first?.severity == .warning)
     #expect(insights.items.contains { $0.title == "Balance runway" && $0.value == "1.7d" })
     #expect(insights.items.contains { $0.title == "Token surge" })
+}
+
+@Test func usageInsightsRespectCustomThresholds() {
+    let stats = DashboardStats(todayTokens: 210_000, todayActualCost: 15, averageDurationMs: 16_000)
+    let currentUser = CurrentUser(
+        id: 1,
+        email: "user@example.com",
+        username: "User",
+        role: "user",
+        balance: 60,
+        status: "active"
+    )
+    let summary = SubscriptionSummary(activeCount: 1, subscriptions: [
+        SubscriptionSummaryItem(
+            id: 1,
+            groupName: "Team",
+            status: "active",
+            dailyProgress: 0.76,
+            weeklyProgress: nil,
+            monthlyProgress: nil,
+            expiresAt: nil,
+            daysRemaining: nil
+        ),
+    ])
+    let trend = [
+        TrendDataPoint(date: "2026-05-15", totalTokens: 100_000),
+        TrendDataPoint(date: "2026-05-16", totalTokens: 100_000),
+        TrendDataPoint(date: "2026-05-17", totalTokens: 100_000),
+        TrendDataPoint(date: "2026-05-18", totalTokens: 130_000),
+    ]
+    let models = [
+        ModelUsageSummary(model: "gpt-5.5", totalTokens: 100, actualCost: 7),
+        ModelUsageSummary(model: "gpt-5.4", totalTokens: 100, actualCost: 3),
+    ]
+    var thresholds = InsightThresholds.defaults
+    thresholds.quotaWarningProgress = 0.75
+    thresholds.lowBalanceDays = 5
+    thresholds.tokenSurgeRatio = 1.2
+    thresholds.modelConcentrationShare = 0.65
+    thresholds.latencyWarningMs = 15_000
+
+    let insights = UsageInsights.make(
+        currentUser: currentUser,
+        stats: stats,
+        subscriptionSummary: summary,
+        trend: trend,
+        models: models,
+        thresholds: thresholds
+    )
+
+    #expect(insights.items.contains { $0.kind == .quota && $0.severity == .warning })
+    #expect(insights.items.contains { $0.kind == .balance && $0.severity == .warning })
+    #expect(insights.items.contains { $0.kind == .trend && $0.title == "Token surge" })
+    #expect(insights.items.contains { $0.kind == .modelMix && $0.severity == .warning })
+    #expect(insights.items.contains { $0.kind == .performance && $0.severity == .warning })
 }
 
 @Test func diagnosticReportRedactsStoredTokenValues() {

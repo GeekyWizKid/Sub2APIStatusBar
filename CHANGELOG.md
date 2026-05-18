@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added Usage Insights for quota pressure, balance runway, token trend changes, model cost concentration, and latency.
+- Added configurable Usage Insight thresholds in Settings.
 - Added Usage Insights to diagnostics so support reports explain the current top signal without exposing tokens.
 - Documented the product direction against usage dashboards and LLM observability tools.
 

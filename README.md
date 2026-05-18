@@ -8,6 +8,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 
 - Native macOS menu bar app with a compact SwiftUI popover
 - Usage Insights that turn balance, quotas, token trend, model concentration, and latency into prioritized signals
+- Custom insight thresholds for quota pressure, balance runway, token surge, model concentration, and latency
 - User dashboard cards for balance, API keys, requests, spend, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
 - Seven-day token trend and model distribution
@@ -72,6 +73,7 @@ To switch accounts or remove saved credentials, open Settings and choose **Disco
 Settings also includes:
 
 - **Show text in menu bar** for a compact always-visible usage summary
+- **Insights thresholds** to tune when quota, balance, token surge, model-share, and latency warnings appear
 - **Launch at login** so the monitor starts with macOS
 - **Copy Diagnostics** for support-safe status details with tokens redacted
 - **Show Config** to reveal the local `config.json`
@@ -159,7 +161,7 @@ swift run Sub2APIStatusBar
 
 ## Privacy
 
-Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server and GitHub Releases when checking for updates.
+Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, insight thresholds, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server and GitHub Releases when checking for updates.
 
 ## Acknowledgements
 Thanks to the [LinuxDo](https://linux.do/) community for the discussions, sharing, and feedback.
