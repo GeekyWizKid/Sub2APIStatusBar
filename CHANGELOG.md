@@ -6,6 +6,7 @@
 - Added local proactive alerts for important Usage Insights, with Settings controls for severity and cooldown.
 - Added visible notification-permission status and diagnostics so blocked macOS alerts are easier to identify.
 - Added configurable Usage Insight thresholds in Settings.
+- Added spend-surge Usage Insights so cost spikes are caught even when token volume is steady.
 - Improved quota insights to name the subscription and show reset timing when the server provides it.
 - Added guided recovery suggestions for onboarding and connection failures.
 - Added Usage Insights to diagnostics so support reports explain the current top signal without exposing tokens.

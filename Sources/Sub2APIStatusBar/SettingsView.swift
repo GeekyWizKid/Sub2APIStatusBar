@@ -194,6 +194,14 @@ struct InsightSettingsSection: View {
                 )
 
                 ThresholdSliderRow(
+                    title: "Spend surge",
+                    value: $model.settingsDraft.insightThresholds.spendSurgeRatio,
+                    range: 1.1...3,
+                    step: 0.05,
+                    valueText: "\(Int(model.settingsDraft.insightThresholds.spendSurgeRatio * 100))%"
+                )
+
+                ThresholdSliderRow(
                     title: "Model share",
                     value: $model.settingsDraft.insightThresholds.modelConcentrationShare,
                     range: 0.5...0.95,

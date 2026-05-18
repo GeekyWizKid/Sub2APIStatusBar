@@ -285,3 +285,16 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Release validation now covers the new proactive-alert capability, reducing the chance that a polished feature ships with incomplete macOS metadata.
+
+### 2026-05-18 Cycle P
+
+1. 审视
+   - Token trend alone misses an important class of user pain: spend can spike because model mix or pricing changed even when token volume stays steady.
+
+2. 执行
+   - Added a spend-surge Usage Insight based on recent actual-cost trend data.
+   - Added a Settings threshold for spend surge and diagnostics output for the active threshold.
+   - Added regression coverage proving spend surge can trigger while token trend remains healthy.
+
+3. 提升
+   - The product now treats money as a first-class signal, closer to the way mature usage dashboards and LLM observability tools protect users.

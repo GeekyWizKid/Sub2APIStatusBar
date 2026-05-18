@@ -3,6 +3,7 @@ import Foundation
 public enum UsageInsightKind: String, Equatable, Sendable {
     case quota
     case balance
+    case spend
     case trend
     case modelMix
     case performance
@@ -13,12 +14,14 @@ public enum UsageInsightKind: String, Equatable, Sendable {
             0
         case .balance:
             1
-        case .trend:
+        case .spend:
             2
-        case .modelMix:
+        case .trend:
             3
-        case .performance:
+        case .modelMix:
             4
+        case .performance:
+            5
         }
     }
 }
@@ -74,6 +77,10 @@ public struct UsageInsights: Equatable, Sendable {
 
         if let balance = balanceInsight(currentUser: currentUser, stats: stats, thresholds: thresholds) {
             items.append(balance)
+        }
+
+        if let spend = spendInsight(trend, thresholds: thresholds) {
+            items.append(spend)
         }
 
         if let trend = trendInsight(trend, thresholds: thresholds) {
@@ -198,6 +205,32 @@ public struct UsageInsights: Equatable, Sendable {
             detail: isSpike
                 ? "Today's tokens are \(StatusFormatters.percent(change)) above the recent average."
                 : "Today's tokens are \(StatusFormatters.percent(change)) below the recent average."
+        )
+    }
+
+    private static func spendInsight(_ trend: [TrendDataPoint]?, thresholds: InsightThresholds) -> UsageInsightItem? {
+        guard let trend, trend.count >= 4, let latest = trend.last else {
+            return nil
+        }
+
+        let previous = trend.dropLast().suffix(6)
+        let average = previous.map(\.actualCost).reduce(0, +) / Double(previous.count)
+        guard average > 0 else {
+            return nil
+        }
+
+        let ratio = latest.actualCost / average
+        guard ratio >= thresholds.spendSurgeRatio else {
+            return nil
+        }
+
+        let change = ratio - 1
+        return UsageInsightItem(
+            kind: .spend,
+            severity: .warning,
+            title: "Spend surge",
+            value: StatusFormatters.percent(change),
+            detail: "Today's spend is \(StatusFormatters.percent(change)) above the recent average."
         )
     }
 

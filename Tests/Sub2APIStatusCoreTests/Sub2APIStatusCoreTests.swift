@@ -38,6 +38,7 @@ import Testing
     thresholds.quotaCriticalProgress = 0.9
     thresholds.lowBalanceDays = 5
     thresholds.tokenSurgeRatio = 1.25
+    thresholds.spendSurgeRatio = 1.6
     thresholds.modelConcentrationShare = 0.65
     thresholds.latencyWarningMs = 18_000
 
@@ -48,6 +49,7 @@ import Testing
     #expect(loaded.insightThresholds.quotaCriticalProgress == 0.9)
     #expect(loaded.insightThresholds.lowBalanceDays == 5)
     #expect(loaded.insightThresholds.tokenSurgeRatio == 1.25)
+    #expect(loaded.insightThresholds.spendSurgeRatio == 1.6)
     #expect(loaded.insightThresholds.modelConcentrationShare == 0.65)
     #expect(loaded.insightThresholds.latencyWarningMs == 18_000)
 }
@@ -115,6 +117,7 @@ import Testing
         quotaCriticalProgress: 0.2,
         lowBalanceDays: -5,
         tokenSurgeRatio: 0.9,
+        spendSurgeRatio: 0.9,
         modelConcentrationShare: 2,
         latencyWarningMs: 500
     )
@@ -125,6 +128,7 @@ import Testing
     #expect(thresholds.quotaCriticalProgress == 0.95)
     #expect(thresholds.lowBalanceDays == 1)
     #expect(thresholds.tokenSurgeRatio == 1.1)
+    #expect(thresholds.spendSurgeRatio == 1.1)
     #expect(thresholds.modelConcentrationShare == 0.8)
     #expect(thresholds.latencyWarningMs == 1_000)
 }
@@ -765,6 +769,34 @@ import Testing
     #expect(insights.items.first?.detail == "Codex Team daily quota is at 91% and resets in 1h.")
 }
 
+@Test func usageInsightsDetectSpendSurgeSeparatelyFromTokenTrend() {
+    let trend = [
+        TrendDataPoint(date: "2026-05-12", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-13", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-14", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-15", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-16", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-17", totalTokens: 100_000, actualCost: 10),
+        TrendDataPoint(date: "2026-05-18", totalTokens: 105_000, actualCost: 20),
+    ]
+
+    let insights = UsageInsights.make(
+        currentUser: nil,
+        stats: nil,
+        subscriptionSummary: nil,
+        trend: trend,
+        models: nil
+    )
+
+    let spend = insights.items.first { $0.title == "Spend surge" }
+    let tokenTrend = insights.items.first { $0.title == "Token trend" }
+
+    #expect(spend?.kind == .spend)
+    #expect(spend?.value == "100%")
+    #expect(tokenTrend?.kind == .trend)
+    #expect(tokenTrend?.severity == .healthy)
+}
+
 @Test func usageInsightsRespectCustomThresholds() {
     let stats = DashboardStats(todayTokens: 210_000, todayActualCost: 15, averageDurationMs: 16_000)
     let currentUser = CurrentUser(
@@ -987,6 +1019,7 @@ import Testing
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
     #expect(report.contains("Insight Alert Cooldown: 90m"))
+    #expect(report.contains("Spend Surge Threshold: 150%"))
     #expect(report.contains("Notification Permission: denied"))
     #expect(report.contains("Usage Insight: Balance covers about 3.9 days at today's spend."))
     #expect(report.contains("secret-access-token") == false)

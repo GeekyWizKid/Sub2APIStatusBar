@@ -58,6 +58,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
     public var quotaCriticalProgress: Double
     public var lowBalanceDays: Double
     public var tokenSurgeRatio: Double
+    public var spendSurgeRatio: Double
     public var modelConcentrationShare: Double
     public var latencyWarningMs: Double
 
@@ -66,6 +67,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         quotaCriticalProgress: Double,
         lowBalanceDays: Double,
         tokenSurgeRatio: Double,
+        spendSurgeRatio: Double? = nil,
         modelConcentrationShare: Double,
         latencyWarningMs: Double
     ) {
@@ -73,6 +75,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         self.quotaCriticalProgress = quotaCriticalProgress
         self.lowBalanceDays = lowBalanceDays
         self.tokenSurgeRatio = tokenSurgeRatio
+        self.spendSurgeRatio = spendSurgeRatio ?? tokenSurgeRatio
         self.modelConcentrationShare = modelConcentrationShare
         self.latencyWarningMs = latencyWarningMs
         normalize()
@@ -83,6 +86,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
         quotaCriticalProgress: 0.95,
         lowBalanceDays: 3,
         tokenSurgeRatio: 1.35,
+        spendSurgeRatio: 1.5,
         modelConcentrationShare: 0.8,
         latencyWarningMs: 30_000
     )
@@ -97,6 +101,7 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
 
         lowBalanceDays = Self.clamped(lowBalanceDays, min: 1, max: 60)
         tokenSurgeRatio = Self.clamped(tokenSurgeRatio, min: 1.1, max: 5)
+        spendSurgeRatio = Self.clamped(spendSurgeRatio, min: 1.1, max: 5)
         if !(0.2...0.95).contains(modelConcentrationShare) {
             modelConcentrationShare = Self.defaults.modelConcentrationShare
         }
