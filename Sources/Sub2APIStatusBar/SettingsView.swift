@@ -90,6 +90,25 @@ struct GeneralSettingsSection: View {
                     Toggle("Show text", isOn: $model.settingsDraft.showsMenuBarText)
                 }
 
+                SettingsControlRow(title: "Alerts") {
+                    Toggle("Notify on insights", isOn: $model.settingsDraft.insightAlertSettings.isEnabled)
+                }
+
+                SettingsControlRow(title: "Alert level") {
+                    Picker("", selection: $model.settingsDraft.insightAlertSettings.minimumSeverity) {
+                        Text("Warning").tag(MonitorSeverity.warning)
+                        Text("Error only").tag(MonitorSeverity.error)
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                SettingsControlRow(title: "Alert quiet") {
+                    Slider(value: $model.settingsDraft.insightAlertSettings.cooldownMinutes, in: 5...360, step: 5)
+                    Text("\(Int(model.settingsDraft.insightAlertSettings.cooldownMinutes))m")
+                        .font(.callout.monospacedDigit())
+                        .frame(width: 48, alignment: .trailing)
+                }
+
                 SettingsControlRow(title: "Startup") {
                     Toggle("Launch at login", isOn: Binding(
                         get: { model.launchAtLoginEnabled },

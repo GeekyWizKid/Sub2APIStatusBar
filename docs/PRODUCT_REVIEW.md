@@ -33,6 +33,7 @@
    - Stores login tokens in the local Application Support config file, including per-account tokens for account switching.
    - Added a settings-level disconnect action for account switching and credential removal.
    - Added Launch at Login, support-safe diagnostics copy, and local config reveal actions.
+   - Added local proactive alerts for high-priority Usage Insights, with deterministic cooldown behavior to avoid noisy repeated notifications.
 
 6. Documentation
    - Rewrote README as a product introduction and setup guide.
@@ -244,3 +245,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The app now helps users recover without reading logs or guessing whether they should retry, replace a token, open the server, or sign in again.
+
+### 2026-05-18 Cycle M
+
+1. 审视
+   - Competitive products such as Helicone make alerting part of the monitoring loop, while LiteLLM-style budgets and OpenAI-style dashboards make it clear users need protection before they run out of quota or balance.
+   - Sub2API Status Bar already explained risk inside the popover, but still required the user to look at it.
+
+2. 执行
+   - Added a core `InsightAlertPolicy` that picks the highest-priority warning/error Usage Insight and suppresses repeats during a configurable quiet period.
+   - Added local macOS notifications for actionable insights, with Settings controls for enabling alerts, choosing warning versus error-only mode, and tuning the cooldown.
+   - Added diagnostics output for alert state so support reports include whether proactive protection is enabled.
+
+3. 提升
+   - The product now acts more like a personal usage guardrail than a passive dashboard: users can keep working and let the menu bar call attention only when something important changes.

@@ -108,6 +108,36 @@ public struct InsightThresholds: Codable, Equatable, Sendable {
     }
 }
 
+public struct InsightAlertSettings: Codable, Equatable, Sendable {
+    public var isEnabled: Bool
+    public var minimumSeverity: MonitorSeverity
+    public var cooldownMinutes: Double
+
+    public init(
+        isEnabled: Bool,
+        minimumSeverity: MonitorSeverity,
+        cooldownMinutes: Double
+    ) {
+        self.isEnabled = isEnabled
+        self.minimumSeverity = minimumSeverity
+        self.cooldownMinutes = cooldownMinutes
+        normalize()
+    }
+
+    public static let defaults = InsightAlertSettings(
+        isEnabled: true,
+        minimumSeverity: .warning,
+        cooldownMinutes: 60
+    )
+
+    public mutating func normalize() {
+        if minimumSeverity == .healthy {
+            minimumSeverity = .warning
+        }
+        cooldownMinutes = min(max(cooldownMinutes, 5), 1_440)
+    }
+}
+
 public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
@@ -177,6 +207,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
     public var insightThresholds: InsightThresholds
+    public var insightAlertSettings: InsightAlertSettings
     public var accounts: [StoredAccount]
     public var selectedAccountID: String?
 
@@ -189,6 +220,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         monitorMode: MonitorMode = .user,
         showsMenuBarText: Bool = false,
         insightThresholds: InsightThresholds = .defaults,
+        insightAlertSettings: InsightAlertSettings = .defaults,
         accounts: [StoredAccount] = [],
         selectedAccountID: String? = nil
     ) {
@@ -200,6 +232,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
         self.insightThresholds = insightThresholds
+        self.insightAlertSettings = insightAlertSettings
         self.accounts = accounts
         self.selectedAccountID = selectedAccountID
         normalize()
@@ -214,6 +247,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case monitorMode
         case showsMenuBarText
         case insightThresholds
+        case insightAlertSettings
         case accounts
         case selectedAccountID
     }
@@ -228,6 +262,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
         insightThresholds = try container.decodeIfPresent(InsightThresholds.self, forKey: .insightThresholds) ?? .defaults
+        insightAlertSettings = try container.decodeIfPresent(InsightAlertSettings.self, forKey: .insightAlertSettings) ?? .defaults
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
@@ -243,6 +278,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
         try container.encode(insightThresholds, forKey: .insightThresholds)
+        try container.encode(insightAlertSettings, forKey: .insightAlertSettings)
         try container.encode(accounts, forKey: .accounts)
         try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
@@ -266,6 +302,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshIntervalSeconds = min(max(refreshIntervalSeconds, 5), 300)
         insightThresholds.normalize()
+        insightAlertSettings.normalize()
         monitorMode = .user
 
         accounts = accounts.map { account in

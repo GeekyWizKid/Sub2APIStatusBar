@@ -24,6 +24,7 @@ final class MonitorViewModel: ObservableObject {
 
     private let store = ConfigStore()
     private let updateChecker = GitHubUpdateChecker()
+    private let insightNotifier = InsightNotifier()
     private var refreshTimer: Timer?
 
     init() {
@@ -359,6 +360,23 @@ final class MonitorViewModel: ObservableObject {
     private func publish(_ next: MonitorSnapshot) {
         snapshot = next
         onSnapshotChange?(next)
+        notifyIfNeeded(for: next)
+    }
+
+    private func notifyIfNeeded(for snapshot: MonitorSnapshot) {
+        guard snapshot.connected else {
+            return
+        }
+
+        let insights = UsageInsights.make(
+            currentUser: snapshot.currentUser,
+            stats: snapshot.stats,
+            subscriptionSummary: snapshot.subscriptionSummary,
+            trend: snapshot.trend,
+            models: snapshot.modelDistribution,
+            thresholds: config.insightThresholds
+        )
+        insightNotifier.handle(insights: insights, settings: config.insightAlertSettings)
     }
 
     private var currentAppVersion: String {

@@ -830,7 +830,7 @@ public struct AccountUsageInfo: Decodable, Equatable, Sendable {
     public let isBanned: Bool?
 }
 
-public enum MonitorSeverity: String, Equatable, Sendable {
+public enum MonitorSeverity: String, Codable, Equatable, Sendable {
     case healthy
     case warning
     case error

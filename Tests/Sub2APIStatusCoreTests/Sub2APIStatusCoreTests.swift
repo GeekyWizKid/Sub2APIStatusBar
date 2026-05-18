@@ -52,6 +52,42 @@ import Testing
     #expect(loaded.insightThresholds.latencyWarningMs == 18_000)
 }
 
+@Test func appConfigPersistsInsightAlertSettings() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let settings = InsightAlertSettings(
+        isEnabled: false,
+        minimumSeverity: .error,
+        cooldownMinutes: 120
+    )
+
+    try store.save(AppConfig(baseURL: "https://sub2api.example.com", insightAlertSettings: settings))
+    let loaded = store.load()
+
+    #expect(loaded.insightAlertSettings.isEnabled == false)
+    #expect(loaded.insightAlertSettings.minimumSeverity == .error)
+    #expect(loaded.insightAlertSettings.cooldownMinutes == 120)
+}
+
+@Test func insightAlertSettingsNormalizeUnsafeValues() {
+    var settings = InsightAlertSettings(
+        isEnabled: true,
+        minimumSeverity: .warning,
+        cooldownMinutes: 2
+    )
+
+    settings.normalize()
+
+    #expect(settings.cooldownMinutes == 5)
+
+    settings.cooldownMinutes = 2_000
+    settings.normalize()
+
+    #expect(settings.cooldownMinutes == 1_440)
+}
+
 @Test func insightThresholdsNormalizeUnsafeValues() {
     var thresholds = InsightThresholds(
         quotaWarningProgress: 1.4,
@@ -736,6 +772,113 @@ import Testing
     #expect(insights.items.contains { $0.kind == .performance && $0.severity == .warning })
 }
 
+@Test func insightAlertPolicyReturnsHighestPriorityActionableInsight() {
+    let insights = UsageInsights(headline: "Daily quota is at 93%.", items: [
+        UsageInsightItem(
+            kind: .trend,
+            severity: .healthy,
+            title: "Token trend",
+            value: "steady",
+            detail: "Token usage is steady."
+        ),
+        UsageInsightItem(
+            kind: .quota,
+            severity: .warning,
+            title: "Daily quota",
+            value: "93%",
+            detail: "Daily quota is at 93%."
+        ),
+    ])
+    let policy = InsightAlertPolicy(settings: .defaults)
+
+    let alert = policy.nextAlert(from: insights, lastAlertedAtByFingerprint: [:], now: Date(timeIntervalSince1970: 0))
+
+    #expect(alert?.title == "Daily quota")
+    #expect(alert?.body == "Daily quota is at 93%.")
+    #expect(alert?.severity == .warning)
+}
+
+@Test func insightAlertPolicySuppressesRepeatedAlertsInsideCooldown() {
+    let insights = UsageInsights(headline: "Balance covers less than one day at today's spend.", items: [
+        UsageInsightItem(
+            kind: .balance,
+            severity: .warning,
+            title: "Balance runway",
+            value: "0.8d",
+            detail: "Balance covers less than one day at today's spend."
+        ),
+    ])
+    let policy = InsightAlertPolicy(settings: InsightAlertSettings(isEnabled: true, minimumSeverity: .warning, cooldownMinutes: 60))
+    let firstTime = Date(timeIntervalSince1970: 1_000)
+    let firstAlert = policy.nextAlert(from: insights, lastAlertedAtByFingerprint: [:], now: firstTime)
+
+    let suppressed = policy.nextAlert(
+        from: insights,
+        lastAlertedAtByFingerprint: [firstAlert?.fingerprint ?? "": firstTime],
+        now: firstTime.addingTimeInterval(30 * 60)
+    )
+    let allowed = policy.nextAlert(
+        from: insights,
+        lastAlertedAtByFingerprint: [firstAlert?.fingerprint ?? "": firstTime],
+        now: firstTime.addingTimeInterval(61 * 60)
+    )
+
+    #expect(firstAlert != nil)
+    #expect(suppressed == nil)
+    #expect(allowed?.fingerprint == firstAlert?.fingerprint)
+}
+
+@Test func insightAlertPolicySuppressesSameSignalWhenValueChangesInsideCooldown() {
+    let firstInsights = UsageInsights(headline: "Daily quota is at 93%.", items: [
+        UsageInsightItem(
+            kind: .quota,
+            severity: .warning,
+            title: "Daily quota",
+            value: "93%",
+            detail: "Daily quota is at 93%."
+        ),
+    ])
+    let updatedInsights = UsageInsights(headline: "Daily quota is at 94%.", items: [
+        UsageInsightItem(
+            kind: .quota,
+            severity: .warning,
+            title: "Daily quota",
+            value: "94%",
+            detail: "Daily quota is at 94%."
+        ),
+    ])
+    let policy = InsightAlertPolicy(settings: InsightAlertSettings(isEnabled: true, minimumSeverity: .warning, cooldownMinutes: 60))
+    let firstTime = Date(timeIntervalSince1970: 2_000)
+    let firstAlert = policy.nextAlert(from: firstInsights, lastAlertedAtByFingerprint: [:], now: firstTime)
+
+    let suppressed = policy.nextAlert(
+        from: updatedInsights,
+        lastAlertedAtByFingerprint: [firstAlert?.fingerprint ?? "": firstTime],
+        now: firstTime.addingTimeInterval(15 * 60)
+    )
+
+    #expect(firstAlert?.fingerprint == "quota-Daily quota-warning")
+    #expect(suppressed == nil)
+}
+
+@Test func insightAlertPolicyRespectsDisabledAndMinimumSeveritySettings() {
+    let insights = UsageInsights(headline: "gpt-5.5 drives 82% of model spend.", items: [
+        UsageInsightItem(
+            kind: .modelMix,
+            severity: .warning,
+            title: "Top model",
+            value: "82%",
+            detail: "gpt-5.5 drives 82% of model spend."
+        ),
+    ])
+
+    let disabled = InsightAlertPolicy(settings: InsightAlertSettings(isEnabled: false, minimumSeverity: .warning, cooldownMinutes: 60))
+    let errorOnly = InsightAlertPolicy(settings: InsightAlertSettings(isEnabled: true, minimumSeverity: .error, cooldownMinutes: 60))
+
+    #expect(disabled.nextAlert(from: insights, lastAlertedAtByFingerprint: [:], now: Date()) == nil)
+    #expect(errorOnly.nextAlert(from: insights, lastAlertedAtByFingerprint: [:], now: Date()) == nil)
+}
+
 @Test func diagnosticReportRedactsStoredTokenValues() {
     let account = StoredAccount(
         id: "work",
@@ -751,6 +894,7 @@ import Testing
         refreshToken: "secret-refresh-token",
         refreshIntervalSeconds: 30,
         showsMenuBarText: true,
+        insightAlertSettings: InsightAlertSettings(isEnabled: true, minimumSeverity: .error, cooldownMinutes: 90),
         accounts: [account],
         selectedAccountID: account.id
     )
@@ -791,6 +935,9 @@ import Testing
     #expect(report.contains("Version: 0.1.5"))
     #expect(report.contains("Access Token: present"))
     #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("Insight Alerts: enabled"))
+    #expect(report.contains("Insight Alert Level: error"))
+    #expect(report.contains("Insight Alert Cooldown: 90m"))
     #expect(report.contains("Usage Insight: Balance covers about 3.9 days at today's spend."))
     #expect(report.contains("secret-access-token") == false)
     #expect(report.contains("secret-refresh-token") == false)
