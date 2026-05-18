@@ -198,12 +198,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px;
+      padding: 10px;
       margin-bottom: 10px;
     }
 
     .insights {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .insights-head {
@@ -231,10 +231,10 @@
     }
 
     .insight-card {
-      min-height: 72px;
+      min-height: 64px;
       display: flex;
       gap: 9px;
-      padding: 9px;
+      padding: 8px;
     }
 
     .insight-copy {
@@ -273,14 +273,14 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
 
     .card {
       display: flex;
       gap: 10px;
-      padding: 10px;
-      min-height: 66px;
+      padding: 9px;
+      min-height: 58px;
     }
 
     .glyph {
@@ -346,8 +346,8 @@
     }
 
     .section {
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      padding: 9px 12px;
+      margin-bottom: 8px;
     }
 
     .trend-head {
@@ -400,7 +400,7 @@
     }
 
     .quota-row {
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .quota-row span:first-child {
@@ -465,7 +465,7 @@
     }
 
     .trend {
-      height: 138px;
+      height: 126px;
       position: relative;
       overflow: hidden;
       border-radius: 8px;
@@ -587,6 +587,27 @@
           </div>
         </div>
 
+        <div class="trend-head">
+          <h2 class="section-title">Usage Trend</h2>
+          <div class="segmented"><span class="active">Tokens</span><span>Spend</span><span>Requests</span></div>
+        </div>
+        <div class="trend">
+          <div class="trend-summary">
+            <div><strong>126.4M</strong><span>2026-05-18</span></div>
+          </div>
+          <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
+            <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
+            <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 52 L93 60 L170 80 L246 83 L322 60 L399 20 L472 82" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 70 L93 48 L170 78 L246 83 L322 61 L399 20 L472 80" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <div class="trend-legend">
+            <span><i class="legend-dot"></i>Input</span>
+            <span><i class="legend-dot" style="background: var(--green)"></i>Output</span>
+            <span><i class="legend-dot" style="background: #06b6d4"></i>Cache Read</span>
+          </div>
+        </div>
+
         <div class="account">
           <div class="avatar">DU</div>
           <div>
@@ -628,26 +649,6 @@
           <div class="quota-row"><span>Monthly</span><div class="bar"><div class="fill" style="width:31%"></div></div><span class="amount">$612.34 / $2K</span></div>
         </div>
 
-        <div class="trend-head">
-          <h2 class="section-title">Usage Trend</h2>
-          <div class="segmented"><span class="active">Tokens</span><span>Spend</span><span>Requests</span></div>
-        </div>
-        <div class="trend">
-          <div class="trend-summary">
-            <div><strong>126.4M</strong><span>2026-05-18</span></div>
-          </div>
-          <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
-            <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
-            <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M16 52 L93 60 L170 80 L246 83 L322 60 L399 20 L472 82" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M16 70 L93 48 L170 78 L246 83 L322 61 L399 20 L472 80" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
-          <div class="trend-legend">
-            <span><i class="legend-dot"></i>Input</span>
-            <span><i class="legend-dot" style="background: var(--green)"></i>Output</span>
-            <span><i class="legend-dot" style="background: #06b6d4"></i>Cache Read</span>
-          </div>
-        </div>
       </div>
 
       <div class="footer">

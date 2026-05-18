@@ -18,6 +18,12 @@ struct MonitorPanel: View {
                         VStack(alignment: .leading, spacing: 14) {
                             statusSection
 
+                            if model.snapshot.connected {
+                                SectionBlock(title: "Usage Trend") {
+                                    UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
+                                }
+                            }
+
                             if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
                                 UpdateAvailableBanner(info: updateInfo) {
                                     model.openLatestRelease()
@@ -28,12 +34,6 @@ struct MonitorPanel: View {
 
                             if let message = model.snapshot.message, !message.isEmpty {
                                 MessageRow(message: message)
-                            }
-
-                            if model.snapshot.connected {
-                                SectionBlock(title: "Usage Trend") {
-                                    UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
-                                }
                             }
 
                             if let suggestion = model.snapshotRecoverySuggestion {
