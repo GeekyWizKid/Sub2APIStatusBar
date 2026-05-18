@@ -281,7 +281,7 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 2. 执行
    - Added a notification-purpose string to the generated `Info.plist`.
    - Extended release verification to assert that notification metadata is present in the packaged app.
-   - Ran the package and verification scripts successfully against `v0.1.5`.
+   - Ran the package and verification scripts successfully against `v0.1.6`.
 
 3. 提升
    - Release validation now covers the new proactive-alert capability, reducing the chance that a polished feature ships with incomplete macOS metadata.

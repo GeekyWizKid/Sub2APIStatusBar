@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.1.6
+
 - Added Usage Insights for quota pressure, balance runway, token trend changes, model cost concentration, and latency.
 - Added local proactive alerts for important Usage Insights, with Settings controls for severity and cooldown.
 - Added visible notification-permission status and diagnostics so blocked macOS alerts are easier to identify.

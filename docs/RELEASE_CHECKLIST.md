@@ -28,7 +28,7 @@
 
 ## Before Public Distribution
 
-- [x] Choose a public version tag, for example `v0.1.5`
+- [x] Choose a public version tag, for example `v0.1.6`
 - [ ] Build with a Developer ID Application certificate
 - [ ] Notarize the app with Apple
 - [x] Attach the release zip and checksum to a GitHub Release
@@ -40,8 +40,8 @@
 ```bash
 swift test
 swift build
-VERSION=v0.1.5 ./scripts/package-release.sh
-VERSION=v0.1.5 ./scripts/verify-release.sh
+VERSION=v0.1.6 ./scripts/package-release.sh
+VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
 
 `verify-release.sh` checks checksum integrity, zip structure, `Info.plist`, notification-purpose metadata, and code signature validity from a clean temporary extraction.
@@ -50,7 +50,7 @@ Developer ID signing:
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/package-release.sh
 ```
 
@@ -61,6 +61,6 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/notarize-release.sh
 ```
