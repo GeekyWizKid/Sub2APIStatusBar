@@ -21,84 +21,121 @@ struct SubscriptionQuotaCard: View {
                     .background((item.status == "active" ? Color.green : Color.secondary).opacity(0.14), in: Capsule())
             }
 
-            if let days = item.daysRemaining {
-                HStack {
-                    Text("Expires")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("Remaining \(days)d")
-                }
-                .font(.caption)
-            }
+            quotaSummary
 
-            QuotaProgressRow(
+            ForEach(quotaWindows, id: \.title) { window in
+                QuotaProgressRow(window: window)
+            }
+        }
+    }
+
+    private var quotaWindows: [QuotaWindowDisplay] {
+        [
+            QuotaWindowDisplay(
                 title: "Daily",
                 used: item.dailyUsedUSD,
                 limit: item.dailyLimitUSD,
                 progress: item.dailyProgress,
                 resetInSeconds: item.dailyResetInSeconds
-            )
-            QuotaProgressRow(
+            ),
+            QuotaWindowDisplay(
                 title: "Weekly",
                 used: item.weeklyUsedUSD,
                 limit: item.weeklyLimitUSD,
                 progress: item.weeklyProgress,
                 resetInSeconds: item.weeklyResetInSeconds
-            )
-            QuotaProgressRow(
+            ),
+            QuotaWindowDisplay(
                 title: "Monthly",
                 used: item.monthlyUsedUSD,
                 limit: item.monthlyLimitUSD,
                 progress: item.monthlyProgress,
                 resetInSeconds: item.monthlyResetInSeconds
-            )
+            ),
+        ]
+    }
+
+    private var quotaSummary: some View {
+        HStack(spacing: 8) {
+            Label(bestWindow.percentText, systemImage: "gauge.with.dots.needle.67percent")
+                .foregroundStyle(tint(for: bestWindow.severity))
+            Text(bestWindow.remainingText)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Spacer()
+
+            if let days = item.daysRemaining {
+                Label("\(days)d left", systemImage: "calendar.badge.clock")
+                    .foregroundStyle(days <= 3 ? .orange : .secondary)
+            }
+        }
+        .font(.caption.weight(.medium))
+    }
+
+    private var bestWindow: QuotaWindowDisplay {
+        quotaWindows.max { $0.normalizedProgress < $1.normalizedProgress } ?? quotaWindows[0]
+    }
+
+    private func tint(for severity: MonitorSeverity) -> Color {
+        switch severity {
+        case .healthy:
+            .green
+        case .warning:
+            .orange
+        case .error:
+            .red
         }
     }
 }
 
 struct QuotaProgressRow: View {
-    let title: String
-    let used: Double?
-    let limit: Double?
-    let progress: Double?
-    let resetInSeconds: Double?
-
-    private var normalizedProgress: Double {
-        min(max(progress ?? 0, 0), 1)
-    }
+    let window: QuotaWindowDisplay
 
     private var tint: Color {
-        normalizedProgress >= 0.95 ? .red : .green
+        switch window.severity {
+        case .healthy:
+            .green
+        case .warning:
+            .orange
+        case .error:
+            .red
+        }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
+            HStack(alignment: .firstTextBaseline) {
+                Text(window.title)
                     .font(.callout.weight(.semibold))
                 Spacer()
-                Text(amountText)
-                    .font(.callout.monospacedDigit())
+                Text(window.percentText)
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(tint)
+                Text(window.amountText)
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
 
-            ProgressView(value: normalizedProgress)
+            ProgressView(value: window.normalizedProgress)
                 .tint(tint)
 
-            if let resetInSeconds {
-                Text("\(StatusFormatters.duration(seconds: resetInSeconds)) until reset")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            HStack {
+                Text(window.remainingText)
+                Spacer()
+                if let resetText = window.resetText {
+                    Text(resetText)
+                }
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(window.title) quota \(window.percentText), \(window.remainingText)")
         }
-    }
-
-    private var amountText: String {
-        guard let used, let limit else {
-            return "--"
-        }
-        return "\(StatusFormatters.currency(used)) / \(StatusFormatters.currency(limit))"
     }
 }

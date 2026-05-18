@@ -661,6 +661,34 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(summary.expiringSoonCount == 1)
 }
 
+@Test func quotaWindowDisplaySummarizesRemainingResetAndSeverity() {
+    let risky = QuotaWindowDisplay(
+        title: "Daily",
+        used: 93,
+        limit: 100,
+        progress: 0.93,
+        resetInSeconds: 7_200
+    )
+    let unavailable = QuotaWindowDisplay(
+        title: "Weekly",
+        used: nil,
+        limit: nil,
+        progress: nil,
+        resetInSeconds: nil
+    )
+
+    #expect(risky.percentText == "93%")
+    #expect(risky.amountText == "$93.00 / $100.00")
+    #expect(risky.remainingText == "$7.00 left")
+    #expect(risky.resetText == "Resets in 2h")
+    #expect(risky.severity == .warning)
+    #expect(unavailable.percentText == "--")
+    #expect(unavailable.amountText == "--")
+    #expect(unavailable.remainingText == "Limit not available")
+    #expect(unavailable.resetText == nil)
+    #expect(unavailable.severity == .healthy)
+}
+
 @Test func subscriptionSummaryDecodesUsdUsageIntoProgress() throws {
     let json = """
     {

@@ -422,3 +422,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The product now has a lightweight reporting loop: see usage, understand risk, and share a safe summary without opening the web dashboard.
+
+### 2026-05-19 Cycle Z
+
+1. 审视
+   - Quota is the highest-stakes surface for users, but the card still read like raw daily/weekly/monthly telemetry.
+   - Best-in-class usage monitors make the remaining amount, reset time, and danger level visible without forcing the user to parse the numbers.
+
+2. 执行
+   - Added a tested Quota Window display model for percent, amount, remaining value, reset text, and severity.
+   - Refactored subscription quota rows to show percent, used/limit, remaining quota, reset countdown, and risk color consistently.
+   - Added a compact subscription summary row that highlights the most pressured quota window and expiration window.
+
+3. 提升
+   - The quota card now answers the user's real question faster: how close am I to the limit, how much is left, and when does it recover?

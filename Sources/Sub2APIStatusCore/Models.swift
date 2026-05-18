@@ -855,6 +855,74 @@ public struct SubscriptionSummaryItem: Decodable, Identifiable, Equatable, Senda
     }
 }
 
+public struct QuotaWindowDisplay: Equatable, Sendable {
+    public let title: String
+    public let used: Double?
+    public let limit: Double?
+    public let progress: Double?
+    public let resetInSeconds: Double?
+
+    public init(
+        title: String,
+        used: Double?,
+        limit: Double?,
+        progress: Double?,
+        resetInSeconds: Double?
+    ) {
+        self.title = title
+        self.used = used
+        self.limit = limit
+        self.progress = progress
+        self.resetInSeconds = resetInSeconds
+    }
+
+    public var normalizedProgress: Double {
+        min(max(progress ?? ratioProgress ?? 0, 0), 1)
+    }
+
+    public var percentText: String {
+        guard progress != nil || ratioProgress != nil else {
+            return "--"
+        }
+        return StatusFormatters.percent(normalizedProgress)
+    }
+
+    public var amountText: String {
+        guard let used, let limit else {
+            return "--"
+        }
+        return "\(StatusFormatters.currency(used)) / \(StatusFormatters.currency(limit))"
+    }
+
+    public var remainingText: String {
+        guard let used, let limit else {
+            return "Limit not available"
+        }
+        return "\(StatusFormatters.currency(max(limit - used, 0))) left"
+    }
+
+    public var resetText: String? {
+        resetInSeconds.map { "Resets in \(StatusFormatters.duration(seconds: $0))" }
+    }
+
+    public var severity: MonitorSeverity {
+        if normalizedProgress >= 0.95 {
+            return .error
+        }
+        if normalizedProgress >= 0.8 {
+            return .warning
+        }
+        return .healthy
+    }
+
+    private var ratioProgress: Double? {
+        guard let used, let limit, limit > 0 else {
+            return nil
+        }
+        return used / limit
+    }
+}
+
 public struct UsageProgress: Decodable, Equatable, Sendable {
     public let used: Double?
     public let limit: Double?
