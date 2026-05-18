@@ -14,6 +14,7 @@
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
+- [x] GitHub Actions preview-asset verification
 - [x] Product-oriented README
 - [x] Changelog
 - [x] Unit tests for config, API decoding, quota progress, menu bar text, and status labels

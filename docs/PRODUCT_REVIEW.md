@@ -323,3 +323,16 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Product marketing assets are now reproducible from the repository instead of being a fragile manual artifact.
+
+### 2026-05-18 Cycle S
+
+1. 审视
+   - CI still packaged non-tag builds as `v0.1.5` and did not verify the newly reproducible preview asset, so release automation had drifted from the product docs.
+
+2. 执行
+   - Updated GitHub Actions to use `v0.1.6` for non-tag package builds.
+   - Added a CI preview-generation step that fails when `docs/assets/product-preview.png` is not reproducible.
+   - Updated the release checklist to mark preview-asset verification as automated.
+
+3. 提升
+   - The repository now treats marketing assets as part of the release surface, not a side artifact outside automation.
