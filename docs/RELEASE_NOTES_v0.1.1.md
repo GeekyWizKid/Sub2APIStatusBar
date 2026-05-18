@@ -1,11 +1,10 @@
 # Sub2API Status Bar v0.1.1
 
-This release tightens the app for real user distribution. Login tokens now live in the macOS Keychain, older JSON-stored tokens migrate automatically, and Settings includes a clear disconnect path for switching accounts or removing saved credentials.
+This release tightens the app for real user distribution and adds a clear disconnect path for switching accounts or removing saved credentials.
 
 ## What's Improved
 
-- Keychain-backed auth and refresh token storage.
-- Automatic migration and scrubbing for older local config files.
+- Credential storage iteration, superseded by v0.1.4 local config storage.
 - Disconnect action in Settings.
 - Account identity card in the dashboard.
 - Model distribution progress bars.

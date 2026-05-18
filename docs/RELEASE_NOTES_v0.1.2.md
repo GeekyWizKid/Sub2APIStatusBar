@@ -1,12 +1,12 @@
 # Sub2API Status Bar v0.1.2
 
-This release adds automatic token renewal on top of the v0.1.1 hardening work. If the access token expires and a refresh token is available, the app renews credentials, saves them back to Keychain, and retries the user dashboard refresh.
+This release adds automatic token renewal on top of the v0.1.1 hardening work. If the access token expires and a refresh token is available, the app renews credentials, saves them back to local config storage, and retries the user dashboard refresh.
 
 ## What's Improved
 
 - Automatic access-token refresh after `401` responses.
 - Dashboard retry after successful token renewal.
-- Keychain-backed auth and refresh token storage.
+- Local auth and refresh token storage.
 - Automatic migration and scrubbing for older local config files.
 - Disconnect action in Settings.
 - Account identity card in the dashboard.

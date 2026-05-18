@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.4
+
+- Removed macOS Keychain token storage.
+- Saved auth and refresh tokens in the local Application Support config file.
+- Simplified config loading so login state is managed from one local JSON file.
+
 ## v0.1.3
 
 - Added GitHub Releases update checking.
@@ -15,7 +21,7 @@
 
 ## v0.1.1
 
-- Moved login tokens to the macOS Keychain with automatic migration from older config files.
+- Added a credential-storage iteration that was superseded by v0.1.4 local config storage.
 - Added a settings action to disconnect and clear saved credentials.
 - Added account identity display and model-usage progress bars.
 - Removed remaining admin-mode client surface from the user-focused app.

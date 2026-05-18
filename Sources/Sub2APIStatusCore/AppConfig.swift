@@ -58,17 +58,23 @@ public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
     public var name: String
     public var email: String
     public var baseURL: String
+    public var authToken: String
+    public var refreshToken: String
 
     public init(
         id: String = UUID().uuidString,
         name: String = "",
         email: String = "",
-        baseURL: String
+        baseURL: String,
+        authToken: String = "",
+        refreshToken: String = ""
     ) {
         self.id = id
         self.name = name
         self.email = email
         self.baseURL = baseURL
+        self.authToken = authToken
+        self.refreshToken = refreshToken
         normalize()
     }
 
@@ -81,6 +87,8 @@ public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
         name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         baseURL = AppConfig.normalizedBaseURL(baseURL)
+        authToken = authToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     public var displayName: String {
@@ -98,6 +106,10 @@ public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
             return email
         }
         return baseURL
+    }
+
+    public var storedTokens: StoredAuthTokens {
+        StoredAuthTokens(authToken: authToken, refreshToken: refreshToken)
     }
 }
 
@@ -164,6 +176,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(baseURL, forKey: .baseURL)
+        try container.encode(authToken, forKey: .authToken)
+        try container.encode(refreshToken, forKey: .refreshToken)
         try container.encode(refreshIntervalSeconds, forKey: .refreshIntervalSeconds)
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
@@ -268,12 +282,18 @@ public struct AppConfig: Codable, Equatable, Sendable {
             accounts[index].name = accountName.isEmpty ? accounts[index].name : accountName
             accounts[index].email = accountEmail
             accounts[index].baseURL = accountBaseURL
+            if let tokens {
+                accounts[index].authToken = tokens.authToken
+                accounts[index].refreshToken = tokens.refreshToken
+            }
             accounts[index].normalize()
         } else {
             var account = StoredAccount(
                 name: accountName.isEmpty ? accountEmail : accountName,
                 email: accountEmail,
-                baseURL: accountBaseURL
+                baseURL: accountBaseURL,
+                authToken: tokens?.authToken ?? "",
+                refreshToken: tokens?.refreshToken ?? ""
             )
             account.normalize()
             accounts.append(account)
@@ -331,34 +351,10 @@ public struct StoredAuthTokens: Equatable, Sendable {
     }
 }
 
-public protocol TokenStore: Sendable {
-    func loadTokens() -> StoredAuthTokens
-    func saveTokens(_ tokens: StoredAuthTokens) throws
-    func loadTokens(for accountID: String) -> StoredAuthTokens
-    func saveTokens(_ tokens: StoredAuthTokens, for accountID: String) throws
-    func deleteTokens(for accountID: String) throws
-}
-
-public extension TokenStore {
-    func loadTokens(for _: String) -> StoredAuthTokens {
-        loadTokens()
-    }
-
-    func saveTokens(_ tokens: StoredAuthTokens, for _: String) throws {
-        try saveTokens(tokens)
-    }
-
-    func deleteTokens(for accountID: String) throws {
-        try saveTokens(StoredAuthTokens(), for: accountID)
-    }
-}
-
 public final class ConfigStore: Sendable {
     private let configURL: URL
-    private let tokenStore: any TokenStore
 
-    public init(configURL: URL? = nil, tokenStore: any TokenStore = KeychainTokenStore()) {
-        self.tokenStore = tokenStore
+    public init(configURL: URL? = nil) {
         if let configURL {
             self.configURL = configURL
             return
@@ -372,59 +368,28 @@ public final class ConfigStore: Sendable {
     }
 
     public func load() -> AppConfig {
-        let legacyKeychainTokens = tokenStore.loadTokens()
         guard let data = try? Data(contentsOf: configURL),
               var decoded = try? JSONDecoder.sub2api.decode(AppConfig.self, from: data) else {
             var defaults = AppConfig.defaults()
             let envTokens = StoredAuthTokens(authToken: defaults.authToken, refreshToken: defaults.refreshToken)
-            if !legacyKeychainTokens.isEmpty {
-                let accountID = defaults.upsertAccount(name: "Default Account", baseURL: defaults.baseURL, tokens: legacyKeychainTokens)
-                do {
-                    try tokenStore.saveTokens(legacyKeychainTokens, for: accountID)
-                    try tokenStore.saveTokens(StoredAuthTokens())
-                    try writeConfig(defaults)
-                } catch {
-                    defaults.authToken = legacyKeychainTokens.authToken
-                    defaults.refreshToken = legacyKeychainTokens.refreshToken
-                }
-            } else if !envTokens.isEmpty {
+            if !envTokens.isEmpty {
                 defaults.upsertAccount(name: "Environment Account", baseURL: defaults.baseURL, tokens: envTokens)
             }
-            defaults.normalize()
             return defaults
         }
 
-        let legacyTokens = StoredAuthTokens(authToken: decoded.authToken, refreshToken: decoded.refreshToken)
+        let topLevelTokens = StoredAuthTokens(authToken: decoded.authToken, refreshToken: decoded.refreshToken)
         decoded.normalize()
-        let migrationTokens = Self.mergedTokens(primary: legacyKeychainTokens, fallback: legacyTokens)
 
-        if decoded.accounts.isEmpty, !migrationTokens.isEmpty {
-            let accountID = decoded.upsertAccount(name: "Default Account", baseURL: decoded.baseURL, tokens: migrationTokens)
-            do {
-                try tokenStore.saveTokens(migrationTokens, for: accountID)
-                try tokenStore.saveTokens(StoredAuthTokens())
-                try writeConfig(decoded)
-            } catch {
-                decoded.authToken = migrationTokens.authToken
-                decoded.refreshToken = migrationTokens.refreshToken
-            }
+        if decoded.accounts.isEmpty, !topLevelTokens.isEmpty {
+            decoded.upsertAccount(name: "Default Account", baseURL: decoded.baseURL, tokens: topLevelTokens)
             decoded.normalize()
             return decoded
         }
 
         if let selectedAccountID = decoded.selectedAccountID {
-            let accountTokens = tokenStore.loadTokens(for: selectedAccountID)
-            let runtimeTokens = Self.mergedTokens(primary: accountTokens, fallback: migrationTokens)
-            decoded.selectAccount(id: selectedAccountID, tokens: runtimeTokens)
-
-            if accountTokens.isEmpty, !runtimeTokens.isEmpty {
-                try? tokenStore.saveTokens(runtimeTokens, for: selectedAccountID)
-                try? tokenStore.saveTokens(StoredAuthTokens())
-            }
-
-            if !legacyTokens.isEmpty {
-                try? writeConfig(decoded)
-            }
+            let tokens = loadTokens(in: decoded, for: selectedAccountID)
+            decoded.selectAccount(id: selectedAccountID, tokens: tokens)
         } else {
             decoded.clearAuthTokens()
         }
@@ -443,18 +408,23 @@ public final class ConfigStore: Sendable {
         }
 
         if let accountID = normalized.selectedAccountID {
-            try tokenStore.saveTokens(tokens, for: accountID)
+            saveTokens(tokens, in: &normalized, for: accountID)
         }
-        try tokenStore.saveTokens(StoredAuthTokens())
         try writeConfig(normalized)
     }
 
     public func loadTokens(for accountID: String) -> StoredAuthTokens {
-        tokenStore.loadTokens(for: accountID)
+        let config = load()
+        return loadTokens(in: config, for: accountID)
     }
 
     public func deleteTokens(for accountID: String) throws {
-        try tokenStore.deleteTokens(for: accountID)
+        var config = load()
+        saveTokens(StoredAuthTokens(), in: &config, for: accountID)
+        if config.selectedAccountID == accountID {
+            config.clearAuthTokens()
+        }
+        try writeConfig(config)
     }
 
     private func writeConfig(_ config: AppConfig) throws {
@@ -466,10 +436,16 @@ public final class ConfigStore: Sendable {
         try encoder.encode(normalized).write(to: configURL, options: .atomic)
     }
 
-    private static func mergedTokens(primary: StoredAuthTokens, fallback: StoredAuthTokens) -> StoredAuthTokens {
-        StoredAuthTokens(
-            authToken: primary.authToken.isEmpty ? fallback.authToken : primary.authToken,
-            refreshToken: primary.refreshToken.isEmpty ? fallback.refreshToken : primary.refreshToken
-        )
+    private func loadTokens(in config: AppConfig, for accountID: String) -> StoredAuthTokens {
+        config.accounts.first { $0.id == accountID }?.storedTokens ?? StoredAuthTokens()
+    }
+
+    private func saveTokens(_ tokens: StoredAuthTokens, in config: inout AppConfig, for accountID: String) {
+        guard let index = config.accounts.firstIndex(where: { $0.id == accountID }) else {
+            return
+        }
+        config.accounts[index].authToken = tokens.authToken
+        config.accounts[index].refreshToken = tokens.refreshToken
+        config.accounts[index].normalize()
     }
 }

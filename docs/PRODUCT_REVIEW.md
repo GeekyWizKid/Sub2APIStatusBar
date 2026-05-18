@@ -30,7 +30,7 @@
 5. Reliability
    - Added tests for user dashboard payloads, balance decoding, quota progress, and status labels.
    - Preserved local config compatibility and user-only mode migration.
-   - Moved login tokens into macOS Keychain and migrates older JSON-stored tokens on load.
+   - Stores login tokens in the local Application Support config file, including per-account tokens for account switching.
    - Added a settings-level disconnect action for account switching and credential removal.
 
 6. Documentation
@@ -55,9 +55,9 @@ The only meaningful blockers for public distribution are external materials and 
    - Found the original Swift PCH error can recur after renaming or moving the project because `.build` keeps old module-cache paths.
 
 2. 执行
-   - Added Keychain token storage with automatic migration from legacy JSON tokens.
+   - Added an initial credential-storage hardening pass that was later superseded by local JSON storage in Cycle I.
    - Added a build-cache cleanup script and README troubleshooting instructions.
-   - Added focused tests for token scrubbing and legacy migration.
+   - Added focused tests for credential storage behavior.
 
 3. 提升
    - Next quality bar: capture product screenshots/demo GIF, add notarization when Apple credentials exist, and keep polishing first-run account switching.
@@ -65,7 +65,7 @@ The only meaningful blockers for public distribution are external materials and 
 ### 2026-04-28 Cycle B
 
 1. 审视
-   - Keychain storage improves privacy, but also makes explicit account management more important.
+   - Safer credential storage also makes explicit account management more important.
 
 2. 执行
    - Added `Disconnect` in Settings to clear saved credentials and return to the login panel.
@@ -132,7 +132,7 @@ The only meaningful blockers for public distribution are external materials and 
 
 2. 执行
    - Added automatic token refresh on `401` responses.
-   - Saved renewed credentials back to Keychain and retried the dashboard refresh after renewal.
+   - Saved renewed credentials back to local config storage and retried the dashboard refresh after renewal.
    - Added test coverage for unauthorized-response classification.
 
 3. 提升
@@ -150,3 +150,17 @@ The only meaningful blockers for public distribution are external materials and 
 
 3. 提升
    - Once the app is notarized and the release is published, older builds can guide users to the newest download without requiring them to watch GitHub manually.
+
+### 2026-05-18 Cycle I
+
+1. 审视
+   - The app should not rely on macOS Keychain for this release.
+   - The latest upstream added multi-account switching, so token storage still needs to support account-specific credentials.
+
+2. 执行
+   - Removed the Keychain runtime dependency.
+   - Stored auth and refresh tokens directly in `config.json`, including per-account tokens.
+   - Added the MIT license.
+
+3. 提升
+   - The persistence model is now simple and inspectable: one local config file owns server URLs, account list, preferences, and credentials.

@@ -2,35 +2,6 @@ import Foundation
 import Testing
 @testable import Sub2APIStatusCore
 
-final class MemoryTokenStore: TokenStore, @unchecked Sendable {
-    var tokens = StoredAuthTokens()
-    var saves: [StoredAuthTokens] = []
-    var accountTokens: [String: StoredAuthTokens] = [:]
-    var accountSaves: [String: [StoredAuthTokens]] = [:]
-
-    func loadTokens() -> StoredAuthTokens {
-        tokens
-    }
-
-    func saveTokens(_ tokens: StoredAuthTokens) throws {
-        self.tokens = tokens
-        saves.append(tokens)
-    }
-
-    func loadTokens(for accountID: String) -> StoredAuthTokens {
-        accountTokens[accountID] ?? StoredAuthTokens()
-    }
-
-    func saveTokens(_ tokens: StoredAuthTokens, for accountID: String) throws {
-        accountTokens[accountID] = tokens
-        accountSaves[accountID, default: []].append(tokens)
-    }
-
-    func deleteTokens(for accountID: String) throws {
-        accountTokens[accountID] = StoredAuthTokens()
-    }
-}
-
 @Test func appConfigNormalizesBaseURLAndRefreshInterval() {
     var config = AppConfig(baseURL: " http://127.0.0.1:8080/api/v1/// ", authToken: " token ", refreshIntervalSeconds: 1, language: .zhHans, monitorMode: .user)
 
@@ -57,12 +28,11 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     #expect(loaded.showsMenuBarText == true)
 }
 
-@Test func configStoreSavesTokensOutsideConfigJSON() throws {
+@Test func configStoreSavesTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
         .appendingPathComponent("config.json")
-    let tokenStore = MemoryTokenStore()
-    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+    let store = ConfigStore(configURL: configURL)
     let config = AppConfig(
         baseURL: "http://127.0.0.1:8080",
         authToken: "access-token",
@@ -73,18 +43,17 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     try store.save(config)
 
     let rawJSON = try String(contentsOf: configURL, encoding: .utf8)
-    #expect(!rawJSON.contains("access-token"))
-    #expect(!rawJSON.contains("refresh-token"))
-    #expect(!rawJSON.contains("authToken"))
-    #expect(!rawJSON.contains("refreshToken"))
-    let accountID = try #require(tokenStore.accountTokens.first?.key)
-    #expect(tokenStore.accountTokens[accountID]?.authToken == "access-token")
-    #expect(tokenStore.accountTokens[accountID]?.refreshToken == "refresh-token")
-    #expect(tokenStore.tokens.isEmpty)
+    #expect(rawJSON.contains("access-token"))
+    #expect(rawJSON.contains("refresh-token"))
+    #expect(rawJSON.contains("authToken"))
+    #expect(rawJSON.contains("refreshToken"))
     #expect(store.load().authToken == "access-token")
+    #expect(store.load().refreshToken == "refresh-token")
+    #expect(store.load().accounts.first?.authToken == "access-token")
+    #expect(store.load().accounts.first?.refreshToken == "refresh-token")
 }
 
-@Test func configStoreMigratesLegacyJSONTokensOutOfConfigFile() throws {
+@Test func configStoreLoadsLegacyJSONTokensIntoDefaultAccount() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
         .appendingPathComponent("config.json")
@@ -100,39 +69,39 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
       "showsMenuBarText" : true
     }
     """.write(to: configURL, atomically: true, encoding: .utf8)
-    let tokenStore = MemoryTokenStore()
-    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+    let store = ConfigStore(configURL: configURL)
 
     let loaded = store.load()
 
     #expect(loaded.authToken == "legacy-access")
     #expect(loaded.refreshToken == "legacy-refresh")
-    let accountID = try #require(loaded.selectedAccountID)
-    #expect(tokenStore.accountTokens[accountID]?.authToken == "legacy-access")
-    #expect(tokenStore.accountTokens[accountID]?.refreshToken == "legacy-refresh")
-    #expect(tokenStore.tokens.isEmpty)
-
-    let migratedJSON = try String(contentsOf: configURL, encoding: .utf8)
-    #expect(!migratedJSON.contains("legacy-access"))
-    #expect(!migratedJSON.contains("legacy-refresh"))
-    #expect(!migratedJSON.contains("authToken"))
-    #expect(!migratedJSON.contains("refreshToken"))
     #expect(loaded.accounts.count == 1)
     #expect(loaded.accounts.first?.baseURL == "http://127.0.0.1:8080")
+    #expect(loaded.accounts.first?.authToken == "legacy-access")
+    #expect(loaded.accounts.first?.refreshToken == "legacy-refresh")
 }
 
-@Test func configStoreSwitchesBetweenAccountTokens() throws {
+@Test func configStoreSwitchesBetweenAccountTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
         .appendingPathComponent("config.json")
-    let first = StoredAccount(id: "first", name: "First", email: "first@example.com", baseURL: "http://one.example.com")
-    let second = StoredAccount(id: "second", name: "Second", email: "second@example.com", baseURL: "http://two.example.com/api/v1")
-    let tokenStore = MemoryTokenStore()
-    tokenStore.accountTokens = [
-        first.id: StoredAuthTokens(authToken: "first-access", refreshToken: "first-refresh"),
-        second.id: StoredAuthTokens(authToken: "second-access", refreshToken: "second-refresh"),
-    ]
-    let store = ConfigStore(configURL: configURL, tokenStore: tokenStore)
+    let first = StoredAccount(
+        id: "first",
+        name: "First",
+        email: "first@example.com",
+        baseURL: "http://one.example.com",
+        authToken: "first-access",
+        refreshToken: "first-refresh"
+    )
+    let second = StoredAccount(
+        id: "second",
+        name: "Second",
+        email: "second@example.com",
+        baseURL: "http://two.example.com/api/v1",
+        authToken: "second-access",
+        refreshToken: "second-refresh"
+    )
+    let store = ConfigStore(configURL: configURL)
     try store.save(AppConfig(
         baseURL: first.baseURL,
         authToken: "first-access",
@@ -147,7 +116,7 @@ final class MemoryTokenStore: TokenStore, @unchecked Sendable {
     #expect(loaded.baseURL == "http://one.example.com")
     #expect(loaded.authToken == "first-access")
 
-    loaded.selectAccount(id: second.id, tokens: tokenStore.loadTokens(for: second.id))
+    loaded.selectAccount(id: second.id, tokens: store.loadTokens(for: second.id))
     try store.save(loaded)
     let switched = store.load()
 

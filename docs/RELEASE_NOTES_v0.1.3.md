@@ -9,7 +9,7 @@ This release adds an update detection path. The app checks GitHub Releases in th
 - Manual Settings > Updates check.
 - In-app update banner with a link to the latest release.
 - Semantic version comparison for tags like `v0.1.3`.
-- Existing v0.1.2 reliability work: automatic token renewal, Keychain storage, disconnect action, user-only client surface, release verification, and notarization scripts.
+- Existing v0.1.2 reliability work: automatic token renewal, disconnect action, user-only client surface, release verification, and notarization scripts.
 
 ## Verify The Download
 
