@@ -310,3 +310,16 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - Users can now see whether today's workload is merely larger or actually more expensive per token, which makes the app more useful for model-mix decisions.
+
+### 2026-05-18 Cycle R
+
+1. 审视
+   - The README preview image existed, but the repo did not contain a reliable way to regenerate it after visual product changes.
+
+2. 执行
+   - Added a WebKit-based preview capture script that renders `docs/assets/product-preview.html` into `docs/assets/product-preview.png`.
+   - Added release tests that assert the preview HTML and 1200x820 PNG asset are present.
+   - Added the preview capture step to development and release documentation.
+
+3. 提升
+   - Product marketing assets are now reproducible from the repository instead of being a fragile manual artifact.

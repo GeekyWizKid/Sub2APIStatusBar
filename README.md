@@ -149,11 +149,18 @@ GitHub only exposes published releases through the public latest-release API. Dr
 ```bash
 swift test
 swift build
+./scripts/capture-product-preview.swift
 ./scripts/package-release.sh
 ./scripts/verify-release.sh
 ```
 
 GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
+
+Regenerate the README product preview after visual changes:
+
+```bash
+./scripts/capture-product-preview.swift
+```
 
 ## Troubleshooting
 

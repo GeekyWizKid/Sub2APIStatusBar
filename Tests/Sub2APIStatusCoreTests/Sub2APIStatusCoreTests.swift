@@ -2,6 +2,22 @@ import Foundation
 import Testing
 @testable import Sub2APIStatusCore
 
+@Test func productPreviewAssetsAreReleaseReady() throws {
+    let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let htmlURL = root.appending(path: "docs/assets/product-preview.html")
+    let pngURL = root.appending(path: "docs/assets/product-preview.png")
+
+    #expect(FileManager.default.fileExists(atPath: htmlURL.path))
+    #expect(FileManager.default.fileExists(atPath: pngURL.path))
+
+    let png = try Data(contentsOf: pngURL)
+    #expect(png.count > 10_000)
+    #expect(png[0..<8].elementsEqual([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+    let size = try #require(pngSize(png))
+    #expect(size.width == 1_200)
+    #expect(size.height == 820)
+}
+
 @Test func appConfigNormalizesBaseURLAndRefreshInterval() {
     var config = AppConfig(baseURL: " http://127.0.0.1:8080/api/v1/// ", authToken: " token ", refreshIntervalSeconds: 1, language: .zhHans, monitorMode: .user)
 
@@ -12,6 +28,16 @@ import Testing
     #expect(config.refreshIntervalSeconds == 5)
     #expect(config.monitorMode == .user)
     #expect(config.showsMenuBarText == false)
+}
+
+private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
+    guard data.count >= 24 else {
+        return nil
+    }
+
+    let width = data[16..<20].reduce(0) { ($0 << 8) + Int($1) }
+    let height = data[20..<24].reduce(0) { ($0 << 8) + Int($1) }
+    return (width, height)
 }
 
 @Test func appConfigPersistsMenuBarTextPreference() throws {

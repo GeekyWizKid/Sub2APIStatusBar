@@ -33,6 +33,7 @@
 - [ ] Notarize the app with Apple
 - [x] Attach the release zip and checksum to a GitHub Release
 - [x] Add product screenshots or a short demo GIF to the README
+- [x] Reproducible product preview capture script
 - [x] Decide whether the repository should stay private or become public
 
 ## Release Commands
@@ -40,6 +41,7 @@
 ```bash
 swift test
 swift build
+./scripts/capture-product-preview.swift
 VERSION=v0.1.6 ./scripts/package-release.sh
 VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
