@@ -350,6 +350,38 @@
       margin-bottom: 10px;
     }
 
+    .trend-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .trend-head .section-title {
+      margin: 0;
+    }
+
+    .segmented {
+      margin-left: auto;
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .segmented span {
+      padding: 4px 7px;
+      border-radius: 6px;
+    }
+
+    .segmented .active {
+      background: rgba(56, 189, 248, 0.22);
+      color: #e0f2fe;
+    }
+
     .quota-head,
     .quota-row,
     .model-row {
@@ -433,13 +465,35 @@
     }
 
     .trend {
-      height: 118px;
+      height: 138px;
       position: relative;
       overflow: hidden;
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.06);
       margin-bottom: 6px;
+    }
+
+    .trend-summary {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: flex-start;
+      z-index: 2;
+    }
+
+    .trend-summary strong {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .trend-summary span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
     }
 
     .trend svg {
@@ -574,8 +628,14 @@
           <div class="quota-row"><span>Monthly</span><div class="bar"><div class="fill" style="width:31%"></div></div><span class="amount">$612.34 / $2K</span></div>
         </div>
 
-        <h2 class="section-title">Token Trend</h2>
+        <div class="trend-head">
+          <h2 class="section-title">Usage Trend</h2>
+          <div class="segmented"><span class="active">Tokens</span><span>Spend</span><span>Requests</span></div>
+        </div>
         <div class="trend">
+          <div class="trend-summary">
+            <div><strong>126.4M</strong><span>2026-05-18</span></div>
+          </div>
           <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
             <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
             <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>

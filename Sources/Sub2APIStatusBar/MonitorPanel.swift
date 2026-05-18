@@ -30,6 +30,12 @@ struct MonitorPanel: View {
                                 MessageRow(message: message)
                             }
 
+                            if model.snapshot.connected {
+                                SectionBlock(title: "Usage Trend") {
+                                    UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
+                                }
+                            }
+
                             if let suggestion = model.snapshotRecoverySuggestion {
                                 RecoverySuggestionCard(suggestion: suggestion) { action in
                                     model.performRecoveryAction(action)
@@ -156,10 +162,6 @@ struct MonitorPanel: View {
 
             if let models = model.snapshot.modelDistribution, !models.isEmpty {
                 ModelDistributionView(models: models)
-            }
-
-            SectionBlock(title: "Token Trend") {
-                TokenTrendSection(state: TokenTrendDisplayState.make(points: model.snapshot.trend))
             }
         }
     }

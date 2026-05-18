@@ -336,3 +336,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The repository now treats marketing assets as part of the release surface, not a side artifact outside automation.
+
+### 2026-05-18 Cycle T
+
+1. 审视
+   - Competitive dashboards make trend exploration prominent, while the app still buried a token-only trend near the bottom of the popover.
+   - A token-only chart also missed the user's more important question: whether cost or request volume changed, not just token volume.
+
+2. 执行
+   - Replaced the token-only display state with a Usage Trend model that supports Tokens, Spend, and Requests modes.
+   - Moved Usage Trend into the first refreshable dashboard area so it remains visible even when lower cards push content down.
+   - Updated tests, README, and product-preview HTML to reflect the broader trend feature.
+
+3. 提升
+   - Trend is now a core product surface instead of a trailing chart: the user can compare volume, money, and request activity without opening the web dashboard.

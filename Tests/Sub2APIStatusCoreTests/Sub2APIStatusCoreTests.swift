@@ -528,7 +528,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(models.models.first?.standardCost == 222.61852)
 }
 
-@Test func tokenTrendDisplayShowsChartOnlyWhenEnoughPointsExist() {
+@Test func usageTrendDisplayShowsChartOnlyWhenEnoughPointsExist() {
     let first = TrendDataPoint(
         date: "2026-05-17",
         requests: 10,
@@ -552,10 +552,38 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
         actualCost: 0.2
     )
 
-    #expect(TokenTrendDisplayState.make(points: nil) == .unavailable("Trend data is not available yet."))
-    #expect(TokenTrendDisplayState.make(points: []) == .unavailable("Trend data is not available yet."))
-    #expect(TokenTrendDisplayState.make(points: [first]) == .unavailable("Trend data is not available yet."))
-    #expect(TokenTrendDisplayState.make(points: [first, second]) == .chart([first, second]))
+    #expect(UsageTrendDisplayState.make(points: nil) == .unavailable("Trend data is not available yet."))
+    #expect(UsageTrendDisplayState.make(points: []) == .unavailable("Trend data is not available yet."))
+    #expect(UsageTrendDisplayState.make(points: [first]) == .unavailable("Trend data is not available yet."))
+    #expect(UsageTrendDisplayState.make(points: [first, second]) == .chart([first, second]))
+}
+
+@Test func usageTrendMetricBuildsModeSpecificSeriesAndSummaries() throws {
+    let points = [
+        TrendDataPoint(date: "2026-05-16", requests: 8, inputTokens: 100, outputTokens: 40, cacheReadTokens: 60, totalTokens: 200, actualCost: 0.12),
+        TrendDataPoint(date: "2026-05-17", requests: 13, inputTokens: 180, outputTokens: 50, cacheReadTokens: 70, totalTokens: 300, actualCost: 0.18),
+        TrendDataPoint(date: "2026-05-18", requests: 21, inputTokens: 260, outputTokens: 80, cacheReadTokens: 160, totalTokens: 500, actualCost: 0.33),
+    ]
+
+    let tokens = UsageTrendMetric(mode: .tokens, points: points)
+    let spend = UsageTrendMetric(mode: .spend, points: points)
+    let requests = UsageTrendMetric(mode: .requests, points: points)
+
+    #expect(tokens.title == "Tokens")
+    #expect(tokens.latestValue == "500")
+    #expect(tokens.series.map(\.label) == ["Input", "Output", "Cache Read"])
+    #expect(tokens.series.map(\.values.last) == [260, 80, 160])
+    #expect(tokens.maximum == 260)
+
+    #expect(spend.title == "Spend")
+    #expect(spend.latestValue == "$0.3300")
+    #expect(spend.series.map(\.label) == ["Actual Cost"])
+    #expect(spend.series.first?.values == [0.12, 0.18, 0.33])
+
+    #expect(requests.title == "Requests")
+    #expect(requests.latestValue == "21")
+    #expect(requests.series.map(\.label) == ["Requests"])
+    #expect(requests.latestDate == "2026-05-18")
 }
 
 @Test func costPerMillionTokensFormatsUnitEconomics() {

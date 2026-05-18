@@ -458,15 +458,75 @@ public struct DashboardModelsResponse: Decodable, Equatable, Sendable {
     }
 }
 
-public enum TokenTrendDisplayState: Equatable, Sendable {
+public enum UsageTrendDisplayState: Equatable, Sendable {
     case chart([TrendDataPoint])
     case unavailable(String)
 
-    public static func make(points: [TrendDataPoint]?) -> TokenTrendDisplayState {
+    public static func make(points: [TrendDataPoint]?) -> UsageTrendDisplayState {
         guard let points, points.count > 1 else {
             return .unavailable("Trend data is not available yet.")
         }
         return .chart(points)
+    }
+}
+
+public enum UsageTrendMode: String, CaseIterable, Identifiable, Sendable {
+    case tokens
+    case spend
+    case requests
+
+    public var id: String { rawValue }
+}
+
+public struct UsageTrendSeries: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let label: String
+    public let values: [Double]
+
+    public init(label: String, values: [Double]) {
+        self.id = label
+        self.label = label
+        self.values = values
+    }
+}
+
+public struct UsageTrendMetric: Equatable, Sendable {
+    public let mode: UsageTrendMode
+    public let title: String
+    public let latestValue: String
+    public let latestDate: String
+    public let series: [UsageTrendSeries]
+
+    public init(mode: UsageTrendMode, points: [TrendDataPoint]) {
+        self.mode = mode
+        latestDate = points.last?.date ?? ""
+
+        switch mode {
+        case .tokens:
+            title = "Tokens"
+            latestValue = StatusFormatters.compactNumber(points.last?.totalTokens ?? 0)
+            series = [
+                UsageTrendSeries(label: "Input", values: points.map { Double($0.inputTokens) }),
+                UsageTrendSeries(label: "Output", values: points.map { Double($0.outputTokens) }),
+                UsageTrendSeries(label: "Cache Read", values: points.map { Double($0.cacheReadTokens) }),
+            ]
+        case .spend:
+            title = "Spend"
+            latestValue = StatusFormatters.preciseCurrency(points.last?.actualCost ?? 0)
+            series = [
+                UsageTrendSeries(label: "Actual Cost", values: points.map(\.actualCost)),
+            ]
+        case .requests:
+            title = "Requests"
+            latestValue = StatusFormatters.menuBarCount(points.last?.requests ?? 0)
+            series = [
+                UsageTrendSeries(label: "Requests", values: points.map { Double($0.requests) }),
+            ]
+        }
+    }
+
+    public var maximum: Double {
+        max(series.flatMap(\.values).max() ?? 0, 1)
     }
 }
 

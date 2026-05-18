@@ -45,14 +45,24 @@ struct ModelDistributionView: View {
     }
 }
 
-struct TokenTrendSection: View {
-    let state: TokenTrendDisplayState
+struct UsageTrendSection: View {
+    let state: UsageTrendDisplayState
+    @State private var selectedMode: UsageTrendMode = .tokens
 
     var body: some View {
         switch state {
         case let .chart(points):
-            TokenTrendView(points: points)
-                .frame(height: 150)
+            VStack(alignment: .leading, spacing: 10) {
+                Picker("", selection: $selectedMode) {
+                    ForEach(UsageTrendMode.allCases) { mode in
+                        Text(UsageTrendMetric(mode: mode, points: points).title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                UsageTrendView(metric: UsageTrendMetric(mode: selectedMode, points: points))
+                    .frame(height: 172)
+            }
         case let .unavailable(message):
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
@@ -68,38 +78,52 @@ struct TokenTrendSection: View {
     }
 }
 
-struct TokenTrendView: View {
-    let points: [TrendDataPoint]
+struct UsageTrendView: View {
+    let metric: UsageTrendMetric
+
+    private let palette: [Color] = [.blue, .green, .cyan, .orange]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(metric.title)
+                        .font(.callout.weight(.semibold))
+                    Text(metric.latestDate)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(metric.latestValue)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+
             GeometryReader { proxy in
                 ZStack {
-                    trendPath(values: points.map { Double($0.cacheReadTokens) }, in: proxy.size)
-                        .fill(Color.cyan.opacity(0.16))
-                    trendPath(values: points.map { Double($0.cacheReadTokens) }, in: proxy.size)
-                        .stroke(Color.cyan, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                    trendPath(values: points.map { Double($0.inputTokens) }, in: proxy.size)
-                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-                    trendPath(values: points.map { Double($0.outputTokens) }, in: proxy.size)
-                        .stroke(Color.green, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    chartGuideLines(in: proxy.size)
+                        .stroke(Color.secondary.opacity(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 5]))
+
+                    ForEach(Array(metric.series.enumerated()), id: \.element.id) { index, series in
+                        let color = palette[index % palette.count]
+                        trendPath(values: series.values, maximum: metric.maximum, in: proxy.size)
+                            .stroke(color, style: StrokeStyle(lineWidth: index == 0 ? 2.6 : 2, lineCap: .round, lineJoin: .round))
+                    }
                 }
             }
 
-            HStack(spacing: 12) {
-                LegendDot(color: .blue, label: "Input")
-                LegendDot(color: .green, label: "Output")
-                LegendDot(color: .cyan, label: "Cache Read")
+            HStack(spacing: 10) {
+                ForEach(Array(metric.series.enumerated()), id: \.element.id) { index, series in
+                    LegendDot(color: palette[index % palette.count], label: series.label)
+                }
                 Spacer()
-                Text(points.last?.date ?? "")
-                    .foregroundStyle(.secondary)
             }
             .font(.caption2)
         }
     }
 
-    private func trendPath(values: [Double], in size: CGSize) -> Path {
-        let maximum = max(values.max() ?? 0, 1)
+    private func trendPath(values: [Double], maximum: Double, in size: CGSize) -> Path {
         var path = Path()
         for index in values.indices {
             let x = size.width * CGFloat(index) / CGFloat(max(values.count - 1, 1))
@@ -109,6 +133,16 @@ struct TokenTrendView: View {
             } else {
                 path.addLine(to: CGPoint(x: x, y: y))
             }
+        }
+        return path
+    }
+
+    private func chartGuideLines(in size: CGSize) -> Path {
+        var path = Path()
+        for fraction in [0.25, 0.5, 0.75] {
+            let y = size.height * CGFloat(fraction)
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: size.width, y: y))
         }
         return path
     }

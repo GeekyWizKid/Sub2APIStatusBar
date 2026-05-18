@@ -7,13 +7,14 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 ## Highlights
 
 - Native macOS menu bar app with a compact SwiftUI popover
-- Usage Insights that turn balance, quotas, spend trend, token trend, model concentration, and latency into prioritized signals
+- Usage Insights that turn balance, quotas, spend trend, usage trend, model concentration, and latency into prioritized signals
 - Local proactive alerts for warning/error insights, with severity and quiet-period controls
 - Notification permission status inside Settings, including quick access to macOS notification settings
 - Custom insight thresholds for quota pressure, balance runway, token surge, model concentration, and latency
 - User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
-- Seven-day token trend and model distribution
+- Seven-day usage trend with Tokens, Spend, and Requests views
+- Model distribution with cost and token share
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
 - First-run login and optional manual Bearer token setup
 - Guided recovery cards for missing URLs, expired sessions, token replacement, and server reachability problems
@@ -28,7 +29,7 @@ Sub2API Status Bar is intentionally optimized for ordinary users who need a fast
 
 - OpenAI-style usage visibility: project-like daily usage, costs, tokens, model mix, and throughput.
 - LiteLLM-style operational guardrails: quota pressure, budget runway, and rate-limit-adjacent RPM/TPM signals.
-- Helicone/Langfuse-style observability cues: local alerts, cost concentration, token trend changes, latency, and support-safe diagnostics.
+- Helicone/Langfuse-style observability cues: local alerts, cost concentration, usage trend changes, latency, and support-safe diagnostics.
 
 The product bias is to surface actionable signals first, then leave deep investigation to the configured Sub2API web dashboard.
 
