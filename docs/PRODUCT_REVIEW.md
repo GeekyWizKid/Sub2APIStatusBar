@@ -260,3 +260,15 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The product now acts more like a personal usage guardrail than a passive dashboard: users can keep working and let the menu bar call attention only when something important changes.
+
+### 2026-05-18 Cycle N
+
+1. 审视
+   - Quota insight was directionally useful but too generic: "Daily quota" did not say which subscription was under pressure or when the limit resets.
+
+2. 执行
+   - Upgraded quota insights to preserve the subscription name, quota window, percentage, and reset timing when available.
+   - Added regression coverage so future changes keep the more actionable quota language.
+
+3. 提升
+   - Usage alerts are now closer to the decision a user needs to make: which subscription needs attention, and whether it is about to reset soon enough to keep working.

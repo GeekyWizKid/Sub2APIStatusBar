@@ -106,18 +106,18 @@ public struct UsageInsights: Equatable, Sendable {
 
         let candidates = summary.subscriptions.flatMap { item in
             [
-                (label: "Daily", progress: item.dailyProgress),
-                (label: "Weekly", progress: item.weeklyProgress),
-                (label: "Monthly", progress: item.monthlyProgress),
+                (groupName: item.groupName, label: "daily", progress: item.dailyProgress, resetInSeconds: item.dailyResetInSeconds),
+                (groupName: item.groupName, label: "weekly", progress: item.weeklyProgress, resetInSeconds: item.weeklyResetInSeconds),
+                (groupName: item.groupName, label: "monthly", progress: item.monthlyProgress, resetInSeconds: item.monthlyResetInSeconds),
             ]
         }
 
         guard let peak = candidates
-            .compactMap({ candidate -> (label: String, progress: Double)? in
+            .compactMap({ candidate -> (groupName: String, label: String, progress: Double, resetInSeconds: Double?)? in
                 guard let progress = candidate.progress else {
                     return nil
                 }
-                return (candidate.label, min(max(progress, 0), 1))
+                return (candidate.groupName, candidate.label, min(max(progress, 0), 1), candidate.resetInSeconds)
             })
             .max(by: { $0.progress < $1.progress }) else {
             return nil
@@ -131,12 +131,14 @@ public struct UsageInsights: Equatable, Sendable {
             .healthy
         }
 
+        let title = "\(peak.groupName) \(peak.label) quota"
+        let resetText = peak.resetInSeconds.map { " and resets in \(StatusFormatters.duration(seconds: $0))" } ?? ""
         return UsageInsightItem(
             kind: .quota,
             severity: severity,
-            title: "\(peak.label) quota",
+            title: title,
             value: StatusFormatters.percent(peak.progress),
-            detail: "\(peak.label) quota is at \(StatusFormatters.percent(peak.progress))."
+            detail: "\(title) is at \(StatusFormatters.percent(peak.progress))\(resetText)."
         )
     }
 

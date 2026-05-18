@@ -728,7 +728,7 @@ import Testing
         models: models
     )
 
-    #expect(insights.headline == "Daily quota is at 93%.")
+    #expect(insights.headline == "Codex daily quota is at 93%.")
     #expect(insights.items.map(\.kind).contains(.quota))
     #expect(insights.items.map(\.kind).contains(.balance))
     #expect(insights.items.map(\.kind).contains(.trend))
@@ -736,6 +736,33 @@ import Testing
     #expect(insights.items.first?.severity == .warning)
     #expect(insights.items.contains { $0.title == "Balance runway" && $0.value == "1.7d" })
     #expect(insights.items.contains { $0.title == "Token surge" })
+}
+
+@Test func usageInsightsQuotaNamesSubscriptionAndResetWindow() {
+    let summary = SubscriptionSummary(activeCount: 1, subscriptions: [
+        SubscriptionSummaryItem(
+            id: 10,
+            groupName: "Codex Team",
+            status: "active",
+            dailyResetInSeconds: 5_400,
+            dailyProgress: 0.91,
+            weeklyProgress: 0.5,
+            monthlyProgress: 0.2,
+            expiresAt: nil,
+            daysRemaining: 12
+        ),
+    ])
+
+    let insights = UsageInsights.make(
+        currentUser: nil,
+        stats: nil,
+        subscriptionSummary: summary,
+        trend: nil,
+        models: nil
+    )
+
+    #expect(insights.items.first?.title == "Codex Team daily quota")
+    #expect(insights.items.first?.detail == "Codex Team daily quota is at 91% and resets in 1h.")
 }
 
 @Test func usageInsightsRespectCustomThresholds() {
