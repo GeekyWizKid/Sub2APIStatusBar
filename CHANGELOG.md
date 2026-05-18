@@ -4,6 +4,7 @@
 
 - Added Usage Insights for quota pressure, balance runway, token trend changes, model cost concentration, and latency.
 - Added local proactive alerts for important Usage Insights, with Settings controls for severity and cooldown.
+- Added visible notification-permission status and diagnostics so blocked macOS alerts are easier to identify.
 - Added configurable Usage Insight thresholds in Settings.
 - Added guided recovery suggestions for onboarding and connection failures.
 - Added Usage Insights to diagnostics so support reports explain the current top signal without exposing tokens.

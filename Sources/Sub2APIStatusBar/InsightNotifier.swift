@@ -27,11 +27,39 @@ final class InsightNotifier {
         lastAlertedAtByFingerprint.removeAll()
     }
 
+    func authorization() async -> InsightNotificationAuthorization {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        return Self.authorization(from: settings.authorizationStatus)
+    }
+
+    func requestAuthorization() async -> InsightNotificationAuthorization {
+        let center = UNUserNotificationCenter.current()
+        do {
+            _ = try await center.requestAuthorization(options: [.alert, .sound])
+        } catch {
+            return await authorization()
+        }
+        return await authorization()
+    }
+
+    static func authorization(from status: UNAuthorizationStatus) -> InsightNotificationAuthorization {
+        switch status {
+        case .authorized, .provisional, .ephemeral:
+            return .authorized
+        case .denied:
+            return .denied
+        case .notDetermined:
+            return .notDetermined
+        @unknown default:
+            return .notDetermined
+        }
+    }
+
     private func deliver(_ alert: InsightAlert) async -> Bool {
         let center = UNUserNotificationCenter.current()
         do {
             let settings = await center.notificationSettings()
-            guard settings.authorizationStatus != .denied else {
+            guard Self.authorization(from: settings.authorizationStatus) != .denied else {
                 return false
             }
 

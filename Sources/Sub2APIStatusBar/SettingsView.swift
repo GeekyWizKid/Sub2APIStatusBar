@@ -109,6 +109,8 @@ struct GeneralSettingsSection: View {
                         .frame(width: 48, alignment: .trailing)
                 }
 
+                InsightNotificationPermissionRow(model: model)
+
                 SettingsControlRow(title: "Startup") {
                     Toggle("Launch at login", isOn: Binding(
                         get: { model.launchAtLoginEnabled },
@@ -198,6 +200,90 @@ struct InsightSettingsSection: View {
 
     private var latencyThresholdText: String {
         String(format: "%.0fs", model.settingsDraft.insightThresholds.latencyWarningMs / 1_000)
+    }
+}
+
+struct InsightNotificationPermissionRow: View {
+    @ObservedObject var model: MonitorViewModel
+
+    private var summary: InsightNotificationPermissionSummary {
+        InsightNotificationPermissionSummary.make(
+            settings: model.settingsDraft.insightAlertSettings,
+            authorization: model.notificationAuthorization
+        )
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: iconName)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(iconColor)
+                .frame(width: 28, height: 28)
+                .background(iconColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(summary.title)
+                    .font(.callout.weight(.semibold))
+                Text(summary.detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            if let action = summary.action {
+                Button(actionLabel(for: action)) {
+                    perform(action)
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(10)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .onAppear {
+            model.refreshNotificationAuthorization()
+        }
+    }
+
+    private var iconName: String {
+        switch summary.action {
+        case .requestPermission:
+            "bell.badge"
+        case .openSystemSettings:
+            "bell.slash"
+        case nil:
+            model.settingsDraft.insightAlertSettings.isEnabled ? "bell.fill" : "bell"
+        }
+    }
+
+    private var iconColor: Color {
+        switch summary.action {
+        case .requestPermission:
+            .orange
+        case .openSystemSettings:
+            .red
+        case nil:
+            model.settingsDraft.insightAlertSettings.isEnabled ? .green : .secondary
+        }
+    }
+
+    private func actionLabel(for action: InsightNotificationPermissionAction) -> String {
+        switch action {
+        case .requestPermission:
+            "Enable"
+        case .openSystemSettings:
+            "Open Settings"
+        }
+    }
+
+    private func perform(_ action: InsightNotificationPermissionAction) {
+        switch action {
+        case .requestPermission:
+            model.requestNotificationAuthorization()
+        case .openSystemSettings:
+            model.openNotificationSettings()
+        }
     }
 }
 

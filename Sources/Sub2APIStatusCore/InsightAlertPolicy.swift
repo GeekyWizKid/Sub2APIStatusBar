@@ -55,3 +55,64 @@ public struct InsightAlertPolicy: Equatable, Sendable {
             .first
     }
 }
+
+public enum InsightNotificationAuthorization: String, Equatable, Sendable {
+    case authorized
+    case denied
+    case notDetermined
+}
+
+public enum InsightNotificationPermissionAction: Equatable, Sendable {
+    case requestPermission
+    case openSystemSettings
+}
+
+public struct InsightNotificationPermissionSummary: Equatable, Sendable {
+    public let title: String
+    public let detail: String
+    public let action: InsightNotificationPermissionAction?
+
+    public init(
+        title: String,
+        detail: String,
+        action: InsightNotificationPermissionAction?
+    ) {
+        self.title = title
+        self.detail = detail
+        self.action = action
+    }
+
+    public static func make(
+        settings: InsightAlertSettings,
+        authorization: InsightNotificationAuthorization
+    ) -> InsightNotificationPermissionSummary {
+        guard settings.isEnabled else {
+            return InsightNotificationPermissionSummary(
+                title: "Alerts off",
+                detail: "Turn on insight alerts to receive local notifications.",
+                action: nil
+            )
+        }
+
+        switch authorization {
+        case .authorized:
+            return InsightNotificationPermissionSummary(
+                title: "Notifications ready",
+                detail: "macOS alerts can be delivered for \(settings.minimumSeverity.rawValue) insights.",
+                action: nil
+            )
+        case .notDetermined:
+            return InsightNotificationPermissionSummary(
+                title: "Permission needed",
+                detail: "Allow notifications so Sub2API can warn you when usage needs attention.",
+                action: .requestPermission
+            )
+        case .denied:
+            return InsightNotificationPermissionSummary(
+                title: "Notifications blocked",
+                detail: "Open macOS notification settings and allow Sub2API alerts.",
+                action: .openSystemSettings
+            )
+        }
+    }
+}

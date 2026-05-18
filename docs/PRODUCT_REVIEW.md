@@ -256,6 +256,7 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
    - Added a core `InsightAlertPolicy` that picks the highest-priority warning/error Usage Insight and suppresses repeats during a configurable quiet period.
    - Added local macOS notifications for actionable insights, with Settings controls for enabling alerts, choosing warning versus error-only mode, and tuning the cooldown.
    - Added diagnostics output for alert state so support reports include whether proactive protection is enabled.
+   - Added visible notification-permission status in Settings, including a direct path to macOS notification settings when alerts are blocked.
 
 3. 提升
    - The product now acts more like a personal usage guardrail than a passive dashboard: users can keep working and let the menu bar call attention only when something important changes.

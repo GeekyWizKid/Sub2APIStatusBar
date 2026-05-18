@@ -88,6 +88,27 @@ import Testing
     #expect(settings.cooldownMinutes == 1_440)
 }
 
+@Test func insightNotificationPermissionSummarizesActionableStates() {
+    let ready = InsightNotificationPermissionSummary.make(settings: .defaults, authorization: .authorized)
+    let notDetermined = InsightNotificationPermissionSummary.make(settings: .defaults, authorization: .notDetermined)
+    let denied = InsightNotificationPermissionSummary.make(settings: .defaults, authorization: .denied)
+    let disabled = InsightNotificationPermissionSummary.make(
+        settings: InsightAlertSettings(isEnabled: false, minimumSeverity: .warning, cooldownMinutes: 60),
+        authorization: .authorized
+    )
+
+    #expect(ready.title == "Notifications ready")
+    #expect(ready.detail == "macOS alerts can be delivered for warning insights.")
+    #expect(ready.action == nil)
+    #expect(notDetermined.title == "Permission needed")
+    #expect(notDetermined.action == .requestPermission)
+    #expect(denied.title == "Notifications blocked")
+    #expect(denied.action == .openSystemSettings)
+    #expect(disabled.title == "Alerts off")
+    #expect(disabled.detail == "Turn on insight alerts to receive local notifications.")
+    #expect(disabled.action == nil)
+}
+
 @Test func insightThresholdsNormalizeUnsafeValues() {
     var thresholds = InsightThresholds(
         quotaWarningProgress: 1.4,
@@ -928,6 +949,7 @@ import Testing
         config: config,
         snapshot: snapshot,
         appVersion: "0.1.5",
+        notificationAuthorization: .denied,
         osVersion: "macOS 15.0"
     )
 
@@ -938,6 +960,7 @@ import Testing
     #expect(report.contains("Insight Alerts: enabled"))
     #expect(report.contains("Insight Alert Level: error"))
     #expect(report.contains("Insight Alert Cooldown: 90m"))
+    #expect(report.contains("Notification Permission: denied"))
     #expect(report.contains("Usage Insight: Balance covers about 3.9 days at today's spend."))
     #expect(report.contains("secret-access-token") == false)
     #expect(report.contains("secret-refresh-token") == false)

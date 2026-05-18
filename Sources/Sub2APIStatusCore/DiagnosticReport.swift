@@ -5,6 +5,7 @@ public enum DiagnosticReport {
         config: AppConfig,
         snapshot: MonitorSnapshot,
         appVersion: String,
+        notificationAuthorization: InsightNotificationAuthorization? = nil,
         osVersion: String = ProcessInfo.processInfo.operatingSystemVersionString
     ) -> String {
         var lines = [
@@ -19,6 +20,7 @@ public enum DiagnosticReport {
             "Insight Alerts: \(config.insightAlertSettings.isEnabled ? "enabled" : "disabled")",
             "Insight Alert Level: \(config.insightAlertSettings.minimumSeverity.rawValue)",
             "Insight Alert Cooldown: \(Int(config.insightAlertSettings.cooldownMinutes))m",
+            "Notification Permission: \(notificationAuthorization?.rawValue ?? "unknown")",
             "Accounts: \(config.accounts.count)",
             "Selected Account: \(config.selectedAccount?.displayName ?? "none")",
             "Access Token: \(config.authToken.isEmpty ? "missing" : "present")",

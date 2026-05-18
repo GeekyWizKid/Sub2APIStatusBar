@@ -19,6 +19,7 @@ final class MonitorViewModel: ObservableObject {
     @Published var launchAtLoginEnabled = false
     @Published var launchAtLoginError: String?
     @Published var focusesManualToken = false
+    @Published var notificationAuthorization: InsightNotificationAuthorization = .notDetermined
 
     var onSnapshotChange: ((MonitorSnapshot) -> Void)?
 
@@ -40,6 +41,7 @@ final class MonitorViewModel: ObservableObject {
         refresh()
         scheduleTimer()
         checkForUpdates(silent: true)
+        refreshNotificationAuthorization()
     }
 
     func refresh() {
@@ -152,6 +154,7 @@ final class MonitorViewModel: ObservableObject {
             config = loaded
             settingsDraft = loaded
             scheduleTimer()
+            refreshNotificationAuthorization()
             onSnapshotChange?(snapshot)
             refresh()
         } catch {
@@ -308,7 +311,8 @@ final class MonitorViewModel: ObservableObject {
         let report = DiagnosticReport.make(
             config: config,
             snapshot: snapshot,
-            appVersion: currentAppVersion
+            appVersion: currentAppVersion,
+            notificationAuthorization: notificationAuthorization
         )
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(report, forType: .string)
@@ -317,6 +321,24 @@ final class MonitorViewModel: ObservableObject {
 
     func revealConfigFile() {
         NSWorkspace.shared.activateFileViewerSelecting([store.configurationFileURL])
+    }
+
+    func refreshNotificationAuthorization() {
+        Task {
+            notificationAuthorization = await insightNotifier.authorization()
+        }
+    }
+
+    func requestNotificationAuthorization() {
+        Task {
+            notificationAuthorization = await insightNotifier.requestAuthorization()
+        }
+    }
+
+    func openNotificationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func quit() {
