@@ -634,6 +634,25 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(StatusFormatters.costPerMillionTokens(cost: 12.5, tokens: 0) == "--")
 }
 
+@Test func modelUsageDisplaySummarizesCostShareAndUnitEconomics() {
+    let models = [
+        ModelUsageSummary(model: "gpt-5.5", requests: 900, totalTokens: 170_000_000, inputTokens: 120_000_000, outputTokens: 50_000_000, actualCost: 86),
+        ModelUsageSummary(model: "gpt-5.4", requests: 286, totalTokens: 40_000_000, inputTokens: 30_000_000, outputTokens: 10_000_000, actualCost: 31.5668),
+    ]
+
+    let displays = ModelUsageDisplay.make(models)
+
+    #expect(displays.count == 2)
+    #expect(displays[0].model == "gpt-5.5")
+    #expect(displays[0].costShareText == "73% cost")
+    #expect(displays[0].costPerMillionTokensText == "$0.5059/MTok")
+    #expect(displays[0].tokenMixText == "In 120.0M / Out 50.0M")
+    #expect(displays[0].costProgress == 1)
+    #expect(displays[1].costShareText == "27% cost")
+    #expect(displays[1].costProgress > 0.36)
+    #expect(displays[1].costProgress < 0.37)
+}
+
 @Test func accountHealthSummaryCountsRuntimeStates() {
     let accounts = [
         AccountSummary(id: 1, name: "ok", platform: "openai", type: "oauth", status: "active", schedulable: true, quotaLimit: 100, quotaUsed: 30, quotaDailyLimit: nil, quotaDailyUsed: nil, quotaWeeklyLimit: nil, quotaWeeklyUsed: nil, errorMessage: "", rateLimitResetAt: nil),

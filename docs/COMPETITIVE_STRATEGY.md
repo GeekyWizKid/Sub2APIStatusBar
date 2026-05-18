@@ -74,7 +74,7 @@ Useful patterns:
 
 What to copy:
 
-- Model distribution and cost concentration insight.
+- Model distribution, cost concentration insight, and model-level unit economics.
 - A clear handoff from native app to web dashboard for deeper work.
 
 What to avoid:

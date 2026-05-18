@@ -16,7 +16,7 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
 - Seven-day usage trend with Tokens, Spend, and Requests views
-- Model distribution with cost and token share
+- Model distribution with cost share, blended cost per million tokens, and token mix
 - Optional menu bar text summary with Auto, Spend, Balance, Quota, Tokens, and Requests modes
 - First-run connection checklist, login, and optional manual Bearer token setup
 - Guided recovery cards for missing URLs, expired sessions, token replacement, and server reachability problems

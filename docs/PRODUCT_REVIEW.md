@@ -478,3 +478,17 @@ Sub2API Status Bar should not compete as a full analytics dashboard. The winning
 
 3. 提升
    - The menu bar can now act as a runway monitor, not only a spend or quota monitor.
+
+### 2026-05-19 Cycle AD
+
+1. 审视
+   - The model distribution card showed model cost and token volume, but did not explain why a model was expensive.
+   - Observability products make model-level unit economics visible so users can compare model mix, cost share, and token mix quickly.
+
+2. 执行
+   - Added a tested Model Usage display model with cost share, Cost/MTok, token mix, and normalized cost/token progress.
+   - Refactored the model distribution card to lead with cost share and unit economics instead of only token progress.
+   - Updated README and competitive strategy docs to reflect model-level unit economics as part of the product surface.
+
+3. 提升
+   - Model Distribution now answers "which model is driving spend, and is it expensive per token?" without opening the web dashboard.

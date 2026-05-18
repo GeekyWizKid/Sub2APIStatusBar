@@ -371,6 +371,64 @@ public struct ModelUsageSummary: Decodable, Identifiable, Equatable, Sendable {
     }
 }
 
+public struct ModelUsageDisplay: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let model: String
+    public let requestsText: String
+    public let tokensText: String
+    public let tokenMixText: String
+    public let costText: String
+    public let costShareText: String
+    public let costPerMillionTokensText: String
+    public let tokenProgress: Double
+    public let costProgress: Double
+
+    public init(
+        model: String,
+        requestsText: String,
+        tokensText: String,
+        tokenMixText: String,
+        costText: String,
+        costShareText: String,
+        costPerMillionTokensText: String,
+        tokenProgress: Double,
+        costProgress: Double
+    ) {
+        self.id = model
+        self.model = model
+        self.requestsText = requestsText
+        self.tokensText = tokensText
+        self.tokenMixText = tokenMixText
+        self.costText = costText
+        self.costShareText = costShareText
+        self.costPerMillionTokensText = costPerMillionTokensText
+        self.tokenProgress = tokenProgress
+        self.costProgress = costProgress
+    }
+
+    public static func make(_ models: [ModelUsageSummary]) -> [ModelUsageDisplay] {
+        let visibleModels = Array(models.prefix(5))
+        let maximumTokens = max(Double(visibleModels.map(\.totalTokens).max() ?? 0), 1)
+        let maximumCost = max(visibleModels.map(\.actualCost).max() ?? 0, 1)
+        let totalCost = max(visibleModels.map(\.actualCost).reduce(0, +), 0)
+
+        return visibleModels.map { item in
+            let costShare = totalCost > 0 ? item.actualCost / totalCost : 0
+            return ModelUsageDisplay(
+                model: item.model,
+                requestsText: "\(StatusFormatters.menuBarCount(item.requests)) requests",
+                tokensText: StatusFormatters.compactNumber(item.totalTokens),
+                tokenMixText: "In \(StatusFormatters.compactNumber(item.inputTokens)) / Out \(StatusFormatters.compactNumber(item.outputTokens))",
+                costText: StatusFormatters.preciseCurrency(item.actualCost),
+                costShareText: "\(StatusFormatters.percent(costShare)) cost",
+                costPerMillionTokensText: StatusFormatters.costPerMillionTokens(cost: item.actualCost, tokens: item.totalTokens),
+                tokenProgress: Double(item.totalTokens) / maximumTokens,
+                costProgress: item.actualCost / maximumCost
+            )
+        }
+    }
+}
+
 public struct TrendDataPoint: Decodable, Identifiable, Equatable, Sendable {
     public var id: String { date }
 

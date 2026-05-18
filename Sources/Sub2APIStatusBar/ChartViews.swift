@@ -4,12 +4,8 @@ import Sub2APIStatusCore
 struct ModelDistributionView: View {
     let models: [ModelUsageSummary]
 
-    private var visibleModels: [ModelUsageSummary] {
-        Array(models.prefix(5))
-    }
-
-    private var maximumTokens: Double {
-        max(Double(visibleModels.map(\.totalTokens).max() ?? 0), 1)
+    private var visibleModels: [ModelUsageDisplay] {
+        ModelUsageDisplay.make(models)
     }
 
     var body: some View {
@@ -22,19 +18,30 @@ struct ModelDistributionView: View {
                                 .font(.callout.weight(.medium))
                                 .lineLimit(1)
                             Spacer()
-                            Text(StatusFormatters.preciseCurrency(item.actualCost))
+                            Text(item.costText)
                                 .font(.callout.weight(.medium))
                                 .foregroundStyle(.green)
                         }
                         HStack {
-                            Text("\(StatusFormatters.menuBarCount(item.requests)) requests")
+                            Text(item.costShareText)
+                                .foregroundStyle(.green)
+                            Text(item.costPerMillionTokensText)
                             Spacer()
-                            Text(StatusFormatters.compactNumber(item.totalTokens))
+                            Text(item.requestsText)
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        ProgressView(value: Double(item.totalTokens) / maximumTokens)
-                            .tint(.blue)
+                        ProgressView(value: item.costProgress)
+                            .tint(.green)
+                        HStack {
+                            Text(item.tokenMixText)
+                            Spacer()
+                            Text(item.tokensText)
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        ProgressView(value: item.tokenProgress)
+                            .tint(.blue.opacity(0.75))
                     }
                     if item.id != visibleModels.last?.id {
                         Divider()
