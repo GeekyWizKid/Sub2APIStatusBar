@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sub2API Status Bar Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #171d2d;
+      --panel-2: #1f2937;
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --blue: #38bdf8;
+      --orange: #f97316;
+      --pink: #f472b6;
+      --violet: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.18), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(34, 197, 94, 0.12), transparent 24%),
+        linear-gradient(135deg, #08111f, #172033 52%, #0f172a);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      color: var(--text);
+    }
+
+    .canvas {
+      width: 1200px;
+      height: 820px;
+      padding: 46px;
+      display: flex;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .copy {
+      flex: 1;
+      max-width: 455px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 56px;
+      line-height: 1.02;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin: 0 0 28px;
+      font-size: 21px;
+      line-height: 1.45;
+      color: #cbd5e1;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #dbeafe;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .popover {
+      width: 520px;
+      height: 720px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(28px);
+    }
+
+    .header,
+    .footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .footer {
+      justify-content: space-between;
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      padding: 12px 16px;
+    }
+
+    .status-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: rgba(34, 197, 94, 0.16);
+      color: var(--green);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #dbeafe;
+      font-size: 15px;
+    }
+
+    .content {
+      height: 638px;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .status-line strong {
+      font-size: 32px;
+      color: var(--green);
+    }
+
+    .pill {
+      margin-left: auto;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .account,
+    .card,
+    .section {
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.16);
+      display: grid;
+      place-items: center;
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .badge {
+      margin-left: auto;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(34, 197, 94, 0.14);
+      color: #86efac;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      min-height: 78px;
+    }
+
+    .glyph {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--blue);
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .green {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    .orange {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--orange);
+    }
+
+    .violet {
+      background: rgba(139, 92, 246, 0.16);
+      color: var(--violet);
+    }
+
+    .pink {
+      background: rgba(244, 114, 182, 0.15);
+      color: var(--pink);
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 19px;
+      font-weight: 760;
+      line-height: 1.12;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 720;
+    }
+
+    .section {
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .quota-head,
+    .quota-row,
+    .model-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quota-head {
+      margin-bottom: 10px;
+    }
+
+    .quota-name {
+      font-size: 16px;
+      font-weight: 740;
+    }
+
+    .quota-row {
+      margin-top: 10px;
+    }
+
+    .quota-row span:first-child {
+      width: 58px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .bar {
+      height: 7px;
+      flex: 1;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .fill.orange {
+      background: var(--orange);
+    }
+
+    .amount {
+      width: 108px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .model-row {
+      padding: 7px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .model-row:first-child {
+      border-top: 0;
+    }
+
+    .model-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .model-cost {
+      color: #86efac;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #dbeafe;
+      font-size: 13px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <section class="copy">
+      <h1>Sub2API Status Bar</h1>
+      <p class="subtitle">A native macOS menu bar monitor for Sub2API usage, quotas, model mix, and spend. Built for normal user accounts.</p>
+      <div class="chips">
+        <span class="chip"><span class="dot"></span>User dashboard</span>
+        <span class="chip"><span class="dot"></span>Quota pressure</span>
+        <span class="chip"><span class="dot"></span>Local config</span>
+        <span class="chip"><span class="dot"></span>Multi-account</span>
+      </div>
+    </section>
+
+    <section class="popover" aria-label="App preview">
+      <div class="header">
+        <div class="status-icon">✓</div>
+        <div>
+          <div class="title">Demo User</div>
+          <div class="muted">Updated 21:12</div>
+        </div>
+        <div class="spacer"></div>
+        <div class="icon-button">↻</div>
+        <div class="icon-button">⚙</div>
+      </div>
+
+      <div class="content">
+        <div class="status-line">
+          <strong>OK</strong>
+          <span class="pill">User Usage</span>
+        </div>
+
+        <div class="account">
+          <div class="avatar">DU</div>
+          <div>
+            <div class="title">Demo User</div>
+            <div class="muted">demo@example.com</div>
+          </div>
+          <span class="badge">Active</span>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="glyph green">$</div>
+            <div><div class="label">Balance</div><div class="value">$128.45</div><div class="caption">Available</div></div>
+          </div>
+          <div class="card">
+            <div class="glyph">#</div>
+            <div><div class="label">API Keys</div><div class="value">4</div><div class="caption">3 active</div></div>
+          </div>
+          <div class="card">
+            <div class="glyph green">▥</div>
+            <div><div class="label">Today Requests</div><div class="value">1219</div><div class="caption">Total 24.4K</div></div>
+          </div>
+          <div class="card">
+            <div class="glyph violet">$</div>
+            <div><div class="label">Today Cost</div><div class="value">$117.57</div><div class="caption">Total $921.45</div></div>
+          </div>
+          <div class="card">
+            <div class="glyph violet">⚡</div>
+            <div><div class="label">Performance</div><div class="value">3 RPM</div><div class="caption">10.8K TPM</div></div>
+          </div>
+          <div class="card">
+            <div class="glyph pink">◷</div>
+            <div><div class="label">Avg Response</div><div class="value">14.51s</div><div class="caption">Average time</div></div>
+          </div>
+        </div>
+
+        <h2 class="section-title">Subscriptions</h2>
+        <div class="section">
+          <div class="quota-head">
+            <span class="dot"></span>
+            <span class="quota-name">Codex Team</span>
+            <span class="spacer"></span>
+            <span class="badge">Active</span>
+          </div>
+          <div class="quota-row"><span>Daily</span><div class="bar"><div class="fill orange" style="width:74%"></div></div><span class="amount">$92.35 / $125</span></div>
+          <div class="quota-row"><span>Weekly</span><div class="bar"><div class="fill" style="width:77%"></div></div><span class="amount">$386.42 / $500</span></div>
+          <div class="quota-row"><span>Monthly</span><div class="bar"><div class="fill" style="width:31%"></div></div><span class="amount">$612.34 / $2K</span></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="button">↗ Open</span>
+        <span class="button">⏻ Quit</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

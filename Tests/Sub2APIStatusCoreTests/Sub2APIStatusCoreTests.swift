@@ -53,6 +53,19 @@ import Testing
     #expect(store.load().accounts.first?.refreshToken == "refresh-token")
 }
 
+@Test func configStoreCanUseEnvironmentConfigPath() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("demo-config.json")
+    let store = ConfigStore(environment: ["SUB2API_CONFIG_PATH": configURL.path])
+
+    try store.save(AppConfig(baseURL: "https://sub2api.example.com", authToken: "demo-token"))
+
+    #expect(store.configurationFileURL == configURL)
+    #expect(FileManager.default.fileExists(atPath: configURL.path))
+    #expect(store.load().authToken == "demo-token")
+}
+
 @Test func configStoreLoadsLegacyJSONTokensIntoDefaultAccount() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
@@ -504,6 +517,50 @@ import Testing
     )
 
     #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
+}
+
+@Test func diagnosticReportRedactsStoredTokenValues() {
+    let account = StoredAccount(
+        id: "work",
+        name: "Work",
+        email: "das@example.com",
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token"
+    )
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token",
+        refreshIntervalSeconds: 30,
+        showsMenuBarText: true,
+        accounts: [account],
+        selectedAccountID: account.id
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 42, todayActualCost: 3.14, rpm: 2),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+
+    let report = DiagnosticReport.make(
+        config: config,
+        snapshot: snapshot,
+        appVersion: "0.1.5",
+        osVersion: "macOS 15.0"
+    )
+
+    #expect(report.contains("Sub2API Status Bar Diagnostics"))
+    #expect(report.contains("Version: 0.1.5"))
+    #expect(report.contains("Access Token: present"))
+    #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("secret-access-token") == false)
+    #expect(report.contains("secret-refresh-token") == false)
 }
 
 @Test func loginFormStateRequiresURLAccountAndPassword() {

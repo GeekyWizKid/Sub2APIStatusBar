@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5
+
+- Added Launch at Login control.
+- Added support-safe diagnostics copy and local config reveal actions.
+- Reworked Settings into clearer account, general, updates, login, and diagnostics sections.
+
 ## v0.1.4
 
 - Removed macOS Keychain token storage.

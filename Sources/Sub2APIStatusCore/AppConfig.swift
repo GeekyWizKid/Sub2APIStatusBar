@@ -354,9 +354,22 @@ public struct StoredAuthTokens: Equatable, Sendable {
 public final class ConfigStore: Sendable {
     private let configURL: URL
 
-    public init(configURL: URL? = nil) {
+    public var configurationFileURL: URL {
+        configURL
+    }
+
+    public init(
+        configURL: URL? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
         if let configURL {
             self.configURL = configURL
+            return
+        }
+
+        if let configPath = environment["SUB2API_CONFIG_PATH"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !configPath.isEmpty {
+            self.configURL = URL(fileURLWithPath: configPath)
             return
         }
 

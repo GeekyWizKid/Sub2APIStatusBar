@@ -2,6 +2,8 @@
 
 Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps daily spend, token usage, quota pressure, model distribution, and subscription limits visible without keeping the web dashboard open.
 
+![Sub2API Status Bar preview](docs/assets/product-preview.png)
+
 ## Highlights
 
 - Native macOS menu bar app with a compact SwiftUI popover
@@ -10,6 +12,8 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Seven-day token trend and model distribution
 - Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
 - First-run login and optional manual Bearer token setup
+- Multiple saved accounts with quick switching
+- Launch at Login, manual refresh, copied diagnostics, and config-file reveal actions
 - Local config storage; no telemetry or third-party analytics
 - GitHub Releases update checking from Settings
 
@@ -54,6 +58,13 @@ Login tokens are stored in the same local config file. The app does not use macO
 
 To switch accounts or remove saved credentials, open Settings and choose **Disconnect**.
 
+Settings also includes:
+
+- **Show text in menu bar** for a compact always-visible usage summary
+- **Launch at login** so the monitor starts with macOS
+- **Copy Diagnostics** for support-safe status details with tokens redacted
+- **Show Config** to reveal the local `config.json`
+
 Optional first-run environment variables:
 
 ```bash
@@ -66,7 +77,7 @@ swift run Sub2APIStatusBar
 ## Build A macOS App
 
 ```bash
-VERSION=v0.1.4 ./scripts/build-app.sh
+VERSION=v0.1.5 ./scripts/build-app.sh
 ```
 
 Output:
@@ -79,21 +90,21 @@ The build script generates the app icon, copies bundle resources, and applies ad
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.4 \
+VERSION=v0.1.5 \
 ./scripts/build-app.sh
 ```
 
 ## Package A Release
 
 ```bash
-VERSION=v0.1.4 ./scripts/package-release.sh
+VERSION=v0.1.5 ./scripts/package-release.sh
 ```
 
 Output:
 
 ```text
-dist/Sub2APIStatusBar-0.1.4-macOS.zip
-dist/Sub2APIStatusBar-0.1.4-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.5-macOS.zip
+dist/Sub2APIStatusBar-0.1.5-macOS.zip.sha256
 ```
 
 ## Notarize A Release
@@ -105,7 +116,7 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.4 \
+VERSION=v0.1.5 \
 ./scripts/notarize-release.sh
 ```
 
@@ -137,7 +148,7 @@ swift run Sub2APIStatusBar
 
 ## Privacy
 
-Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server.
+Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server and GitHub Releases when checking for updates.
 
 ## Acknowledgements
 Thanks to the [LinuxDo](https://linux.do/) community for the discussions, sharing, and feedback.

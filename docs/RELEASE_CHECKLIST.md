@@ -21,30 +21,33 @@
 - [x] Automatic token refresh and dashboard retry on expired access tokens
 - [x] GitHub Releases update checking with launch-time and manual checks
 - [x] Troubleshooting path for stale Swift build cache errors
+- [x] Launch at Login setting
+- [x] Support-safe diagnostics copy action with token redaction
+- [x] Local config reveal action
 
 ## Before Public Distribution
 
-- [x] Choose a public version tag, for example `v0.1.4`
+- [x] Choose a public version tag, for example `v0.1.5`
 - [ ] Build with a Developer ID Application certificate
 - [ ] Notarize the app with Apple
 - [x] Attach the release zip and checksum to a GitHub Release
-- [ ] Add product screenshots or a short demo GIF to the README
-- [ ] Decide whether the repository should stay private or become public
+- [x] Add product screenshots or a short demo GIF to the README
+- [x] Decide whether the repository should stay private or become public
 
 ## Release Commands
 
 ```bash
 swift test
 swift build
-VERSION=v0.1.4 ./scripts/package-release.sh
-VERSION=v0.1.4 ./scripts/verify-release.sh
+VERSION=v0.1.5 ./scripts/package-release.sh
+VERSION=v0.1.5 ./scripts/verify-release.sh
 ```
 
 Developer ID signing:
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.4 \
+VERSION=v0.1.5 \
 ./scripts/package-release.sh
 ```
 
@@ -55,6 +58,6 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.4 \
+VERSION=v0.1.5 \
 ./scripts/notarize-release.sh
 ```

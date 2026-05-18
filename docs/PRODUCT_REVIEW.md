@@ -32,19 +32,19 @@
    - Preserved local config compatibility and user-only mode migration.
    - Stores login tokens in the local Application Support config file, including per-account tokens for account switching.
    - Added a settings-level disconnect action for account switching and credential removal.
+   - Added Launch at Login, support-safe diagnostics copy, and local config reveal actions.
 
 6. Documentation
    - Rewrote README as a product introduction and setup guide.
+   - Added a product preview image for GitHub visitors.
    - Added a changelog and release checklist.
 
 ## Remaining Product Work
 
-The only meaningful blockers for public distribution are external materials and launch assets:
+The only meaningful blockers for fully trusted macOS public distribution are Apple signing assets:
 
 - Apple Developer ID certificate for trusted signing.
 - Apple notarization credentials.
-- Product screenshots or a demo GIF captured from the final running app.
-- A decision on whether the GitHub repository should stay private or become public.
 
 ## MAGI Log
 
@@ -164,3 +164,18 @@ The only meaningful blockers for public distribution are external materials and 
 
 3. 提升
    - The persistence model is now simple and inspectable: one local config file owns server URLs, account list, preferences, and credentials.
+
+### 2026-05-18 Cycle J
+
+1. 审视
+   - A marketable menu bar utility should start with macOS and give users a support-safe way to explain failures.
+   - Settings had grown into a mixed list of account, token, update, and login controls.
+
+2. 执行
+   - Added a Launch at Login setting using the macOS login item service.
+   - Added Copy Diagnostics with token redaction and Show Config for local troubleshooting.
+   - Reorganized Settings into account, general, updates, login, and diagnostics sections.
+   - Added a clean product preview image to the README.
+
+3. 提升
+   - The next product pass should notarize once Apple Developer credentials are available.

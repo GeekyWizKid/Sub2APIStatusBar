@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import SwiftUI
 import Sub2APIStatusCore
 
@@ -90,6 +91,8 @@ final class MonitorViewModel: ObservableObject {
     @Published var updateInfo: UpdateInfo?
     @Published var isCheckingForUpdates = false
     @Published var updateStatusMessage: String?
+    @Published var launchAtLoginEnabled = false
+    @Published var launchAtLoginError: String?
 
     var onSnapshotChange: ((MonitorSnapshot) -> Void)?
 
@@ -103,6 +106,7 @@ final class MonitorViewModel: ObservableObject {
         settingsDraft = loaded
         loginEmail = loaded.selectedAccount?.email ?? ""
         snapshot = .idle(mode: loaded.monitorMode)
+        launchAtLoginEnabled = Self.currentLaunchAtLoginState()
     }
 
     func start() {
@@ -358,6 +362,36 @@ final class MonitorViewModel: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
+    func setLaunchAtLogin(_ enabled: Bool) {
+        launchAtLoginError = nil
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLoginEnabled = Self.currentLaunchAtLoginState()
+        } catch {
+            launchAtLoginEnabled = Self.currentLaunchAtLoginState()
+            launchAtLoginError = error.localizedDescription
+        }
+    }
+
+    func copyDiagnostics() {
+        let report = DiagnosticReport.make(
+            config: config,
+            snapshot: snapshot,
+            appVersion: currentAppVersion
+        )
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(report, forType: .string)
+        updateStatusMessage = "Diagnostics copied."
+    }
+
+    func revealConfigFile() {
+        NSWorkspace.shared.activateFileViewerSelecting([store.configurationFileURL])
+    }
+
     func quit() {
         NSApp.terminate(nil)
     }
@@ -390,6 +424,10 @@ final class MonitorViewModel: ObservableObject {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
         return (formatter.string(from: start), formatter.string(from: today))
+    }
+
+    private static func currentLaunchAtLoginState() -> Bool {
+        SMAppService.mainApp.status == .enabled
     }
 }
 
@@ -433,7 +471,7 @@ struct MonitorPanel: View {
         .frame(width: 520, height: 680)
         .sheet(isPresented: $showingSettings) {
             SettingsView(model: model)
-                .frame(width: 430, height: 610)
+                .frame(width: 450, height: 690)
         }
     }
 
@@ -811,62 +849,14 @@ struct SettingsView: View {
             Text("Settings")
                 .font(.title2.bold())
 
-            if !model.config.accounts.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Accounts")
-                        .font(.headline)
-                    Picker("Active Account", selection: Binding(
-                        get: { model.config.selectedAccountID ?? "" },
-                        set: { id in
-                            if let account = model.config.accounts.first(where: { $0.id == id }) {
-                                model.selectAccount(account)
-                                model.settingsDraft = model.config
-                            }
-                        }
-                    )) {
-                        ForEach(model.config.accounts) { account in
-                            Text(account.displayName).tag(account.id)
-                        }
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    AccountSettingsSection(model: model)
+                    GeneralSettingsSection(model: model)
+                    UpdateSettingsSection(model: model)
+                    LoginSettingsSection(model: model, dismiss: dismiss)
+                    DiagnosticsSettingsSection(model: model)
                 }
-            }
-
-            Form {
-                TextField("Base URL", text: $model.settingsDraft.baseURL)
-                Toggle("Show text in menu bar", isOn: $model.settingsDraft.showsMenuBarText)
-                HStack {
-                    Slider(value: $model.settingsDraft.refreshIntervalSeconds, in: 5...300, step: 5)
-                    Text("\(Int(model.settingsDraft.refreshIntervalSeconds))s")
-                        .frame(width: 42, alignment: .trailing)
-                }
-                SecureField("Bearer Token", text: $model.settingsDraft.authToken)
-            }
-
-            Divider()
-
-            UpdateSettingsSection(model: model)
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Login")
-                    .font(.headline)
-                TextField("Email", text: $model.loginEmail)
-                SecureField("Password", text: $model.loginPassword)
-                Button {
-                    model.loginAndSave()
-                } label: {
-                    Label("Login and Save Account", systemImage: "person.crop.circle.badge.plus")
-                }
-                .disabled(!LoginFormState(baseURL: model.settingsDraft.baseURL, email: model.loginEmail, password: model.loginPassword).canSubmit || model.isLoggingIn)
-
-                Button(role: .destructive) {
-                    model.disconnect()
-                    dismiss()
-                } label: {
-                    Label("Remove Current Account", systemImage: "person.crop.circle.badge.xmark")
-                }
-                .disabled(model.config.selectedAccountID == nil && model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
             }
 
             if let error = model.settingsError {
@@ -891,6 +881,147 @@ struct SettingsView: View {
             }
         }
         .padding(20)
+    }
+}
+
+struct AccountSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        if !model.config.accounts.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Accounts")
+                    .font(.headline)
+                Picker("Active Account", selection: Binding(
+                    get: { model.config.selectedAccountID ?? "" },
+                    set: { id in
+                        if let account = model.config.accounts.first(where: { $0.id == id }) {
+                            model.selectAccount(account)
+                            model.settingsDraft = model.config
+                        }
+                    }
+                )) {
+                    ForEach(model.config.accounts) { account in
+                        Text(account.displayName).tag(account.id)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct GeneralSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("General")
+                .font(.headline)
+
+            VStack(spacing: 8) {
+                SettingsControlRow(title: "Base URL") {
+                    TextField("https://sub2api.example.com", text: $model.settingsDraft.baseURL)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                SettingsControlRow(title: "Menu Bar") {
+                    Toggle("Show text", isOn: $model.settingsDraft.showsMenuBarText)
+                }
+
+                SettingsControlRow(title: "Startup") {
+                    Toggle("Launch at login", isOn: Binding(
+                        get: { model.launchAtLoginEnabled },
+                        set: { model.setLaunchAtLogin($0) }
+                    ))
+                }
+
+                SettingsControlRow(title: "Refresh") {
+                    Slider(value: $model.settingsDraft.refreshIntervalSeconds, in: 5...300, step: 5)
+                    Text("\(Int(model.settingsDraft.refreshIntervalSeconds))s")
+                        .font(.callout.monospacedDigit())
+                        .frame(width: 42, alignment: .trailing)
+                }
+
+                SettingsControlRow(title: "Token") {
+                    SecureField("Bearer Token", text: $model.settingsDraft.authToken)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+
+            if let error = model.launchAtLoginError {
+                MessageRow(message: error)
+            }
+        }
+    }
+}
+
+struct SettingsControlRow<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(width: 76, alignment: .leading)
+            HStack(spacing: 8) {
+                content
+            }
+        }
+    }
+}
+
+struct LoginSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+    let dismiss: DismissAction
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Login")
+                .font(.headline)
+            TextField("Email", text: $model.loginEmail)
+            SecureField("Password", text: $model.loginPassword)
+            Button {
+                model.loginAndSave()
+            } label: {
+                Label("Login and Save Account", systemImage: "person.crop.circle.badge.plus")
+            }
+            .disabled(!LoginFormState(baseURL: model.settingsDraft.baseURL, email: model.loginEmail, password: model.loginPassword).canSubmit || model.isLoggingIn)
+
+            Button(role: .destructive) {
+                model.disconnect()
+                dismiss()
+            } label: {
+                Label("Remove Current Account", systemImage: "person.crop.circle.badge.xmark")
+            }
+            .disabled(model.config.selectedAccountID == nil && model.config.authToken.isEmpty && model.settingsDraft.authToken.isEmpty)
+        }
+    }
+}
+
+struct DiagnosticsSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Diagnostics")
+                .font(.headline)
+            HStack {
+                Button {
+                    model.copyDiagnostics()
+                } label: {
+                    Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    model.revealConfigFile()
+                } label: {
+                    Label("Show Config", systemImage: "folder")
+                }
+            }
+            .buttonStyle(.borderless)
+        }
     }
 }
 
