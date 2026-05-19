@@ -33,23 +33,26 @@ public struct SocialShareSummary: Equatable, Sendable {
         let spend = StatusFormatters.currency(stats?.todayActualCost ?? 0)
         let requests = StatusFormatters.menuBarCount(stats?.todayRequests ?? 0)
 
+        let title = stats?.todayTokens ?? 0 > 0
+            ? "I shipped \(tokens) AI tokens today"
+            : "My AI usage receipt"
+        let tagline = "Anonymous usage receipt, ready to post."
+
         let lines = [
-            "My Sub2API day",
-            "Token flex, with receipts.",
-            "\(tokens) tokens | \(spend) | \(requests) requests",
+            title,
+            "\(spend) spend | \(requests) requests | \(unitCost)",
             "Top model: \(topModel)",
-            "Cost/MTok: \(unitCost)",
             "Quota: \(quota)",
             "Trend: \(trend)",
-            "Made visible by Sub2API Status Bar",
+            "Made visible by Sub2API Status Bar.",
             "#AIUsage #BuildInPublic",
         ]
 
         return SocialShareSummary(
-            title: "My Sub2API day",
-            tagline: "Token flex, with receipts.",
+            title: title,
+            tagline: tagline,
             primaryMetric: tokens,
-            primaryLabel: "tokens today",
+            primaryLabel: "AI tokens today",
             spendText: spend,
             requestsText: requests,
             topModelText: topModel,

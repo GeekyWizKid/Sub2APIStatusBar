@@ -32,14 +32,14 @@ struct UserAccountCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "person.crop.circle.fill")
-                .font(.system(size: 28, weight: .semibold))
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundStyle(.blue)
-                .frame(width: 42, height: 42)
+                .frame(width: 38, height: 38)
                 .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(displayName)
-                    .font(.headline)
+                    .font(.callout.weight(.semibold))
                     .lineLimit(1)
                 Text(user.email)
                     .font(.caption)
@@ -51,16 +51,18 @@ struct UserAccountCard: View {
             Spacer()
 
             if let status = user.status, !status.isEmpty {
-                Text(status.capitalized)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(status.lowercased() == "active" ? .green : .secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background((status.lowercased() == "active" ? Color.green : Color.secondary).opacity(0.14), in: Capsule())
+                StatusPill(
+                    text: status.capitalized,
+                    color: status.lowercased() == "active" ? .green : .secondary
+                )
             }
         }
-        .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .padding(12)
+        .background(PanelColors.elevatedSurface, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(PanelColors.border, lineWidth: 1)
+        )
     }
 }
 
@@ -68,14 +70,14 @@ struct MetricGrid: View {
     let items: [MetricItem]
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             ForEach(items) { item in
                 HStack(spacing: 10) {
                     if let systemImage = item.systemImage {
                         SafeSystemImage(systemName: systemImage)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(item.tint)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 34, height: 34)
                             .background(item.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
                     }
 
@@ -84,7 +86,7 @@ struct MetricGrid: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(item.value)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .font(.system(size: 18, weight: .bold, design: .rounded).monospacedDigit())
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                         if let caption = item.caption {
@@ -97,14 +99,18 @@ struct MetricGrid: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .padding(12)
+                .background(PanelColors.surface, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(PanelColors.border, lineWidth: 1)
+                )
             }
         }
     }
 }
 
-struct SafeSystemImage: View {
+private struct SafeSystemImage: View {
     let systemName: String
     var fallbackName = "circle.grid.3x3.fill"
 
@@ -125,8 +131,8 @@ struct UsageInsightsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Usage Insights")
-                    .font(.headline)
+                Label("Usage Insights", systemImage: "sparkles")
+                    .font(.system(size: 14, weight: .semibold))
                 Spacer()
                 Text(insights.headline)
                     .font(.caption)
@@ -135,13 +141,13 @@ struct UsageInsightsView: View {
                     .minimumScaleFactor(0.75)
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                ForEach(insights.items) { item in
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(insights.items.prefix(4)) { item in
                     HStack(spacing: 9) {
                         SafeSystemImage(systemName: iconName(for: item.kind))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(color(for: item.severity))
-                            .frame(width: 28, height: 28)
+                            .frame(width: 30, height: 30)
                             .background(color(for: item.severity).opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
 
                         VStack(alignment: .leading, spacing: 3) {
@@ -161,9 +167,13 @@ struct UsageInsightsView: View {
 
                         Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
-                    .padding(9)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+                    .padding(10)
+                    .background(PanelColors.surface, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(PanelColors.border, lineWidth: 1)
+                    )
                 }
             }
         }

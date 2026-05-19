@@ -10,16 +10,16 @@ struct ModelDistributionView: View {
 
     var body: some View {
         SectionBlock(title: "Model Distribution") {
-            VStack(spacing: 10) {
+            VStack(spacing: 0) {
                 ForEach(visibleModels) { item in
-                    VStack(spacing: 7) {
+                    VStack(spacing: 8) {
                         HStack {
                             Text(item.model)
-                                .font(.callout.weight(.medium))
+                                .font(.callout.weight(.semibold))
                                 .lineLimit(1)
                             Spacer()
                             Text(item.costText)
-                                .font(.callout.weight(.medium))
+                                .font(.callout.weight(.bold).monospacedDigit())
                                 .foregroundStyle(.green)
                         }
                         HStack {
@@ -43,6 +43,7 @@ struct ModelDistributionView: View {
                         ProgressView(value: item.tokenProgress)
                             .tint(.blue.opacity(0.75))
                     }
+                    .padding(.vertical, 8)
                     if item.id != visibleModels.last?.id {
                         Divider()
                     }
@@ -66,9 +67,10 @@ struct UsageTrendSection: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .controlSize(.small)
 
                 UsageTrendView(metric: UsageTrendMetric(mode: selectedMode, points: points))
-                    .frame(height: 172)
+                    .frame(height: 154)
             }
         case let .unavailable(message):
             HStack(alignment: .top, spacing: 8) {
@@ -80,7 +82,7 @@ struct UsageTrendSection: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()
             }
-            .frame(maxWidth: .infinity, minHeight: 58, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 54, alignment: .topLeading)
         }
     }
 }
@@ -91,18 +93,18 @@ struct UsageTrendView: View {
     private let palette: [Color] = [.blue, .green, .cyan, .orange]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(metric.title)
-                        .font(.callout.weight(.semibold))
+                        .font(.caption.weight(.semibold))
                     Text(metric.latestDate)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text(metric.latestValue)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded).monospacedDigit())
+                    .font(.system(size: 22, weight: .bold, design: .rounded).monospacedDigit())
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }

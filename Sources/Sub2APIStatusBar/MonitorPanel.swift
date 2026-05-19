@@ -10,74 +10,59 @@ struct MonitorPanel: View {
             if model.config.authToken.isEmpty {
                 LoginPanel(model: model)
             } else {
-                VStack(spacing: 0) {
-                    header
-                    Divider()
+                ZStack {
+                    PanelBackground()
+                        .ignoresSafeArea()
 
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            statusSection
+                    VStack(spacing: 0) {
+                        header
 
-                            if model.snapshot.connected {
-                                SectionBlock(title: "Usage Trend") {
-                                    UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
-                                }
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 16) {
+                                statusSection
 
-                                VStack(alignment: .leading, spacing: 6) {
-                                    HStack {
-                                        Button {
-                                            model.copySocialShareCard()
-                                        } label: {
-                                            Label("Copy Share Card", systemImage: "square.and.arrow.up")
-                                        }
+                                if model.snapshot.connected {
+                                    OverviewCard(
+                                        statusText: statusLabel,
+                                        statusColor: iconColor,
+                                        stats: model.snapshot.stats,
+                                        balanceText: balanceText,
+                                        quotaText: quotaHeadline,
+                                        tokenBreakdown: tokenBreakdown
+                                    )
 
-                                        Button {
-                                            model.copyUsageReport()
-                                        } label: {
-                                            Label("Copy Usage Report", systemImage: "doc.on.doc")
-                                        }
+                                    shareToolbar
 
-                                        Button {
-                                            model.openSocialShareDraft()
-                                        } label: {
-                                            Label("Post to X", systemImage: "paperplane")
-                                        }
-
-                                        Spacer()
-                                    }
-
-                                    if let message = model.updateStatusMessage, message.hasPrefix("Share") || message == "Usage report copied." {
-                                        Text(message)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                    SectionBlock(title: "Usage Trend") {
+                                        UsageTrendSection(state: UsageTrendDisplayState.make(points: model.snapshot.trend))
                                     }
                                 }
-                                .buttonStyle(.borderless)
-                            }
 
-                            if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
-                                UpdateAvailableBanner(info: updateInfo) {
-                                    model.openLatestRelease()
+                                if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
+                                    UpdateAvailableBanner(info: updateInfo) {
+                                        model.openLatestRelease()
+                                    }
+                                }
+
+                                userSection
+
+                                if let message = model.snapshot.message, !message.isEmpty {
+                                    MessageRow(message: message)
+                                }
+
+                                if let suggestion = model.snapshotRecoverySuggestion {
+                                    RecoverySuggestionCard(suggestion: suggestion) { action in
+                                        model.performRecoveryAction(action)
+                                    }
                                 }
                             }
-
-                            userSection
-
-                            if let message = model.snapshot.message, !message.isEmpty {
-                                MessageRow(message: message)
-                            }
-
-                            if let suggestion = model.snapshotRecoverySuggestion {
-                                RecoverySuggestionCard(suggestion: suggestion) { action in
-                                    model.performRecoveryAction(action)
-                                }
-                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 16)
                         }
-                        .padding(16)
-                    }
 
-                    Divider()
-                    footer
+                        Divider()
+                        footer
+                    }
                 }
             }
         }
@@ -89,14 +74,17 @@ struct MonitorPanel: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: iconName)
-                .font(.system(size: 22, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(iconColor)
+                .frame(width: 36, height: 36)
+                .background(iconColor.opacity(0.13), in: RoundedRectangle(cornerRadius: 8))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(activeAccountTitle)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1)
                 Text(model.snapshot.connected ? lastUpdatedText : "Disconnected")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -125,23 +113,18 @@ struct MonitorPanel: View {
             .help("Settings")
         }
         .buttonStyle(.borderless)
-        .padding(16)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background(PanelColors.elevatedSurface.opacity(0.82))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(PanelColors.border)
+                .frame(height: 1)
+        }
     }
 
     private var statusSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(statusLabel)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(iconColor)
-                Spacer()
-                Text("User Usage")
-                    .font(.caption.weight(.medium))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
-            }
-
+        VStack(alignment: .leading, spacing: 12) {
             if model.config.authToken.isEmpty {
                 Text("Set Base URL and token to start monitoring.")
                     .font(.callout)
@@ -152,6 +135,45 @@ struct MonitorPanel: View {
         }
     }
 
+    private var shareToolbar: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Button {
+                    model.copySocialShareCard()
+                } label: {
+                    Label("Share Card", systemImage: "square.and.arrow.up")
+                }
+
+                Button {
+                    model.copyUsageReport()
+                } label: {
+                    Label("Report", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    model.openSocialShareDraft()
+                } label: {
+                    Label("Post", systemImage: "paperplane")
+                }
+
+                Spacer()
+            }
+
+            if let message = model.updateStatusMessage, message.hasPrefix("Share") || message == "Usage report copied." {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.borderless)
+        .padding(10)
+        .background(PanelColors.surface, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(PanelColors.border, lineWidth: 1)
+        )
+    }
+
     private var userSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let user = model.snapshot.currentUser {
@@ -159,6 +181,9 @@ struct MonitorPanel: View {
             }
 
             if let stats = model.snapshot.stats {
+                Text("Details")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
                 MetricGrid(items: [
                     MetricItem(title: "Balance", value: balanceText, caption: "Available", systemImage: "banknote", tint: .green),
                     MetricItem(title: "API Keys", value: "\(stats.totalAPIKeys)", caption: "\(stats.activeAPIKeys) active", systemImage: "key", tint: .blue),
@@ -215,7 +240,9 @@ struct MonitorPanel: View {
             }
         }
         .buttonStyle(.borderless)
-        .padding(12)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .background(PanelColors.elevatedSurface.opacity(0.86))
     }
 
     private var iconName: String {
@@ -257,6 +284,14 @@ struct MonitorPanel: View {
             return "--"
         }
         return StatusFormatters.currency(balance)
+    }
+
+    private var quotaHeadline: String {
+        guard let summary = model.snapshot.subscriptionSummary else {
+            return "No quota data"
+        }
+        let progress = StatusFormatters.percent(summary.highestProgress)
+        return "\(progress) peak"
     }
 
     private var usageInsights: UsageInsights {
@@ -312,5 +347,103 @@ struct AccountSwitcher: View {
         }
         .menuStyle(.borderlessButton)
         .help("Switch account")
+    }
+}
+
+struct OverviewCard: View {
+    let statusText: String
+    let statusColor: Color
+    let stats: DashboardStats?
+    let balanceText: String
+    let quotaText: String
+    let tokenBreakdown: (Int64, Int64) -> String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    StatusPill(text: statusText, color: statusColor, systemImage: "circle.fill")
+                    Text("Today")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(balanceText)
+                        .font(.system(size: 17, weight: .bold, design: .rounded).monospacedDigit())
+                    Text("balance")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let stats {
+                HStack(alignment: .lastTextBaseline, spacing: 10) {
+                    Text(StatusFormatters.compactNumber(stats.todayTokens))
+                        .font(.system(size: 48, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.68)
+                    Text("tokens")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 10) {
+                    OverviewStat(title: "Spend", value: StatusFormatters.preciseCurrency(stats.todayActualCost), color: .green)
+                    OverviewStat(title: "Requests", value: StatusFormatters.menuBarCount(stats.todayRequests), color: .blue)
+                    OverviewStat(title: "Quota", value: quotaText, color: .orange)
+                }
+
+                Text(tokenBreakdown(stats.todayInputTokens, stats.todayOutputTokens))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            } else {
+                Text("Waiting for usage data.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0.96),
+                    Color(red: 0.88, green: 0.93, blue: 1.0).opacity(0.64),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(PanelColors.border, lineWidth: 1)
+        )
+    }
+}
+
+struct OverviewStat: View {
+    let title: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))
     }
 }

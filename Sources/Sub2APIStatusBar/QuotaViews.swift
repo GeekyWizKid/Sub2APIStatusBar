@@ -5,20 +5,18 @@ struct SubscriptionQuotaCard: View {
     let item: SubscriptionSummaryItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Circle()
                     .fill(item.status == "active" ? Color.green : Color.secondary)
                     .frame(width: 7, height: 7)
                 Text(item.groupName)
-                    .font(.headline)
+                    .font(.callout.weight(.semibold))
                 Spacer()
-                Text(item.status == "active" ? "Active" : item.status)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(item.status == "active" ? .green : .secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background((item.status == "active" ? Color.green : Color.secondary).opacity(0.14), in: Capsule())
+                StatusPill(
+                    text: item.status == "active" ? "Active" : item.status,
+                    color: item.status == "active" ? .green : .secondary
+                )
             }
 
             quotaSummary
@@ -108,10 +106,10 @@ struct QuotaProgressRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.title)
-                    .font(.callout.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                 Spacer()
                 Text(window.percentText)
-                    .font(.callout.weight(.semibold).monospacedDigit())
+                    .font(.caption.weight(.bold).monospacedDigit())
                     .foregroundStyle(tint)
                 Text(window.amountText)
                     .font(.caption.monospacedDigit())
