@@ -69,7 +69,6 @@ struct MonitorPanel: View {
         .frame(width: 520, height: 680)
         .sheet(isPresented: $showingSettings) {
             SettingsView(model: model)
-                .frame(width: 450, height: 690)
         }
     }
 

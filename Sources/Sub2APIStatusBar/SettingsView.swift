@@ -6,13 +6,14 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Settings")
-                .font(.title2.bold())
+        VStack(spacing: 0) {
+            header
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    AccountSettingsSection(model: model)
+                    if !model.config.accounts.isEmpty {
+                        AccountSettingsSection(model: model)
+                    }
                     GeneralSettingsSection(model: model)
                     AlertSettingsSection(model: model)
                     InsightSettingsSection(model: model)
@@ -20,30 +21,67 @@ struct SettingsView: View {
                     LoginSettingsSection(model: model, dismiss: dismiss)
                     DiagnosticsSettingsSection(model: model)
                 }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if let error = model.settingsError {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.red.opacity(0.08))
             }
+
+            Divider()
+            footer
+        }
+        .frame(width: 520, height: 680)
+        .background(PanelBackground())
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 34, height: 34)
+                .background(Color.blue.opacity(0.13), in: RoundedRectangle(cornerRadius: 8))
+
+            Text("Settings")
+                .font(.title2.bold())
 
             Spacer()
-
-            HStack {
-                Spacer()
-                Button("Cancel") {
-                    dismiss()
-                }
-                Button("Save") {
-                    model.saveSettings()
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-            }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(PanelColors.elevatedSurface.opacity(0.88))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(PanelColors.border)
+                .frame(height: 1)
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            Spacer()
+            Button("Cancel") {
+                dismiss()
+            }
+            Button("Save") {
+                model.saveSettings()
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(PanelColors.elevatedSurface.opacity(0.92))
     }
 }
 
@@ -51,11 +89,9 @@ struct AccountSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        if !model.config.accounts.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Accounts")
-                    .font(.headline)
-                Picker("Active Account", selection: Binding(
+        SettingsSection(title: "Accounts") {
+            SettingsControlRow(title: "Active Account") {
+                Picker("", selection: Binding(
                     get: { model.config.selectedAccountID ?? "" },
                     set: { id in
                         if let account = model.config.accounts.first(where: { $0.id == id }) {
@@ -68,6 +104,8 @@ struct AccountSettingsSection: View {
                         Text(account.displayName).tag(account.id)
                     }
                 }
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -77,14 +115,12 @@ struct GeneralSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("General")
-                .font(.headline)
-
+        SettingsSection(title: "General") {
             VStack(spacing: 8) {
                 SettingsControlRow(title: "Base URL") {
                     TextField("https://sub2api.example.com", text: $model.settingsDraft.baseURL)
                         .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: .infinity)
                 }
 
                 SettingsControlRow(title: "Menu Bar") {
@@ -98,7 +134,9 @@ struct GeneralSettingsSection: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .controlSize(.small)
                     .disabled(!model.settingsDraft.showsMenuBarText)
+                    .frame(maxWidth: .infinity)
                 }
 
                 SettingsControlRow(title: "Startup") {
@@ -110,6 +148,7 @@ struct GeneralSettingsSection: View {
 
                 SettingsControlRow(title: "Refresh") {
                     Slider(value: $model.settingsDraft.refreshIntervalSeconds, in: 5...300, step: 5)
+                        .frame(maxWidth: .infinity)
                     Text("\(Int(model.settingsDraft.refreshIntervalSeconds))s")
                         .font(.callout.monospacedDigit())
                         .frame(width: 42, alignment: .trailing)
@@ -118,6 +157,7 @@ struct GeneralSettingsSection: View {
                 SettingsControlRow(title: "Token") {
                     SecureField("Bearer Token", text: $model.settingsDraft.authToken)
                         .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: .infinity)
                 }
             }
 
@@ -132,10 +172,7 @@ struct AlertSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Alerts")
-                .font(.headline)
-
+        SettingsSection(title: "Alerts") {
             VStack(spacing: 8) {
                 SettingsControlRow(title: "Notify") {
                     Toggle("Usage insights", isOn: $model.settingsDraft.insightAlertSettings.isEnabled)
@@ -147,10 +184,13 @@ struct AlertSettingsSection: View {
                         Text("Error only").tag(MonitorSeverity.error)
                     }
                     .pickerStyle(.segmented)
+                    .controlSize(.small)
+                    .frame(maxWidth: 320, alignment: .leading)
                 }
 
                 SettingsControlRow(title: "Quiet") {
                     Slider(value: $model.settingsDraft.insightAlertSettings.cooldownMinutes, in: 5...360, step: 5)
+                        .frame(maxWidth: .infinity)
                     Text("\(Int(model.settingsDraft.insightAlertSettings.cooldownMinutes))m")
                         .font(.callout.monospacedDigit())
                         .frame(width: 48, alignment: .trailing)
@@ -166,10 +206,7 @@ struct InsightSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Insights")
-                .font(.headline)
-
+        SettingsSection(title: "Insights") {
             VStack(spacing: 8) {
                 ThresholdSliderRow(
                     title: "Quota warn",
@@ -202,6 +239,7 @@ struct InsightSettingsSection: View {
                         format: .number.precision(.fractionLength(0...2))
                     )
                     .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: .infinity)
                     Text("USD")
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -341,6 +379,7 @@ struct ThresholdSliderRow: View {
     var body: some View {
         SettingsControlRow(title: title) {
             Slider(value: $value, in: range, step: step)
+                .frame(maxWidth: .infinity)
             Text(valueText)
                 .font(.callout.monospacedDigit())
                 .frame(width: 48, alignment: .trailing)
@@ -353,15 +392,36 @@ struct SettingsControlRow<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.callout)
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 76, alignment: .leading)
             HStack(spacing: 8) {
                 content
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct SettingsSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+            content
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PanelColors.elevatedSurface.opacity(0.88), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(PanelColors.border, lineWidth: 1)
+        )
     }
 }
 
@@ -370,11 +430,11 @@ struct LoginSettingsSection: View {
     let dismiss: DismissAction
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Login")
-                .font(.headline)
+        SettingsSection(title: "Login") {
             TextField("Email", text: $model.loginEmail)
+                .textFieldStyle(.roundedBorder)
             SecureField("Password", text: $model.loginPassword)
+                .textFieldStyle(.roundedBorder)
             Button {
                 model.loginAndSave()
             } label: {
@@ -397,9 +457,7 @@ struct DiagnosticsSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Diagnostics")
-                .font(.headline)
+        SettingsSection(title: "Diagnostics") {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Button {
@@ -440,10 +498,8 @@ struct UpdateSettingsSection: View {
     @ObservedObject var model: MonitorViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        SettingsSection(title: "Updates") {
             HStack {
-                Text("Updates")
-                    .font(.headline)
                 Spacer()
                 if model.isCheckingForUpdates {
                     ProgressView()
