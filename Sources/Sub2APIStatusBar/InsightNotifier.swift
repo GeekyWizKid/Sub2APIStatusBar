@@ -51,8 +51,7 @@ final class InsightNotifier {
     }
 
     func authorization() async -> InsightNotificationAuthorization {
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
-        return Self.authorization(from: settings.authorizationStatus)
+        await currentAuthorization()
     }
 
     func requestAuthorization() async -> InsightNotificationAuthorization {
@@ -65,7 +64,7 @@ final class InsightNotifier {
         return await authorization()
     }
 
-    static func authorization(from status: UNAuthorizationStatus) -> InsightNotificationAuthorization {
+    nonisolated static func authorization(from status: UNAuthorizationStatus) -> InsightNotificationAuthorization {
         switch status {
         case .authorized, .provisional, .ephemeral:
             return .authorized
@@ -81,12 +80,12 @@ final class InsightNotifier {
     private func deliver(_ alert: InsightAlert) async -> Bool {
         let center = UNUserNotificationCenter.current()
         do {
-            let settings = await center.notificationSettings()
-            guard Self.authorization(from: settings.authorizationStatus) != .denied else {
+            let authorization = await currentAuthorization(center: center)
+            guard authorization != .denied else {
                 return false
             }
 
-            if settings.authorizationStatus == .notDetermined {
+            if authorization == .notDetermined {
                 let granted = try await center.requestAuthorization(options: [.alert, .sound])
                 guard granted else {
                     return false
@@ -107,6 +106,14 @@ final class InsightNotifier {
             return true
         } catch {
             return false
+        }
+    }
+
+    private func currentAuthorization(center: UNUserNotificationCenter = .current()) async -> InsightNotificationAuthorization {
+        await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                continuation.resume(returning: Self.authorization(from: settings.authorizationStatus))
+            }
         }
     }
 }
