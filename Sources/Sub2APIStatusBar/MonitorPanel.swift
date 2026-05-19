@@ -410,8 +410,8 @@ struct OverviewCard: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color(nsColor: .controlBackgroundColor).opacity(0.96),
-                    Color(red: 0.88, green: 0.93, blue: 1.0).opacity(0.64),
+                    PanelColors.heroSurfaceStart,
+                    PanelColors.heroSurfaceEnd,
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -443,6 +443,6 @@ struct OverviewStat: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))
+        .background(PanelColors.softFill, in: RoundedRectangle(cornerRadius: 8))
     }
 }

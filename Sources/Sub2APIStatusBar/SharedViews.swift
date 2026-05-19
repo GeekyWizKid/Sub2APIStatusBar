@@ -24,11 +24,42 @@ struct SectionBlock<Content: View>: View {
 
 enum PanelColors {
     static let backgroundTop = Color(nsColor: .windowBackgroundColor)
-    static let backgroundBottom = Color(red: 0.91, green: 0.94, blue: 0.98)
-    static let surface = Color(nsColor: .controlBackgroundColor).opacity(0.86)
-    static let elevatedSurface = Color(nsColor: .windowBackgroundColor).opacity(0.94)
-    static let border = Color.primary.opacity(0.08)
-    static let mutedBorder = Color.primary.opacity(0.05)
+    static let backgroundMid = Color(
+        light: Color(red: 0.96, green: 0.98, blue: 1.0),
+        dark: Color(red: 0.14, green: 0.15, blue: 0.17)
+    )
+    static let backgroundBottom = Color(
+        light: Color(red: 0.91, green: 0.94, blue: 0.98),
+        dark: Color(red: 0.09, green: 0.10, blue: 0.12)
+    )
+    static let surface = Color(
+        light: Color(nsColor: .controlBackgroundColor).opacity(0.86),
+        dark: Color(red: 0.18, green: 0.19, blue: 0.21).opacity(0.94)
+    )
+    static let elevatedSurface = Color(
+        light: Color(nsColor: .windowBackgroundColor).opacity(0.94),
+        dark: Color(red: 0.13, green: 0.14, blue: 0.16).opacity(0.98)
+    )
+    static let heroSurfaceStart = Color(
+        light: Color(nsColor: .controlBackgroundColor).opacity(0.96),
+        dark: Color(red: 0.20, green: 0.21, blue: 0.23)
+    )
+    static let heroSurfaceEnd = Color(
+        light: Color(red: 0.88, green: 0.93, blue: 1.0).opacity(0.64),
+        dark: Color(red: 0.12, green: 0.15, blue: 0.18)
+    )
+    static let softFill = Color(
+        light: Color.primary.opacity(0.035),
+        dark: Color.white.opacity(0.055)
+    )
+    static let border = Color(
+        light: Color.primary.opacity(0.08),
+        dark: Color.white.opacity(0.10)
+    )
+    static let mutedBorder = Color(
+        light: Color.primary.opacity(0.05),
+        dark: Color.white.opacity(0.07)
+    )
 }
 
 struct PanelBackground: View {
@@ -36,12 +67,26 @@ struct PanelBackground: View {
         LinearGradient(
             colors: [
                 PanelColors.backgroundTop,
-                Color(red: 0.95, green: 0.97, blue: 0.99),
+                PanelColors.backgroundMid,
                 PanelColors.backgroundBottom,
             ],
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+}
+
+extension Color {
+    init(light: Color, dark: Color) {
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            let bestMatch = appearance.bestMatch(from: [.darkAqua, .aqua])
+            switch bestMatch {
+            case .darkAqua:
+                return NSColor(dark)
+            default:
+                return NSColor(light)
+            }
+        })
     }
 }
 
