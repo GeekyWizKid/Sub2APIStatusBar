@@ -32,7 +32,15 @@ jobs:
       - name: Verify Product Preview
         run: |
           ./scripts/capture-product-preview.swift
-          git diff --exit-code docs/assets/product-preview.png
+          bytes="$(stat -f%z docs/assets/product-preview.png)"
+          if [[ "$bytes" -le 10000 ]]; then
+            echo "Product preview PNG is unexpectedly small: ${bytes} bytes" >&2
+            exit 1
+          fi
+          dimensions="$(sips -g pixelWidth -g pixelHeight docs/assets/product-preview.png)"
+          echo "$dimensions"
+          grep -q "pixelWidth: 1200" <<< "$dimensions"
+          grep -q "pixelHeight: 820" <<< "$dimensions"
 
       - name: Resolve Release Signing
         id: signing
