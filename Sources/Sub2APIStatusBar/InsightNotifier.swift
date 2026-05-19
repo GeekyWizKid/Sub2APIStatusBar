@@ -1,6 +1,6 @@
 import Foundation
 import Sub2APIStatusCore
-import UserNotifications
+@preconcurrency import UserNotifications
 
 @MainActor
 final class InsightNotifier {
@@ -56,12 +56,8 @@ final class InsightNotifier {
 
     func requestAuthorization() async -> InsightNotificationAuthorization {
         let center = UNUserNotificationCenter.current()
-        do {
-            _ = try await center.requestAuthorization(options: [.alert, .sound])
-        } catch {
-            return await authorization()
-        }
-        return await authorization()
+        _ = await requestNotificationAuthorization(center: center)
+        return await currentAuthorization(center: center)
     }
 
     nonisolated static func authorization(from status: UNAuthorizationStatus) -> InsightNotificationAuthorization {
@@ -79,33 +75,44 @@ final class InsightNotifier {
 
     private func deliver(_ alert: InsightAlert) async -> Bool {
         let center = UNUserNotificationCenter.current()
-        do {
-            let authorization = await currentAuthorization(center: center)
-            guard authorization != .denied else {
+        let authorization = await currentAuthorization(center: center)
+        guard authorization != .denied else {
+            return false
+        }
+
+        if authorization == .notDetermined {
+            let granted = await requestNotificationAuthorization(center: center)
+            guard granted else {
                 return false
             }
+        }
 
-            if authorization == .notDetermined {
-                let granted = try await center.requestAuthorization(options: [.alert, .sound])
-                guard granted else {
-                    return false
-                }
+        let content = UNMutableNotificationContent()
+        content.title = "Sub2API \(alert.title)"
+        content.body = alert.body
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "sub2api-insight-\(alert.fingerprint)",
+            content: content,
+            trigger: nil
+        )
+        return await addNotification(request, center: center)
+    }
+
+    private func requestNotificationAuthorization(center: UNUserNotificationCenter) async -> Bool {
+        await withCheckedContinuation { continuation in
+            center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+                continuation.resume(returning: granted)
             }
+        }
+    }
 
-            let content = UNMutableNotificationContent()
-            content.title = "Sub2API \(alert.title)"
-            content.body = alert.body
-            content.sound = .default
-
-            let request = UNNotificationRequest(
-                identifier: "sub2api-insight-\(alert.fingerprint)",
-                content: content,
-                trigger: nil
-            )
-            try await center.add(request)
-            return true
-        } catch {
-            return false
+    private func addNotification(_ request: UNNotificationRequest, center: UNUserNotificationCenter) async -> Bool {
+        await withCheckedContinuation { continuation in
+            center.add(request) { error in
+                continuation.resume(returning: error == nil)
+            }
         }
     }
 
