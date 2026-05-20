@@ -49,8 +49,8 @@
 ```bash
 swift test
 swift build
-VERSION=v0.1.5 ./scripts/package-release.sh
-VERSION=v0.1.5 ./scripts/verify-release.sh
+VERSION=v0.1.6 ./scripts/package-release.sh
+VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
 
 For the v0.1.6 productization pass:
@@ -68,7 +68,7 @@ Developer ID signing:
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/package-release.sh
 ```
 
@@ -79,6 +79,6 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/notarize-release.sh
 ```

@@ -7,6 +7,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Local warning thresholds for daily spend, daily tokens, and highest subscription quota usage.
 - Alert-aware status text, diagnostics, and menu bar detail.
 - Productization roadmap documentation and release-readiness matrix.
+- Contributor guidance, issue flow, security policy, and pull request checklist for public collaboration.
 
 ## Verification
 

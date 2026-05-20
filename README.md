@@ -83,7 +83,7 @@ swift run Sub2APIStatusBar
 ## Build A macOS App
 
 ```bash
-VERSION=v0.1.5 ./scripts/build-app.sh
+VERSION=v0.1.6 ./scripts/build-app.sh
 ```
 
 Output:
@@ -96,21 +96,21 @@ The build script generates the app icon, copies bundle resources, and applies ad
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/build-app.sh
 ```
 
 ## Package A Release
 
 ```bash
-VERSION=v0.1.5 ./scripts/package-release.sh
+VERSION=v0.1.6 ./scripts/package-release.sh
 ```
 
 Output:
 
 ```text
-dist/Sub2APIStatusBar-0.1.5-macOS.zip
-dist/Sub2APIStatusBar-0.1.5-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.6-macOS.zip
+dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
 ```
 
 ## Notarize A Release
@@ -122,7 +122,7 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.5 \
+VERSION=v0.1.6 \
 ./scripts/notarize-release.sh
 ```
 

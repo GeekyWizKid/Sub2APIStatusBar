@@ -7,6 +7,8 @@
 - Added local alert thresholds for daily spend, daily tokens, and subscription quota pressure.
 - Surfaced active alerts in status labels, detail text, diagnostics, Settings controls, and the popover.
 - Added compact panel density, dashboard section visibility, stale-data status detail, and menu bar summary modes.
+- Added contributor guidance and a pull request checklist for public collaboration.
+- Aligned default build, package, CI, and documentation examples with the v0.1.6 release line.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

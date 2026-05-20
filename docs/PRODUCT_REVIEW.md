@@ -290,3 +290,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - After the first external contributions, refine PR checks based on the failure modes reviewers actually see.
+
+### 2026-05-20 Cycle S
+
+1. 审视
+   - Mature products keep public install examples, CI defaults, and app-reported versions aligned with the current release.
+   - The project had v0.1.6 release notes and verification, but several defaults and examples still pointed at v0.1.5.
+
+2. 执行
+   - Aligned the fallback app version, package script defaults, CI package default, README examples, and release checklist commands with v0.1.6.
+   - Added a focused test that guards the app fallback version against drifting behind the current release line.
+   - Updated v0.1.6 release notes and changelog to include the contributor workflow and version-alignment pass.
+
+3. 提升
+   - In the next release, make the current release line a single source of truth so scripts, docs, and tests do not require scattered manual edits.

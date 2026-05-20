@@ -376,6 +376,10 @@ import Testing
     #expect(current.statusText == "You are up to date.")
 }
 
+@Test func defaultBuildVersionMatchesCurrentRelease() {
+    #expect(AppBuildInfo.fallbackVersion == "0.1.6")
+}
+
 @Test func currentUserResponseDecodesDirectUserPayload() throws {
     let json = """
     {
