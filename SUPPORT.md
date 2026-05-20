@@ -2,7 +2,7 @@
 
 Use GitHub Issues for bugs, product feedback, and release questions.
 
-For security vulnerabilities, do not open a public issue. Follow [SECURITY.md](SECURITY.md).
+For security vulnerabilities, do not open a public issue. Follow [SECURITY.md](SECURITY.md), which points to GitHub private vulnerability reporting.
 
 ## Issue Routing
 

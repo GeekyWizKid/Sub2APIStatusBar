@@ -475,3 +475,18 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once the repository is public, sync `.github/labels.yml` to GitHub and use real issue flow to decide whether automation or saved replies are worth adding.
+
+### 2026-05-20 Cycle AF
+
+1. 审视
+   - Mature public repositories give vulnerability reporters a private path and keep public issue templates from becoming an accidental disclosure channel.
+   - The project had a security policy, but it still allowed a fallback public issue asking for private contact and did not configure issue-template contact links.
+
+2. 执行
+   - Added `.github/ISSUE_TEMPLATE/config.yml` to disable blank public issues and route security reports to GitHub private vulnerability reporting.
+   - Added `scripts/verify-security-reporting.sh` to verify the private security route, support contact link, and removal of the public-issue fallback.
+   - Wired security reporting verification into the release candidate gate.
+   - Updated SECURITY, SUPPORT, CONTRIBUTING, release checklist, release notes, and changelog.
+
+3. 提升
+   - Before the repository is made public, enable GitHub private vulnerability reporting in repository settings and confirm the Security tab resolves for outside reporters.

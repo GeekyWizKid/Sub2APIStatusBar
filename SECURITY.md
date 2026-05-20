@@ -4,6 +4,8 @@
 
 Do not open a public GitHub Issue for security vulnerabilities.
 
+Use GitHub private vulnerability reporting from the repository Security tab: <https://github.com/GeekyWizKid/Sub2APIStatusBar/security/policy>
+
 Report privately to the project maintainer with:
 
 - A short summary of the vulnerability.
@@ -12,7 +14,7 @@ Report privately to the project maintainer with:
 - Reproduction steps or proof-of-concept details.
 - Whether local config files, auth tokens, refresh tokens, release archives, or update checks are involved.
 
-If no private security contact is published for the repository yet, open a minimal public issue that asks for a private contact channel and does not include exploit details, secrets, server URLs, tokens, or private logs.
+Do not include exploit details, secrets, server URLs, tokens, or private logs in public issues.
 
 ## Sensitive Data
 

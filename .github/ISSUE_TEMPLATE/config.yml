@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/GeekyWizKid/Sub2APIStatusBar/security/policy
+    about: Report vulnerabilities privately; do not include exploit details or secrets in public issues.
+  - name: Support checklist
+    url: https://github.com/GeekyWizKid/Sub2APIStatusBar/blob/main/SUPPORT.md
+    about: Review diagnostics and privacy guidance before opening a public support issue.

@@ -29,6 +29,7 @@ For repository operations changes, also run:
 
 ```bash
 ./scripts/verify-github-labels.sh
+./scripts/verify-security-reporting.sh
 ```
 
 ## Product Standards
@@ -72,6 +73,8 @@ Do not commit:
 - Generated release archives in `dist/`.
 
 Security vulnerabilities should follow `SECURITY.md` instead of public issue discussion.
+
+Issue template configuration must keep blank public issues disabled and preserve the private security contact link.
 
 ## Pull Request Checklist
 
