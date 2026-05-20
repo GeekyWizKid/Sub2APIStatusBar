@@ -58,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        switch snapshot.severity {
+        switch snapshot.severity(using: model.config.alertRules) {
         case .healthy:
             button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Sub2API OK")
         case .warning:
@@ -71,12 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.title = snapshot.connected && model.config.showsMenuBarText ? " \(snapshot.menuBarSummary(displayMode: model.config.menuBarDisplayMode))" : ""
 
         if let stats = snapshot.stats, snapshot.connected {
-            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
-            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let label = snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
             button.toolTip = "Sub2API \(label) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm)). \(detail)"
         } else {
-            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
-            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let label = snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
             button.toolTip = "Sub2API \(label). \(detail)"
         }
     }
@@ -538,7 +538,7 @@ struct MonitorPanel: View {
     private var statusSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(model.snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
+                Text(model.snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds))
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(iconColor)
                 Spacer()
@@ -554,7 +554,7 @@ struct MonitorPanel: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } else {
-                Text(model.snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
+                Text(model.snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

@@ -15,6 +15,9 @@ public enum DiagnosticReport {
             "Connected: \(snapshot.connected ? "yes" : "no")",
             "Base URL: \(config.baseURL)",
             "Refresh Interval: \(Int(config.refreshIntervalSeconds))s",
+            "Daily Spend Alert: \(config.alertRules.dailySpendUSD.map(StatusFormatters.preciseCurrency) ?? "off")",
+            "Daily Token Alert: \(config.alertRules.dailyTokens.map { String($0) } ?? "off")",
+            "Quota Alert: \(StatusFormatters.percent(config.alertRules.quotaProgress))",
             "Menu Bar Text: \(config.showsMenuBarText ? "shown" : "hidden")",
             "Menu Bar Summary Mode: \(config.menuBarDisplayMode.displayName)",
             "Accounts: \(config.accounts.count)",
@@ -22,6 +25,13 @@ public enum DiagnosticReport {
             "Access Token: \(config.authToken.isEmpty ? "missing" : "present")",
             "Refresh Token: \(config.refreshToken.isEmpty ? "missing" : "present")",
         ]
+
+        let alerts = snapshot.localAlerts(using: config.alertRules)
+        if alerts.isEmpty {
+            lines.append("Active Alerts: none")
+        } else {
+            lines.append("Active Alerts: \(alerts.map(\.title).joined(separator: ", "))")
+        }
 
         if let stats = snapshot.stats {
             lines.append("Today Requests: \(stats.todayRequests)")

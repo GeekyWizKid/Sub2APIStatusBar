@@ -842,6 +842,35 @@ import Testing
     #expect(report.contains("secret-refresh-token") == false)
 }
 
+@Test func diagnosticReportIncludesLocalAlertState() {
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        alertRules: LocalAlertRules(dailySpendUSD: 5, dailyTokens: 1_000, quotaProgress: 0.9)
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 2_000, todayActualCost: 9),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+
+    let report = DiagnosticReport.make(
+        config: config,
+        snapshot: snapshot,
+        appVersion: "0.1.6",
+        osVersion: "macOS 15.0"
+    )
+
+    #expect(report.contains("Daily Spend Alert: $5.0000"))
+    #expect(report.contains("Daily Token Alert: 1000"))
+    #expect(report.contains("Quota Alert: 90%"))
+    #expect(report.contains("Active Alerts: Daily spend alert, Daily token alert"))
+}
+
 @Test func loginFormStateRequiresURLAccountAndPassword() {
     #expect(LoginFormState(baseURL: "", email: "a@example.com", password: "secret").canSubmit == false)
     #expect(LoginFormState(baseURL: "http://127.0.0.1:8080", email: "", password: "secret").canSubmit == false)
