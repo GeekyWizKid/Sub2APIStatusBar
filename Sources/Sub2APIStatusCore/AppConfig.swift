@@ -53,87 +53,150 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
-public enum MenuBarDisplayMode: String, Codable, CaseIterable, Identifiable, Sendable {
-    case spendRequestsRPM
-    case requestsAndTokens
-    case quotaSnapshot
+public enum MenuBarMetric: String, Codable, CaseIterable, Identifiable, Sendable {
+    case automatic
+    case spend
+    case balance
+    case quota
+    case tokens
+    case requests
 
     public var id: String { rawValue }
 
     public var displayName: String {
         switch self {
-        case .spendRequestsRPM:
-            "Spend, Requests, RPM"
-        case .requestsAndTokens:
-            "Requests, Tokens, TPM"
-        case .quotaSnapshot:
-            "Quota Snapshot"
+        case .automatic:
+            "Auto"
+        case .spend:
+            "Spend"
+        case .balance:
+            "Balance"
+        case .quota:
+            "Quota"
+        case .tokens:
+            "Tokens"
+        case .requests:
+            "Requests"
         }
     }
 }
 
-public struct DashboardSectionVisibility: Codable, Equatable, Sendable {
-    public var accountOverview: Bool
-    public var usageMetrics: Bool
-    public var subscriptions: Bool
-    public var modelDistribution: Bool
-    public var tokenTrend: Bool
+public struct InsightThresholds: Codable, Equatable, Sendable {
+    public var quotaWarningProgress: Double
+    public var quotaCriticalProgress: Double
+    public var lowBalanceDays: Double
+    public var monthlyBudgetUSD: Double
+    public var tokenSurgeRatio: Double
+    public var spendSurgeRatio: Double
+    public var modelConcentrationShare: Double
+    public var latencyWarningMs: Double
+
+    private enum CodingKeys: String, CodingKey {
+        case quotaWarningProgress
+        case quotaCriticalProgress
+        case lowBalanceDays
+        case monthlyBudgetUSD
+        case tokenSurgeRatio
+        case spendSurgeRatio
+        case modelConcentrationShare
+        case latencyWarningMs
+    }
 
     public init(
-        accountOverview: Bool = true,
-        usageMetrics: Bool = true,
-        subscriptions: Bool = true,
-        modelDistribution: Bool = true,
-        tokenTrend: Bool = true
+        quotaWarningProgress: Double,
+        quotaCriticalProgress: Double,
+        lowBalanceDays: Double,
+        monthlyBudgetUSD: Double = 0,
+        tokenSurgeRatio: Double,
+        spendSurgeRatio: Double? = nil,
+        modelConcentrationShare: Double,
+        latencyWarningMs: Double
     ) {
-        self.accountOverview = accountOverview
-        self.usageMetrics = usageMetrics
-        self.subscriptions = subscriptions
-        self.modelDistribution = modelDistribution
-        self.tokenTrend = tokenTrend
+        self.quotaWarningProgress = quotaWarningProgress
+        self.quotaCriticalProgress = quotaCriticalProgress
+        self.lowBalanceDays = lowBalanceDays
+        self.monthlyBudgetUSD = monthlyBudgetUSD
+        self.tokenSurgeRatio = tokenSurgeRatio
+        self.spendSurgeRatio = spendSurgeRatio ?? tokenSurgeRatio
+        self.modelConcentrationShare = modelConcentrationShare
+        self.latencyWarningMs = latencyWarningMs
+        normalize()
     }
-}
 
-public enum PanelDensity: String, Codable, CaseIterable, Identifiable, Sendable {
-    case regular
-    case compact
+    public static let defaults = InsightThresholds(
+        quotaWarningProgress: 0.8,
+        quotaCriticalProgress: 0.95,
+        lowBalanceDays: 3,
+        monthlyBudgetUSD: 0,
+        tokenSurgeRatio: 1.35,
+        spendSurgeRatio: 1.5,
+        modelConcentrationShare: 0.8,
+        latencyWarningMs: 30_000
+    )
 
-    public var id: String { rawValue }
-
-    public var displayName: String {
-        switch self {
-        case .regular:
-            "Comfortable"
-        case .compact:
-            "Compact"
-        }
-    }
-}
-
-public struct LocalAlertRules: Codable, Equatable, Sendable {
-    public var dailySpendUSD: Double?
-    public var dailyTokens: Int64?
-    public var quotaProgress: Double
-
-    public init(
-        dailySpendUSD: Double? = nil,
-        dailyTokens: Int64? = nil,
-        quotaProgress: Double = 0.85
-    ) {
-        self.dailySpendUSD = dailySpendUSD
-        self.dailyTokens = dailyTokens
-        self.quotaProgress = quotaProgress
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        quotaWarningProgress = try container.decodeIfPresent(Double.self, forKey: .quotaWarningProgress) ?? Self.defaults.quotaWarningProgress
+        quotaCriticalProgress = try container.decodeIfPresent(Double.self, forKey: .quotaCriticalProgress) ?? Self.defaults.quotaCriticalProgress
+        lowBalanceDays = try container.decodeIfPresent(Double.self, forKey: .lowBalanceDays) ?? Self.defaults.lowBalanceDays
+        monthlyBudgetUSD = try container.decodeIfPresent(Double.self, forKey: .monthlyBudgetUSD) ?? Self.defaults.monthlyBudgetUSD
+        tokenSurgeRatio = try container.decodeIfPresent(Double.self, forKey: .tokenSurgeRatio) ?? Self.defaults.tokenSurgeRatio
+        spendSurgeRatio = try container.decodeIfPresent(Double.self, forKey: .spendSurgeRatio) ?? tokenSurgeRatio
+        modelConcentrationShare = try container.decodeIfPresent(Double.self, forKey: .modelConcentrationShare) ?? Self.defaults.modelConcentrationShare
+        latencyWarningMs = try container.decodeIfPresent(Double.self, forKey: .latencyWarningMs) ?? Self.defaults.latencyWarningMs
         normalize()
     }
 
     public mutating func normalize() {
-        if let dailySpendUSD, dailySpendUSD <= 0 {
-            self.dailySpendUSD = nil
+        quotaWarningProgress = Self.clamped(quotaWarningProgress, min: 0.1, max: 0.98)
+        quotaCriticalProgress = Self.clamped(quotaCriticalProgress, min: 0.2, max: 1)
+        if quotaCriticalProgress <= quotaWarningProgress {
+            quotaWarningProgress = Self.defaults.quotaWarningProgress
+            quotaCriticalProgress = Self.defaults.quotaCriticalProgress
         }
-        if let dailyTokens, dailyTokens <= 0 {
-            self.dailyTokens = nil
+
+        lowBalanceDays = Self.clamped(lowBalanceDays, min: 1, max: 60)
+        monthlyBudgetUSD = Self.clamped(monthlyBudgetUSD, min: 0, max: 1_000_000)
+        tokenSurgeRatio = Self.clamped(tokenSurgeRatio, min: 1.1, max: 5)
+        spendSurgeRatio = Self.clamped(spendSurgeRatio, min: 1.1, max: 5)
+        if !(0.2...0.95).contains(modelConcentrationShare) {
+            modelConcentrationShare = Self.defaults.modelConcentrationShare
         }
-        quotaProgress = min(max(quotaProgress, 0.5), 1)
+        latencyWarningMs = Self.clamped(latencyWarningMs, min: 1_000, max: 120_000)
+    }
+
+    private static func clamped(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
+        Swift.min(Swift.max(value, minimum), maximum)
+    }
+}
+
+public struct InsightAlertSettings: Codable, Equatable, Sendable {
+    public var isEnabled: Bool
+    public var minimumSeverity: MonitorSeverity
+    public var cooldownMinutes: Double
+
+    public init(
+        isEnabled: Bool,
+        minimumSeverity: MonitorSeverity,
+        cooldownMinutes: Double
+    ) {
+        self.isEnabled = isEnabled
+        self.minimumSeverity = minimumSeverity
+        self.cooldownMinutes = cooldownMinutes
+        normalize()
+    }
+
+    public static let defaults = InsightAlertSettings(
+        isEnabled: true,
+        minimumSeverity: .warning,
+        cooldownMinutes: 60
+    )
+
+    public mutating func normalize() {
+        if minimumSeverity == .healthy {
+            minimumSeverity = .warning
+        }
+        cooldownMinutes = min(max(cooldownMinutes, 5), 1_440)
     }
 }
 
@@ -205,10 +268,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var language: AppLanguage
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
-    public var menuBarDisplayMode: MenuBarDisplayMode
-    public var dashboardSections: DashboardSectionVisibility
-    public var panelDensity: PanelDensity
-    public var alertRules: LocalAlertRules
+    public var menuBarMetric: MenuBarMetric
+    public var insightThresholds: InsightThresholds
+    public var insightAlertSettings: InsightAlertSettings
     public var accounts: [StoredAccount]
     public var selectedAccountID: String?
 
@@ -220,10 +282,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language: AppLanguage = .auto,
         monitorMode: MonitorMode = .user,
         showsMenuBarText: Bool = false,
-        menuBarDisplayMode: MenuBarDisplayMode = .spendRequestsRPM,
-        dashboardSections: DashboardSectionVisibility = DashboardSectionVisibility(),
-        panelDensity: PanelDensity = .regular,
-        alertRules: LocalAlertRules = LocalAlertRules(),
+        menuBarMetric: MenuBarMetric = .automatic,
+        insightThresholds: InsightThresholds = .defaults,
+        insightAlertSettings: InsightAlertSettings = .defaults,
         accounts: [StoredAccount] = [],
         selectedAccountID: String? = nil
     ) {
@@ -234,10 +295,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.language = language
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
-        self.menuBarDisplayMode = menuBarDisplayMode
-        self.dashboardSections = dashboardSections
-        self.panelDensity = panelDensity
-        self.alertRules = alertRules
+        self.menuBarMetric = menuBarMetric
+        self.insightThresholds = insightThresholds
+        self.insightAlertSettings = insightAlertSettings
         self.accounts = accounts
         self.selectedAccountID = selectedAccountID
         normalize()
@@ -251,10 +311,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case language
         case monitorMode
         case showsMenuBarText
-        case menuBarDisplayMode
-        case dashboardSections
-        case panelDensity
-        case alertRules
+        case menuBarMetric
+        case insightThresholds
+        case insightAlertSettings
         case accounts
         case selectedAccountID
     }
@@ -268,10 +327,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .auto
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
-        menuBarDisplayMode = try container.decodeIfPresent(MenuBarDisplayMode.self, forKey: .menuBarDisplayMode) ?? .spendRequestsRPM
-        dashboardSections = try container.decodeIfPresent(DashboardSectionVisibility.self, forKey: .dashboardSections) ?? DashboardSectionVisibility()
-        panelDensity = try container.decodeIfPresent(PanelDensity.self, forKey: .panelDensity) ?? .regular
-        alertRules = try container.decodeIfPresent(LocalAlertRules.self, forKey: .alertRules) ?? LocalAlertRules()
+        menuBarMetric = try container.decodeIfPresent(MenuBarMetric.self, forKey: .menuBarMetric) ?? .automatic
+        insightThresholds = try container.decodeIfPresent(InsightThresholds.self, forKey: .insightThresholds) ?? .defaults
+        insightAlertSettings = try container.decodeIfPresent(InsightAlertSettings.self, forKey: .insightAlertSettings) ?? .defaults
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
@@ -286,10 +344,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
-        try container.encode(menuBarDisplayMode, forKey: .menuBarDisplayMode)
-        try container.encode(dashboardSections, forKey: .dashboardSections)
-        try container.encode(panelDensity, forKey: .panelDensity)
-        try container.encode(alertRules, forKey: .alertRules)
+        try container.encode(menuBarMetric, forKey: .menuBarMetric)
+        try container.encode(insightThresholds, forKey: .insightThresholds)
+        try container.encode(insightAlertSettings, forKey: .insightAlertSettings)
         try container.encode(accounts, forKey: .accounts)
         try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
@@ -304,10 +361,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
             language: AppLanguage.fromEnvironment(env["SUB2API_LANGUAGE"]),
             monitorMode: .user,
             showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased()),
-            menuBarDisplayMode: .spendRequestsRPM,
-            dashboardSections: DashboardSectionVisibility(),
-            panelDensity: .regular,
-            alertRules: LocalAlertRules()
+            menuBarMetric: MenuBarMetric(rawValue: (env["SUB2API_MENU_BAR_METRIC"] ?? "").lowercased()) ?? .automatic
         )
     }
 
@@ -316,8 +370,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         authToken = authToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshIntervalSeconds = min(max(refreshIntervalSeconds, 5), 300)
+        insightThresholds.normalize()
+        insightAlertSettings.normalize()
         monitorMode = .user
-        alertRules.normalize()
 
         accounts = accounts.map { account in
             var normalized = account

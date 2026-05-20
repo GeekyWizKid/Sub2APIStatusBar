@@ -7,19 +7,34 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 ## Highlights
 
 - Native macOS menu bar app with a compact SwiftUI popover
-- User dashboard cards for balance, API keys, requests, spend, token totals, RPM/TPM, and response time
+- Usage Insights that turn balance, quotas, monthly budget, spend trend, usage trend, model concentration, and latency into prioritized signals
+- Local proactive alerts for warning/error insights, with severity and quiet-period controls
+- Stale-data guardrail so the menu bar and local alerts warn when the last successful refresh is too old
+- Notification permission status inside Settings, including quick access to macOS notification settings
+- Copy Share Card for a social-ready anonymous usage card plus text fallback, with a one-click X draft
+- Copy Usage Report for a shareable, credential-free summary of balance, spend, tokens, quotas, trend, models, and insights
+- Custom insight thresholds for quota pressure, balance runway, monthly budget, token surge, model concentration, and latency
+- User dashboard cards for balance, API keys, requests, spend, blended cost per million tokens, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
-- Seven-day token trend and model distribution
-- Optional menu bar text summary with multiple compact modes, for example `$120.75 · 1219 req · 3 RPM`
-- Customizable panel layout so users can hide less important dashboard sections
-- First-run login and optional manual Bearer token setup
+- Seven-day usage trend with Tokens, Spend, and Requests views
+- Model distribution with cost share, blended cost per million tokens, and token mix
+- Optional menu bar text summary with Auto, Spend, Balance, Quota, Tokens, and Requests modes
+- First-run connection checklist, login, and optional manual Bearer token setup
+- Guided recovery cards for missing URLs, expired sessions, token replacement, and server reachability problems
 - Multiple saved accounts with quick switching
 - Launch at Login, manual refresh, copied diagnostics, and config-file reveal actions
-- Stale-data detection so delayed refreshes are called out as `Needs Refresh`
-- Local alert thresholds for daily spend, daily tokens, and subscription quota pressure
-- MAGI productization roadmap with release-readiness gates and maturity backlog
 - Local config storage; no telemetry or third-party analytics
 - GitHub Releases update checking from Settings
+
+## Product Direction
+
+Sub2API Status Bar is intentionally optimized for ordinary users who need a fast answer to: am I healthy, what changed, and what should I watch next? It borrows the useful parts of larger usage dashboards without turning the menu bar into another full analytics console:
+
+- OpenAI-style usage visibility: project-like daily usage, costs, tokens, model mix, and throughput.
+- LiteLLM-style operational guardrails: quota pressure, budget runway, and rate-limit-adjacent RPM/TPM signals.
+- Helicone/Langfuse-style observability cues: local alerts, cost concentration, usage trend changes, latency, and support-safe diagnostics.
+
+The product bias is to surface actionable signals first, then leave deep investigation to the configured Sub2API web dashboard.
 
 ## Requirements
 
@@ -65,12 +80,17 @@ To switch accounts or remove saved credentials, open Settings and choose **Disco
 Settings also includes:
 
 - **Show text in menu bar** for a compact always-visible usage summary
-- **Summary mode** to switch the menu bar text between spend, token throughput, and quota emphasis
-- **Layout** controls to show or hide account, metrics, subscriptions, model distribution, and token trend sections
+- **Metric** to choose whether the menu bar emphasizes Auto, Spend, Balance, Quota, Tokens, or Requests
+- **Notify on insights** to receive local macOS alerts when important usage signals cross the configured level
+- **Notification status** to confirm alerts are ready or open macOS settings when permissions are blocked
+- **Insights thresholds** to tune when quota, balance, spend surge, token surge, model-share, and latency warnings appear
 - **Launch at login** so the monitor starts with macOS
+- **Copy Share Card** for an anonymous visual usage card and social post text without account details
+- **Copy Usage Report** for a shareable usage summary with credentials omitted
 - **Copy Diagnostics** for support-safe status details with tokens redacted
-- **Copy Support Bundle** for a ready-to-paste support packet with diagnostics and issue prompts
 - **Show Config** to reveal the local `config.json`
+
+If refreshes stop succeeding, the menu bar and popover mark the data as stale after roughly three refresh intervals, and insight alerts can notify you locally so old usage numbers are not mistaken for current state.
 
 Optional first-run environment variables:
 
@@ -86,8 +106,6 @@ swift run Sub2APIStatusBar
 ```bash
 VERSION=v0.1.6 ./scripts/build-app.sh
 ```
-
-If `VERSION` is omitted, release scripts read the current tag from the repository `VERSION` file.
 
 Output:
 
@@ -106,7 +124,7 @@ VERSION=v0.1.6 \
 ## Package A Release
 
 ```bash
-VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
+VERSION=v0.1.6 ./scripts/package-release.sh
 ```
 
 Output:
@@ -116,29 +134,36 @@ dist/Sub2APIStatusBar-0.1.6-macOS.zip
 dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg.sha256
-dist/Sub2APIStatusBar-0.1.6-macOS-manifest.json
-dist/sub2api-status-bar.rb
 ```
 
-After GitHub creates a draft release, download the zip, DMG, checksum files, manifest, and cask draft into a clean folder, then verify those downloaded assets:
-
-```bash
-VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh /path/to/downloaded-assets
-```
+The `.dmg` is the user-facing installer image with an Applications shortcut. The `.zip` remains available for automation and release verification.
 
 ## Notarize A Release
 
-After signing with a Developer ID Application certificate, notarize and staple the app through the release candidate gate:
+After signing with a Developer ID Application certificate, notarize and staple the app with:
 
 ```bash
 APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-REQUIRE_NOTARIZATION=true \
 VERSION=v0.1.6 \
-./scripts/verify-release-candidate.sh
+./scripts/notarize-release.sh
 ```
+
+## GitHub Release Signing
+
+Tagged GitHub Actions releases require Apple signing and notarization secrets. Add all of these repository secrets before pushing a `v*` tag:
+
+- `APPLE_CERTIFICATE_BASE64`: base64-encoded `.p12` Developer ID Application certificate
+- `APPLE_CERTIFICATE_PASSWORD`: password for that `.p12`
+- `APPLE_KEYCHAIN_PASSWORD`: temporary CI keychain password
+- `DEVELOPER_ID_APPLICATION`: certificate identity, for example `Developer ID Application: Your Name (TEAMID)`
+- `APPLE_ID`: Apple ID email used by `notarytool`
+- `TEAM_ID`: Apple Developer Team ID
+- `APP_SPECIFIC_PASSWORD`: app-specific password for notarization
+
+If no signing secrets are configured, branch and pull-request builds still produce ad-hoc signed artifacts. Tagged releases fail until the full signing set is present, so public downloads are not accidentally shipped as unnotarized builds. CI uploads both `.dmg` and `.zip` artifacts with SHA-256 checksum files.
 
 ## Updates
 
@@ -146,39 +171,23 @@ The app checks GitHub Releases once on launch and lets users check manually from
 
 GitHub only exposes published releases through the public latest-release API. Draft releases are intentionally not shown to users.
 
-## Productization Roadmap
-
-The project uses a MAGI spiral for product work:
-
-- 审视: compare the current app with mature menu bar, AI observability, and macOS distribution products.
-- 执行: ship one small, verifiable product improvement.
-- 提升: record the next quality bar in `docs/PRODUCT_REVIEW.md`.
-
-The current roadmap lives in `docs/superpowers/specs/2026-05-20-magi-productization-design.md`.
-
 ## Development Checks
 
 ```bash
-./scripts/verify-release-candidate.sh
+swift test
+swift build
+./scripts/capture-product-preview.swift
+./scripts/package-release.sh
+./scripts/verify-release.sh
 ```
 
-GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
+GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches. Release verification checks both the zip archive and DMG installer image from clean temporary locations.
 
-For contribution workflow, product standards, documentation expectations, and PR checks, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Regenerate the README product preview after visual changes:
 
-The README preview is generated from `docs/assets/product-preview.html`. When user-visible product surfaces change, regenerate `docs/assets/product-preview.png` and run `./scripts/verify-product-preview.sh`.
-
-For tagged releases, open a GitHub Release Checklist issue before publishing the draft release. Set the repository variable `PUBLIC_RELEASE=true` only when tag builds must fail unless Apple signing and notarization secrets are configured.
-
-## Support
-
-For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.
-
-If a maintainer asks for a longer support packet, use Settings > Diagnostics > Copy Support Bundle. It creates a ready-to-paste version of [docs/SUPPORT_BUNDLE.md](docs/SUPPORT_BUNDLE.md) with diagnostics included. Review it for secrets before posting.
-
-Do not share `config.json`, access tokens, refresh tokens, passwords, or private server logs. See [SUPPORT.md](SUPPORT.md) for the support checklist and privacy boundary.
-
-For vulnerabilities, use the private reporting guidance in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+```bash
+./scripts/capture-product-preview.swift
+```
 
 ## Troubleshooting
 
@@ -191,7 +200,7 @@ swift run Sub2APIStatusBar
 
 ## Privacy
 
-Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server and GitHub Releases when checking for updates.
+Sub2API Status Bar stores the server URL, auth token, refresh token, display preferences, insight thresholds, account list, and refresh interval in the local Application Support config file. It does not use macOS Keychain and does not send data anywhere except the configured Sub2API server and GitHub Releases when checking for updates.
 
 ## Acknowledgements
 Thanks to the [LinuxDo](https://linux.do/) community for the discussions, sharing, and feedback.

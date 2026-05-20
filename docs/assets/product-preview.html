@@ -18,6 +18,7 @@
       --orange: #f97316;
       --pink: #f472b6;
       --violet: #8b5cf6;
+      --red: #ef4444;
     }
 
     * {
@@ -186,7 +187,8 @@
 
     .account,
     .card,
-    .section {
+    .section,
+    .insight-card {
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.06);
@@ -196,8 +198,54 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px;
+      padding: 10px;
       margin-bottom: 10px;
+    }
+
+    .insights {
+      margin-bottom: 10px;
+    }
+
+    .insights-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .insights-head strong {
+      font-size: 16px;
+    }
+
+    .insights-head span {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .insight-card {
+      min-height: 64px;
+      display: flex;
+      gap: 9px;
+      padding: 8px;
+    }
+
+    .insight-copy {
+      min-width: 0;
+    }
+
+    .insight-detail {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.25;
+      margin-top: 2px;
     }
 
     .avatar {
@@ -225,14 +273,79 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .card {
       display: flex;
       gap: 10px;
-      padding: 10px;
-      min-height: 66px;
+      padding: 9px;
+      min-height: 58px;
+    }
+
+    .share-card {
+      padding: 11px;
+      margin-bottom: 9px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(56, 189, 248, 0.14));
+      border: 1px solid rgba(134, 239, 172, 0.18);
+    }
+
+    .share-card .share-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .share-card strong {
+      font-size: 15px;
+    }
+
+    .share-card .share-top span {
+      margin-left: auto;
+      color: #86efac;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .share-stats {
+      display: flex;
+      gap: 8px;
+    }
+
+    .share-stat {
+      flex: 1;
+      padding: 8px;
+      border-radius: 7px;
+      background: rgba(8, 17, 31, 0.42);
+    }
+
+    .share-stat .share-value {
+      font-size: 17px;
+      font-weight: 820;
+      line-height: 1.1;
+    }
+
+    .share-stat .share-label {
+      color: #cbd5e1;
+      font-size: 10px;
+      margin-top: 3px;
+    }
+
+    .share-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      color: #dbeafe;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .share-action {
+      padding: 5px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .glyph {
@@ -268,6 +381,11 @@
       color: var(--pink);
     }
 
+    .red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
     .label {
       color: var(--muted);
       font-size: 12px;
@@ -293,8 +411,40 @@
     }
 
     .section {
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      padding: 9px 12px;
+      margin-bottom: 8px;
+    }
+
+    .trend-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .trend-head .section-title {
+      margin: 0;
+    }
+
+    .segmented {
+      margin-left: auto;
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .segmented span {
+      padding: 4px 7px;
+      border-radius: 6px;
+    }
+
+    .segmented .active {
+      background: rgba(56, 189, 248, 0.22);
+      color: #e0f2fe;
     }
 
     .quota-head,
@@ -315,7 +465,7 @@
     }
 
     .quota-row {
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .quota-row span:first-child {
@@ -380,13 +530,35 @@
     }
 
     .trend {
-      height: 118px;
+      height: 126px;
       position: relative;
       overflow: hidden;
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.06);
       margin-bottom: 6px;
+    }
+
+    .trend-summary {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: flex-start;
+      z-index: 2;
+    }
+
+    .trend-summary strong {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .trend-summary span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
     }
 
     .trend svg {
@@ -427,13 +599,14 @@
   <main class="canvas">
     <section class="copy">
       <h1>Sub2API Status Bar</h1>
-      <p class="subtitle">A native macOS menu bar monitor for Sub2API usage, quotas, model mix, and spend. Built for normal user accounts.</p>
+      <p class="subtitle">A native macOS menu bar monitor for Sub2API usage, quotas, model mix, spend, and shareable token wins. Built for normal user accounts.</p>
       <div class="chips">
         <span class="chip"><span class="dot"></span>User dashboard</span>
-        <span class="chip"><span class="dot"></span>Quota pressure</span>
+        <span class="chip"><span class="dot"></span>Usage Insights</span>
         <span class="chip"><span class="dot"></span>Local alerts</span>
-        <span class="chip"><span class="dot"></span>Settings + Diagnostics</span>
-        <span class="chip"><span class="dot"></span>Multi-account</span>
+        <span class="chip"><span class="dot"></span>Share cards</span>
+        <span class="chip"><span class="dot"></span>Tunable warnings</span>
+        <span class="chip"><span class="dot"></span>Guided recovery</span>
       </div>
     </section>
 
@@ -451,8 +624,70 @@
 
       <div class="content">
         <div class="status-line">
-          <strong>High Usage</strong>
-          <span class="pill">Local alerts</span>
+          <strong>OK</strong>
+          <span class="pill">User Usage</span>
+        </div>
+
+        <div class="insights">
+          <div class="insights-head">
+            <strong>Usage Insights</strong>
+            <span>Daily quota is at 93%</span>
+          </div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <div class="glyph orange">%</div>
+              <div class="insight-copy"><div class="label">Daily quota</div><div class="value">93%</div><div class="insight-detail">Watch today's reset window.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph orange">↗</div>
+              <div class="insight-copy"><div class="label">Token surge</div><div class="value">+80%</div><div class="insight-detail">Above recent average.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph green">$</div>
+              <div class="insight-copy"><div class="label">Balance runway</div><div class="value">3.1d</div><div class="insight-detail">At today's spend pace.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="glyph violet">◷</div>
+              <div class="insight-copy"><div class="label">Monthly budget</div><div class="value">$300</div><div class="insight-detail">Against $200 budget.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-head">
+          <h2 class="section-title">Usage Trend</h2>
+          <div class="segmented"><span class="active">Tokens</span><span>Spend</span><span>Requests</span></div>
+        </div>
+        <div class="trend">
+          <div class="trend-summary">
+            <div><strong>126.4M</strong><span>2026-05-18</span></div>
+          </div>
+          <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
+            <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
+            <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 52 L93 60 L170 80 L246 83 L322 60 L399 20 L472 82" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M16 70 L93 48 L170 78 L246 83 L322 61 L399 20 L472 80" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <div class="trend-legend">
+            <span><i class="legend-dot"></i>Input</span>
+            <span><i class="legend-dot" style="background: var(--green)"></i>Output</span>
+            <span><i class="legend-dot" style="background: #06b6d4"></i>Cache Read</span>
+          </div>
+        </div>
+
+        <div class="share-card">
+          <div class="share-top">
+            <strong>Share Card</strong>
+            <span>Copy + Post to X</span>
+          </div>
+          <div class="share-stats">
+            <div class="share-stat"><div class="share-value">126.4M</div><div class="share-label">tokens today</div></div>
+            <div class="share-stat"><div class="share-value">$117.57</div><div class="share-label">spend</div></div>
+            <div class="share-stat"><div class="share-value">+33%</div><div class="share-label">vs avg</div></div>
+          </div>
+          <div class="share-actions">
+            <span class="share-action">↥ Copy visual card</span>
+            <span class="share-action">✈ Draft post</span>
+          </div>
         </div>
 
         <div class="account">
@@ -479,7 +714,7 @@
           </div>
           <div class="card">
             <div class="glyph violet">$</div>
-            <div><div class="label">Daily spend</div><div class="value">$117.57</div><div class="caption">Alert at $100</div></div>
+            <div><div class="label">Today Cost</div><div class="value">$117.57</div><div class="caption">Total $921.45</div></div>
           </div>
         </div>
 
@@ -496,25 +731,10 @@
           <div class="quota-row"><span>Monthly</span><div class="bar"><div class="fill" style="width:31%"></div></div><span class="amount">$612.34 / $2K</span></div>
         </div>
 
-        <h2 class="section-title">Token Trend</h2>
-        <div class="trend">
-          <svg viewBox="0 0 488 104" role="img" aria-label="Token trend preview">
-            <path d="M16 58 L93 45 L170 75 L246 83 L322 60 L399 18 L472 80 L472 104 L16 104 Z" fill="rgba(34, 211, 238, 0.16)"></path>
-            <path d="M16 62 L93 56 L170 74 L246 83 L322 61 L399 20 L472 78" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M16 52 L93 60 L170 80 L246 83 L322 60 L399 20 L472 82" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M16 70 L93 48 L170 78 L246 83 L322 61 L399 20 L472 80" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
-          <div class="trend-legend">
-            <span><i class="legend-dot"></i>Input</span>
-            <span><i class="legend-dot" style="background: var(--green)"></i>Output</span>
-            <span><i class="legend-dot" style="background: #06b6d4"></i>Cache Read</span>
-          </div>
-        </div>
       </div>
 
       <div class="footer">
-        <span class="button">⚙ Settings</span>
-        <span class="button">⧉ Copy Diagnostics</span>
+        <span class="button">↗ Open</span>
         <span class="button">⏻ Quit</span>
       </div>
     </section>

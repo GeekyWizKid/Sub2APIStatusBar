@@ -10,23 +10,14 @@
 - [x] App icon generation and `AppIcon.icns`
 - [x] macOS `.app` bundle script
 - [x] Release zip and SHA-256 checksum script
-- [x] Release DMG and SHA-256 checksum script with `/Applications` shortcut
+- [x] Release DMG and SHA-256 checksum script
 - [x] Release verification script that checks the zip from a clean temporary extraction
-- [x] DMG verification script that checks checksum, mountability, bundle plist, app alias, and code signature
-- [x] Release manifest generation and verification for zip/DMG asset names, sizes, and SHA-256 digests
-- [x] Homebrew Cask draft generation and verification from the release manifest
-- [x] One-command release candidate verification for tests, build, zip, DMG, and manifest
-- [x] Downloaded release asset verification for draft zip, DMG, checksums, manifest, and cask files
-- [x] Public release mode that fails tag builds unless Apple notarization credentials are complete
-- [x] Product preview asset verification for README image, dimensions, and current feature coverage
-- [x] GitHub label configuration and verification for public issue triage
-- [x] Private security reporting route through GitHub Security policy and issue contact links
-- [x] Repository settings contract for main branch protection, required checks, issues, and private vulnerability reporting
-- [x] Support bundle template, in-app copy action, and verification for support-safe follow-up details
-- [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
+- [x] Release verification script that checks the DMG from a clean temporary mount
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
+- [x] GitHub Actions preview-asset verification
+- [x] GitHub Actions Developer ID signing and notarization path for tagged releases
 - [x] Product-oriented README
 - [x] Changelog
 - [x] Unit tests for config, API decoding, quota progress, menu bar text, and status labels
@@ -36,83 +27,30 @@
 - [x] Troubleshooting path for stale Swift build cache errors
 - [x] Launch at Login setting
 - [x] Support-safe diagnostics copy action with token redaction
-- [x] In-app support bundle copy action with token-redacted diagnostics and issue prompts
 - [x] Local config reveal action
-- [x] Local alert thresholds for daily spend, daily tokens, and quota pressure
-- [x] Alert-aware status labels, diagnostics, Settings controls, and popover summary
-- [x] MAGI productization design, implementation plan, and v0.1.6 integration audit
-- [x] Tag-based CI creates a draft GitHub Release with zip, DMG, checksum, and manifest assets
+- [x] Notification permission purpose string included in the app bundle and checked by release verification
 
-## Productization Readiness Matrix
+## Before Public Distribution
 
-| Area | Current Status | Verification | Next Gate |
-| --- | --- | --- | --- |
-| App identity | Ready | `Resources/AppIcon.icns`, bundle metadata from `scripts/build-app.sh`, and `scripts/verify-product-preview.sh` | Keep screenshots current for each public release |
-| User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, menu bar summaries, and local alerts | Add anomaly or model-cost concentration insights after alert rules prove useful |
-| Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
-| Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
-| Release archive | Ready | `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs tests, build, zip, DMG, manifest, Homebrew Cask, and downloaded-asset checks | Update the version for each tag |
-| GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, creates a draft GitHub Release, and uses `REQUIRE_NOTARIZATION=auto` to choose the trust path | Publish the draft only after release notes and trust posture are reviewed |
-| Public trust | Blocked by Apple credentials | `PUBLIC_RELEASE=true REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` fails unless Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
-| Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
-| Distribution channels | Prepared | Homebrew Cask draft is generated from the release manifest and uploaded as a CI/release asset | Submit or publish a cask only after a notarized public release exists |
-| Support | Ready for v0.1.6 | Copy Diagnostics, Copy Support Bundle, Show Config, token-redacted diagnostics, support bundle template, GitHub issue templates, verified labels, private security reporting route, and repository settings contract exist | Refine support bundle fields after real support volume proves the need |
+- [x] Choose a public version tag, for example `v0.1.6`
+- [ ] Build with a Developer ID Application certificate
+- [ ] Notarize the app with Apple
+- [x] Attach the release zip and checksum to a GitHub Release
+- [x] Add product screenshots or a short demo GIF to the README
+- [x] Reproducible product preview capture script
+- [x] Decide whether the repository should stay private or become public
 
 ## Release Commands
 
-The repository `VERSION` file is the default release version used by local scripts and non-tag CI builds. Override `VERSION=...` only when preparing or validating a specific tag.
-
 ```bash
-VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
+swift test
+swift build
+./scripts/capture-product-preview.swift
+VERSION=v0.1.6 ./scripts/package-release.sh
+VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
 
-For the v0.1.6 productization pass:
-
-```bash
-VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
-```
-
-The release candidate gate also verifies the README product preview. After changing user-visible dashboard, alert, Settings, or diagnostics surfaces, update `docs/assets/product-preview.html`, regenerate `docs/assets/product-preview.png`, and run:
-
-```bash
-./scripts/verify-product-preview.sh
-```
-
-The release candidate gate also verifies GitHub label configuration. After changing issue templates or public triage flow, update `.github/labels.yml` and run:
-
-```bash
-./scripts/verify-github-labels.sh
-```
-
-The release candidate gate also verifies security reporting. Vulnerability reports must route through GitHub private vulnerability reporting instead of public issues:
-
-```bash
-./scripts/verify-security-reporting.sh
-```
-
-The release candidate gate also verifies expected public repository settings. Before publishing the repository or release, align GitHub settings with `.github/repository-settings.yml` and run:
-
-```bash
-./scripts/verify-repository-settings.sh
-```
-
-The release candidate gate also verifies the support bundle generator, in-app copy action, template, and support guidance links. After changing diagnostics, support, or issue-template guidance, run:
-
-```bash
-./scripts/verify-support-bundle.sh
-```
-
-When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. If `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` secrets are all configured, tag builds run the notarized release gate. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.
-
-Set repository variable `PUBLIC_RELEASE=true` only when tag builds are allowed to create publishable public release candidates. In that mode, tag builds fail unless all Apple signing and notarization secrets are present.
-
-Use the GitHub release checklist issue template before publishing a draft release. It tracks the tag run, trust posture, downloaded assets, checksum verification, manifest review, DMG mount test, and final publish decision.
-
-After the draft release exists, download all release assets into a clean directory and run:
-
-```bash
-VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh /path/to/downloaded-assets
-```
+`verify-release.sh` checks checksum integrity, zip structure, DMG structure, `Info.plist`, notification-purpose metadata, and code signature validity from clean temporary extraction/mount locations.
 
 Developer ID signing:
 
@@ -122,24 +60,25 @@ VERSION=v0.1.6 \
 ./scripts/package-release.sh
 ```
 
-Notarization requires Apple Developer account credentials. When they are available locally or in CI secrets, require the trusted release gate:
+Notarization requires Apple Developer account credentials and is intentionally not automated until those secrets are available in GitHub Actions or the local keychain.
+
+GitHub tag signing requires repository secrets:
+
+- `APPLE_CERTIFICATE_BASE64`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_KEYCHAIN_PASSWORD`
+- `DEVELOPER_ID_APPLICATION`
+- `APPLE_ID`
+- `TEAM_ID`
+- `APP_SPECIFIC_PASSWORD`
+
+When all secrets are present, `v*` tag builds import the Developer ID certificate into a temporary keychain, run `scripts/notarize-release.sh`, and upload the notarized zip and checksum. If a tag is pushed without the full secret set, the workflow fails instead of publishing an unnotarized release artifact.
 
 ```bash
 APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-REQUIRE_NOTARIZATION=true \
 VERSION=v0.1.6 \
-./scripts/verify-release-candidate.sh
-```
-
-CI and local automation can also select the trust path automatically:
-
-```bash
-PUBLIC_RELEASE=true \
-GITHUB_REF_TYPE=tag \
-REQUIRE_NOTARIZATION=auto \
-VERSION=v0.1.6 \
-./scripts/verify-release-candidate.sh
+./scripts/notarize-release.sh
 ```

@@ -371,6 +371,64 @@ public struct ModelUsageSummary: Decodable, Identifiable, Equatable, Sendable {
     }
 }
 
+public struct ModelUsageDisplay: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let model: String
+    public let requestsText: String
+    public let tokensText: String
+    public let tokenMixText: String
+    public let costText: String
+    public let costShareText: String
+    public let costPerMillionTokensText: String
+    public let tokenProgress: Double
+    public let costProgress: Double
+
+    public init(
+        model: String,
+        requestsText: String,
+        tokensText: String,
+        tokenMixText: String,
+        costText: String,
+        costShareText: String,
+        costPerMillionTokensText: String,
+        tokenProgress: Double,
+        costProgress: Double
+    ) {
+        self.id = model
+        self.model = model
+        self.requestsText = requestsText
+        self.tokensText = tokensText
+        self.tokenMixText = tokenMixText
+        self.costText = costText
+        self.costShareText = costShareText
+        self.costPerMillionTokensText = costPerMillionTokensText
+        self.tokenProgress = tokenProgress
+        self.costProgress = costProgress
+    }
+
+    public static func make(_ models: [ModelUsageSummary]) -> [ModelUsageDisplay] {
+        let visibleModels = Array(models.prefix(5))
+        let maximumTokens = max(Double(visibleModels.map(\.totalTokens).max() ?? 0), 1)
+        let maximumCost = max(visibleModels.map(\.actualCost).max() ?? 0, 1)
+        let totalCost = max(visibleModels.map(\.actualCost).reduce(0, +), 0)
+
+        return visibleModels.map { item in
+            let costShare = totalCost > 0 ? item.actualCost / totalCost : 0
+            return ModelUsageDisplay(
+                model: item.model,
+                requestsText: "\(StatusFormatters.menuBarCount(item.requests)) requests",
+                tokensText: StatusFormatters.compactNumber(item.totalTokens),
+                tokenMixText: "In \(StatusFormatters.compactNumber(item.inputTokens)) / Out \(StatusFormatters.compactNumber(item.outputTokens))",
+                costText: StatusFormatters.preciseCurrency(item.actualCost),
+                costShareText: "\(StatusFormatters.percent(costShare)) cost",
+                costPerMillionTokensText: StatusFormatters.costPerMillionTokens(cost: item.actualCost, tokens: item.totalTokens),
+                tokenProgress: Double(item.totalTokens) / maximumTokens,
+                costProgress: item.actualCost / maximumCost
+            )
+        }
+    }
+}
+
 public struct TrendDataPoint: Decodable, Identifiable, Equatable, Sendable {
     public var id: String { date }
 
@@ -458,15 +516,75 @@ public struct DashboardModelsResponse: Decodable, Equatable, Sendable {
     }
 }
 
-public enum TokenTrendDisplayState: Equatable, Sendable {
+public enum UsageTrendDisplayState: Equatable, Sendable {
     case chart([TrendDataPoint])
     case unavailable(String)
 
-    public static func make(points: [TrendDataPoint]?) -> TokenTrendDisplayState {
+    public static func make(points: [TrendDataPoint]?) -> UsageTrendDisplayState {
         guard let points, points.count > 1 else {
             return .unavailable("Trend data is not available yet.")
         }
         return .chart(points)
+    }
+}
+
+public enum UsageTrendMode: String, CaseIterable, Identifiable, Sendable {
+    case tokens
+    case spend
+    case requests
+
+    public var id: String { rawValue }
+}
+
+public struct UsageTrendSeries: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let label: String
+    public let values: [Double]
+
+    public init(label: String, values: [Double]) {
+        self.id = label
+        self.label = label
+        self.values = values
+    }
+}
+
+public struct UsageTrendMetric: Equatable, Sendable {
+    public let mode: UsageTrendMode
+    public let title: String
+    public let latestValue: String
+    public let latestDate: String
+    public let series: [UsageTrendSeries]
+
+    public init(mode: UsageTrendMode, points: [TrendDataPoint]) {
+        self.mode = mode
+        latestDate = points.last?.date ?? ""
+
+        switch mode {
+        case .tokens:
+            title = "Tokens"
+            latestValue = StatusFormatters.compactNumber(points.last?.totalTokens ?? 0)
+            series = [
+                UsageTrendSeries(label: "Input", values: points.map { Double($0.inputTokens) }),
+                UsageTrendSeries(label: "Output", values: points.map { Double($0.outputTokens) }),
+                UsageTrendSeries(label: "Cache Read", values: points.map { Double($0.cacheReadTokens) }),
+            ]
+        case .spend:
+            title = "Spend"
+            latestValue = StatusFormatters.preciseCurrency(points.last?.actualCost ?? 0)
+            series = [
+                UsageTrendSeries(label: "Actual Cost", values: points.map(\.actualCost)),
+            ]
+        case .requests:
+            title = "Requests"
+            latestValue = StatusFormatters.menuBarCount(points.last?.requests ?? 0)
+            series = [
+                UsageTrendSeries(label: "Requests", values: points.map { Double($0.requests) }),
+            ]
+        }
+    }
+
+    public var maximum: Double {
+        max(series.flatMap(\.values).max() ?? 0, 1)
     }
 }
 
@@ -795,6 +913,74 @@ public struct SubscriptionSummaryItem: Decodable, Identifiable, Equatable, Senda
     }
 }
 
+public struct QuotaWindowDisplay: Equatable, Sendable {
+    public let title: String
+    public let used: Double?
+    public let limit: Double?
+    public let progress: Double?
+    public let resetInSeconds: Double?
+
+    public init(
+        title: String,
+        used: Double?,
+        limit: Double?,
+        progress: Double?,
+        resetInSeconds: Double?
+    ) {
+        self.title = title
+        self.used = used
+        self.limit = limit
+        self.progress = progress
+        self.resetInSeconds = resetInSeconds
+    }
+
+    public var normalizedProgress: Double {
+        min(max(progress ?? ratioProgress ?? 0, 0), 1)
+    }
+
+    public var percentText: String {
+        guard progress != nil || ratioProgress != nil else {
+            return "--"
+        }
+        return StatusFormatters.percent(normalizedProgress)
+    }
+
+    public var amountText: String {
+        guard let used, let limit else {
+            return "--"
+        }
+        return "\(StatusFormatters.currency(used)) / \(StatusFormatters.currency(limit))"
+    }
+
+    public var remainingText: String {
+        guard let used, let limit else {
+            return "Limit not available"
+        }
+        return "\(StatusFormatters.currency(max(limit - used, 0))) left"
+    }
+
+    public var resetText: String? {
+        resetInSeconds.map { "Resets in \(StatusFormatters.duration(seconds: $0))" }
+    }
+
+    public var severity: MonitorSeverity {
+        if normalizedProgress >= 0.95 {
+            return .error
+        }
+        if normalizedProgress >= 0.8 {
+            return .warning
+        }
+        return .healthy
+    }
+
+    private var ratioProgress: Double? {
+        guard let used, let limit, limit > 0 else {
+            return nil
+        }
+        return used / limit
+    }
+}
+
 public struct UsageProgress: Decodable, Equatable, Sendable {
     public let used: Double?
     public let limit: Double?
@@ -830,28 +1016,21 @@ public struct AccountUsageInfo: Decodable, Equatable, Sendable {
     public let isBanned: Bool?
 }
 
-public enum LocalAlertKind: String, Equatable, Sendable {
-    case dailySpend
-    case dailyTokens
-    case quotaProgress
-}
-
-public struct LocalAlert: Equatable, Sendable {
-    public let kind: LocalAlertKind
-    public let title: String
-    public let message: String
-
-    public init(kind: LocalAlertKind, title: String, message: String) {
-        self.kind = kind
-        self.title = title
-        self.message = message
-    }
-}
-
-public enum MonitorSeverity: String, Equatable, Sendable {
+public enum MonitorSeverity: String, Codable, Equatable, Sendable {
     case healthy
     case warning
     case error
+
+    public var sortRank: Int {
+        switch self {
+        case .error:
+            3
+        case .warning:
+            2
+        case .healthy:
+            1
+        }
+    }
 }
 
 public struct MonitorSnapshot: Equatable, Sendable {
@@ -906,58 +1085,17 @@ public struct MonitorSnapshot: Equatable, Sendable {
         )
     }
 
-    public func isStale(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> Bool {
-        guard connected, let lastUpdatedAt else {
-            return false
-        }
-        let staleAfter = max(refreshIntervalSeconds * 3, 90)
-        return referenceDate.timeIntervalSince(lastUpdatedAt) >= staleAfter
-    }
-
-    public func localAlerts(using rules: LocalAlertRules) -> [LocalAlert] {
-        guard connected else {
-            return []
-        }
-
-        var normalized = rules
-        normalized.normalize()
-        var alerts: [LocalAlert] = []
-
-        if let limit = normalized.dailySpendUSD,
-           let actual = stats?.todayActualCost,
-           actual >= limit {
-            alerts.append(LocalAlert(
-                kind: .dailySpend,
-                title: "Daily spend alert",
-                message: "Daily spend is \(StatusFormatters.preciseCurrency(actual)), above the \(StatusFormatters.preciseCurrency(limit)) alert."
-            ))
-        }
-
-        if let limit = normalized.dailyTokens,
-           let actual = stats?.todayTokens,
-           actual >= limit {
-            alerts.append(LocalAlert(
-                kind: .dailyTokens,
-                title: "Daily token alert",
-                message: "Daily tokens are \(StatusFormatters.compactNumber(actual)), above the \(StatusFormatters.compactNumber(limit)) alert."
-            ))
-        }
-
-        if let progress = subscriptionSummary?.highestProgress,
-           progress >= normalized.quotaProgress {
-            alerts.append(LocalAlert(
-                kind: .quotaProgress,
-                title: "Quota alert",
-                message: "Highest subscription quota is \(StatusFormatters.percent(progress)), above the \(StatusFormatters.percent(normalized.quotaProgress)) alert."
-            ))
-        }
-
-        return alerts
-    }
-
     public var severity: MonitorSeverity {
+        severity(now: Date(), refreshIntervalSeconds: nil)
+    }
+
+    public func severity(now: Date, refreshIntervalSeconds: Double?) -> MonitorSeverity {
         if !connected {
             return .error
+        }
+
+        if isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return .warning
         }
 
         if (realtime?.errorRate ?? 0) >= 0.1 {
@@ -986,20 +1124,17 @@ public struct MonitorSnapshot: Equatable, Sendable {
         return .healthy
     }
 
-    public func severity(using rules: LocalAlertRules) -> MonitorSeverity {
-        let base = severity
-        if base == .error {
-            return .error
-        }
-        if !localAlerts(using: rules).isEmpty {
-            return .warning
-        }
-        return base
+    public var statusLabel: String {
+        statusLabel(now: Date(), refreshIntervalSeconds: nil)
     }
 
-    private var baseStatusLabel: String {
+    public func statusLabel(now: Date, refreshIntervalSeconds: Double?) -> String {
         if !connected {
             return "Disconnected"
+        }
+
+        if isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return "Stale Data"
         }
 
         if let subscriptionSummary {
@@ -1014,7 +1149,7 @@ public struct MonitorSnapshot: Equatable, Sendable {
             }
         }
 
-        return switch severity {
+        return switch severity(now: now, refreshIntervalSeconds: refreshIntervalSeconds) {
         case .healthy:
             "OK"
         case .warning:
@@ -1024,106 +1159,66 @@ public struct MonitorSnapshot: Equatable, Sendable {
         }
     }
 
-    public var statusLabel: String {
-        baseStatusLabel
-    }
-
-    public func statusLabel(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> String {
-        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds) {
-            return "Needs Refresh"
-        }
-        return baseStatusLabel
-    }
-
-    public func statusLabel(
-        using rules: LocalAlertRules,
-        referenceDate: Date = .now,
-        refreshIntervalSeconds: Double
-    ) -> String {
-        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds) {
-            return "Needs Refresh"
-        }
-        if !localAlerts(using: rules).isEmpty {
-            return "Budget Alert"
-        }
-        return baseStatusLabel
-    }
-
-    public func statusDetail(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> String {
-        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds),
-           let lastUpdatedAt {
-            let age = StatusFormatters.relativeAge(seconds: referenceDate.timeIntervalSince(lastUpdatedAt))
-            return "Last successful update was \(age) ago."
-        }
-
-        if !connected {
-            return message ?? "Reconnect to resume monitoring."
-        }
-
-        if let message, !message.isEmpty {
-            return message
-        }
-
-        if let subscriptionSummary {
-            if subscriptionSummary.highestProgress >= 0.95 {
-                return "Quota usage is close to the current limit."
-            }
-            if subscriptionSummary.highestProgress >= 0.8 {
-                return "Usage is elevated and worth watching."
-            }
-            if subscriptionSummary.expiringSoonCount > 0 {
-                return "One or more subscriptions are expiring soon."
-            }
-        }
-
-        return "Everything looks normal."
-    }
-
-    public func statusDetail(
-        using rules: LocalAlertRules,
-        referenceDate: Date = .now,
-        refreshIntervalSeconds: Double
-    ) -> String {
-        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds),
-           let lastUpdatedAt {
-            let age = StatusFormatters.relativeAge(seconds: referenceDate.timeIntervalSince(lastUpdatedAt))
-            return "Last successful update was \(age) ago."
-        }
-
-        if let alert = localAlerts(using: rules).first {
-            return alert.message
-        }
-
-        return statusDetail(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds)
-    }
-
     public var menuBarSummary: String {
-        menuBarSummary()
+        menuBarSummary(now: Date(), refreshIntervalSeconds: nil)
     }
 
-    public func menuBarSummary(displayMode: MenuBarDisplayMode = .spendRequestsRPM) -> String {
+    public func menuBarSummary(now: Date, refreshIntervalSeconds: Double?) -> String {
+        menuBarSummary(metric: .automatic, now: now, refreshIntervalSeconds: refreshIntervalSeconds)
+    }
+
+    public func menuBarSummary(
+        metric: MenuBarMetric,
+        now: Date,
+        refreshIntervalSeconds: Double?
+    ) -> String {
         guard connected else {
-            return "Sub2API \(baseStatusLabel)"
+            return "Sub2API \(statusLabel(now: now, refreshIntervalSeconds: refreshIntervalSeconds))"
+        }
+
+        let prefix = isStale(now: now, refreshIntervalSeconds: refreshIntervalSeconds) ? "Stale · " : ""
+
+        if metric == .quota, let subscriptionSummary {
+            return "\(prefix)\(StatusFormatters.percent(subscriptionSummary.highestProgress)) quota · \(subscriptionSummary.activeCount) subs"
         }
 
         if let stats {
-            switch displayMode {
-            case .spendRequestsRPM:
-                return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
-            case .requestsAndTokens:
-                return "\(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.compactNumber(stats.todayTokens)) tok · \(StatusFormatters.compactDouble(stats.tpm)) TPM"
-            case .quotaSnapshot:
-                if let subscriptionSummary {
-                    return "\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
+            switch metric {
+            case .automatic:
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            case .spend:
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req"
+            case .balance:
+                if let balance = currentUser?.balance {
+                    if stats.todayActualCost > 0 {
+                        return "\(prefix)\(StatusFormatters.currency(balance)) · \(String(format: "%.1fd", balance / stats.todayActualCost))"
+                    }
+                    return "\(prefix)\(StatusFormatters.currency(balance)) · no spend"
                 }
-                return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.compactNumber(stats.todayTokens)) tok"
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · no balance"
+            case .quota:
+                if let subscriptionSummary {
+                    return "\(prefix)\(StatusFormatters.percent(subscriptionSummary.highestProgress)) quota · \(subscriptionSummary.activeCount) subs"
+                }
+                return "\(prefix)\(StatusFormatters.currency(stats.todayActualCost)) · no quota"
+            case .tokens:
+                return "\(prefix)\(StatusFormatters.compactNumber(stats.todayTokens)) tok · \(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM"
+            case .requests:
+                return "\(prefix)\(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
             }
         }
 
         if let subscriptionSummary {
-            return "\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
+            return "\(prefix)\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
         }
 
-        return "Sub2API \(baseStatusLabel)"
+        return "Sub2API \(statusLabel(now: now, refreshIntervalSeconds: refreshIntervalSeconds))"
+    }
+
+    public func isStale(now: Date, refreshIntervalSeconds: Double?) -> Bool {
+        guard connected, let lastUpdatedAt, let refreshIntervalSeconds, refreshIntervalSeconds > 0 else {
+            return false
+        }
+        return now.timeIntervalSince(lastUpdatedAt) > refreshIntervalSeconds * 3
     }
 }

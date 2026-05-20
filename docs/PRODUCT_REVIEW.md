@@ -33,6 +33,7 @@
    - Stores login tokens in the local Application Support config file, including per-account tokens for account switching.
    - Added a settings-level disconnect action for account switching and credential removal.
    - Added Launch at Login, support-safe diagnostics copy, and local config reveal actions.
+   - Added local proactive alerts for high-priority Usage Insights, with deterministic cooldown behavior to avoid noisy repeated notifications.
 
 6. Documentation
    - Rewrote README as a product introduction and setup guide.
@@ -45,6 +46,44 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 - Apple Developer ID certificate for trusted signing.
 - Apple notarization credentials.
+
+## Competitive Direction
+
+### What the category teaches
+
+1. OpenAI usage dashboards
+   - Strong at filtering usage by project, user, service account, model, and API key.
+   - Strong at TPM-oriented activity views and cost/token drilldowns.
+   - Weak fit for a menu bar app if copied literally, because the full table/filter experience belongs in a browser.
+
+2. LiteLLM proxy dashboards
+   - Strong at virtual-key, user, team, and budget controls.
+   - Strong at rate-limit surfaces such as RPM/TPM and spend caps.
+   - Useful lesson: users care less about raw totals than whether a key/account is about to hit a limit.
+
+3. Helicone-style observability
+   - Strong at requests, cost, latency, token volume, errors, rate limits, caching, and alerting.
+   - Useful lesson: surface anomalies and next actions early, especially when something crosses a threshold.
+
+4. Langfuse-style observability
+   - Strong at token/cost breakdowns by usage type and model.
+   - Useful lesson: model mix and usage type matter when explaining why spend moved.
+
+### Product choice
+
+Sub2API Status Bar should not compete as a full analytics dashboard. The winning shape is a native, low-friction personal monitor that answers three questions faster than any browser tab:
+
+- Am I healthy right now?
+- What changed in usage or cost?
+- Which limit, model, or balance should I watch next?
+
+### First product-intelligence pass
+
+- Added a local Usage Insights engine.
+- Prioritizes quota pressure, balance runway, token trend changes, model spend concentration, and latency.
+- Shows the top insights directly in the popover.
+- Adds the same insight headline to support-safe diagnostics.
+- Added Settings controls for insight thresholds so cautious and tolerant users can tune warnings without editing config JSON.
 
 ## MAGI Log
 
@@ -180,356 +219,304 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 3. 提升
    - The next product pass should notarize once Apple Developer credentials are available.
 
-### 2026-05-20 Cycle K
+### 2026-05-18 Cycle K
 
 1. 审视
-   - The app had enough data, but the menu bar surface was still too fixed compared with mature menu bar products.
-   - Refresh failures were visible only as connection breaks; stale but still-connected data did not feel clearly different from healthy data.
+   - The status bar target had grown into one 1,679-line Swift file mixing lifecycle, refresh state, login, settings, dashboard cards, quota UI, charts, and shared components.
+   - That shape slows down product iteration because every UI change requires navigating unrelated app, networking, and settings code.
 
 2. 执行
-   - Added selectable menu bar summary modes for spend-focused, token-throughput, and quota-focused monitoring.
-   - Added stale-data detection that promotes long-delayed snapshots to `Needs Refresh`.
-   - Added richer status detail text in the popover tooltip, status card, and diagnostics output.
+   - Split the app into focused files for app lifecycle, monitor state, main panel, login views, settings views, dashboard components, quota views, chart views, and shared view primitives.
+   - Kept the split mechanical and behavior-preserving, with Swift build verification after each major move.
 
 3. 提升
-   - The next maturity pass should let users choose which dashboard sections stay visible, so the popover becomes as compressible as mature menu bar utilities.
+   - The codebase is now friendlier to deeper product work: future passes can improve settings, charts, alerts, and onboarding without crowding a single file.
 
-### 2026-05-20 Cycle L
+### 2026-05-18 Cycle L
 
 1. 审视
-   - The popover already exposed strong usage data, but it still forced every section onto every user.
-   - Mature menu bar apps usually let people hide secondary sections so the interface stays compact and personal.
+   - First-run and failure states still behaved like a demo: users saw a form or raw error text, but not a clear next action.
+   - Mature monitoring tools should recover gracefully from bad URLs, expired sessions, token replacement, and unreachable servers.
 
 2. 执行
-   - Added persisted panel-layout preferences to the app config.
-   - Added a new Settings > Layout section with per-block toggles for account overview, usage metrics, subscriptions, model distribution, and token trend.
-   - Wired the main popover to respect those choices so users can compress the monitor to the parts they care about.
+   - Added a core `RecoverySuggestion` model that maps common connection and authentication failures to short explanations and actions.
+   - Added guided recovery cards to the login panel and disconnected dashboard state.
+   - Kept the guidance local and deterministic so diagnostics and UI can share the same recovery language later.
 
 3. 提升
-   - The next maturity pass should add section density controls or compact cards, so advanced users can reduce both count and visual weight of visible blocks.
+   - The app now helps users recover without reading logs or guessing whether they should retry, replace a token, open the server, or sign in again.
 
-### 2026-05-20 Cycle M
+### 2026-05-18 Cycle M
 
 1. 审视
-   - Compared the app against mature macOS menu bar utilities and LLM observability products.
-   - Confirmed the next product jump should preserve menu bar calmness while making usage pressure actionable.
+   - Competitive products such as Helicone make alerting part of the monitoring loop, while LiteLLM-style budgets and OpenAI-style dashboards make it clear users need protection before they run out of quota or balance.
+   - Sub2API Status Bar already explained risk inside the popover, but still required the user to look at it.
 
 2. 执行
-   - Added a committed MAGI productization design spec.
-   - Promoted release readiness into a matrix that separates ready, in-progress, credential-blocked, and planned work.
-   - Chose local budget and quota alerts as the next feature slice.
+   - Added a core `InsightAlertPolicy` that picks the highest-priority warning/error Usage Insight and suppresses repeats during a configurable quiet period.
+   - Added local macOS notifications for actionable insights, with Settings controls for enabling alerts, choosing warning versus error-only mode, and tuning the cooldown.
+   - Added diagnostics output for alert state so support reports include whether proactive protection is enabled.
+   - Added visible notification-permission status in Settings, including a direct path to macOS notification settings when alerts are blocked.
 
 3. 提升
-   - Implement local alert rules for daily spend, daily tokens, and highest quota usage, then surface them in status, diagnostics, and Settings.
+   - The product now acts more like a personal usage guardrail than a passive dashboard: users can keep working and let the menu bar call attention only when something important changes.
 
-### 2026-05-20 Cycle N
+### 2026-05-18 Cycle N
 
 1. 审视
-   - Usage data became more actionable once the menu bar and popover could show local alert pressure.
-   - The alert rules stayed local, which matches the app's privacy and no-telemetry posture.
+   - Quota insight was directionally useful but too generic: "Daily quota" did not say which subscription was under pressure or when the limit resets.
 
 2. 执行
-   - Added persisted alert thresholds for daily spend, daily tokens, and highest quota usage.
-   - Surfaced active alerts in status labels, detail text, diagnostics, Settings, and the popover.
-   - Verified the feature with Swift tests, build checks, and release package validation.
+   - Upgraded quota insights to preserve the subscription name, quota window, percentage, and reset timing when available.
+   - Added regression coverage so future changes keep the more actionable quota language.
 
 3. 提升
-   - The next maturity pass should evaluate signed update installation and distribution channels after Apple Developer ID notarization is available.
+   - Usage alerts are now closer to the decision a user needs to make: which subscription needs attention, and whether it is about to reset soon enough to keep working.
 
-### 2026-05-20 Cycle O
+### 2026-05-18 Cycle O
 
 1. 审视
-   - Mature open-source products make support paths explicit so users can report issues without exposing secrets.
-   - The app already had support-safe diagnostics, but the repository did not yet guide users into a safe issue shape.
+   - Proactive notifications add a release-trust requirement: the distributed app bundle should explain why it requests notification permission, and release verification should catch missing metadata.
 
 2. 执行
-   - Added `SUPPORT.md` with the diagnostics checklist, useful environment details, release-installation details, and privacy boundary.
-   - Added GitHub issue templates for bug reports and product feature requests.
-   - Linked README support guidance to diagnostics and the support checklist.
+   - Added a notification-purpose string to the generated `Info.plist`.
+   - Extended release verification to assert that notification metadata is present in the packaged app.
+   - Ran the package and verification scripts successfully against `v0.1.6`.
 
 3. 提升
-   - The next support pass should add labels or triage automation once the public repository workflow is active.
+   - Release validation now covers the new proactive-alert capability, reducing the chance that a polished feature ships with incomplete macOS metadata.
 
-### 2026-05-20 Cycle P
+### 2026-05-18 Cycle P
 
 1. 审视
-   - Mature desktop projects turn verified tag builds into release assets instead of leaving maintainers to upload archives by hand.
-   - The project already built and uploaded CI artifacts, but tag builds did not yet create a GitHub Release record.
+   - Token trend alone misses an important class of user pain: spend can spike because model mix or pricing changed even when token volume stays steady.
 
 2. 执行
-   - Added tag-based draft GitHub Release creation after tests, build, package, and archive verification pass.
-   - Uploaded the release zip and checksum to the draft release while preserving normal artifact upload for all CI runs.
-   - Documented that draft release status is intentional until release notes and trust posture are reviewed.
+   - Added a spend-surge Usage Insight based on recent actual-cost trend data.
+   - Added a Settings threshold for spend surge and diagnostics output for the active threshold.
+   - Added regression coverage proving spend surge can trigger while token trend remains healthy.
 
 3. 提升
-   - Once Developer ID credentials are available, wire signing and notarization into the tag release path before publishing final releases.
+   - The product now treats money as a first-class signal, closer to the way mature usage dashboards and LLM observability tools protect users.
 
-### 2026-05-20 Cycle Q
+### 2026-05-18 Cycle Q
 
 1. 审视
-   - Mature public repositories separate ordinary support from vulnerability disclosure.
-   - The app handles local credentials, so public issues should steer users away from sharing secrets or exploit details.
+   - Spend totals show absolute burn, but users also need unit economics to notice when the same token volume becomes more expensive.
 
 2. 执行
-   - Added `SECURITY.md` with private vulnerability reporting guidance, sensitive-data boundaries, current security posture, and supported-version policy.
-   - Linked support and README guidance to the security policy.
+   - Added a Cost / MTok formatter with low-cost precision and zero-token fallback.
+   - Added the blended Cost / MTok metric to the dashboard and diagnostics.
 
 3. 提升
-   - Once the repository is public, publish a real private security contact or GitHub private vulnerability reporting configuration.
+   - Users can now see whether today's workload is merely larger or actually more expensive per token, which makes the app more useful for model-mix decisions.
 
-### 2026-05-20 Cycle R
+### 2026-05-18 Cycle R
 
 1. 审视
-   - Mature public projects make contribution expectations explicit so future changes do not erode product quality.
-   - The repository had support and security paths, but no contributor guide or pull request checklist.
+   - The README preview image existed, but the repo did not contain a reliable way to regenerate it after visual product changes.
 
 2. 执行
-   - Added `CONTRIBUTING.md` with local setup, verification commands, product standards, documentation expectations, and privacy rules.
-   - Added a pull request template covering product area, verification, documentation, MAGI notes, diagnostics redaction, and secret hygiene.
-   - Linked README development guidance to the contributor guide.
+   - Added a WebKit-based preview capture script that renders `docs/assets/product-preview.html` into `docs/assets/product-preview.png`.
+   - Added release tests that assert the preview HTML and 1200x820 PNG asset are present.
+   - Added the preview capture step to development and release documentation.
 
 3. 提升
-   - After the first external contributions, refine PR checks based on the failure modes reviewers actually see.
+   - Product marketing assets are now reproducible from the repository instead of being a fragile manual artifact.
 
-### 2026-05-20 Cycle S
+### 2026-05-18 Cycle S
 
 1. 审视
-   - Mature products keep public install examples, CI defaults, and app-reported versions aligned with the current release.
-   - The project had v0.1.6 release notes and verification, but several defaults and examples still pointed at v0.1.5.
+   - CI still packaged non-tag builds as `v0.1.5` and did not verify the newly reproducible preview asset, so release automation had drifted from the product docs.
 
 2. 执行
-   - Aligned the fallback app version, package script defaults, CI package default, README examples, and release checklist commands with v0.1.6.
-   - Added a focused test that guards the app fallback version against drifting behind the current release line.
-   - Updated v0.1.6 release notes and changelog to include the contributor workflow and version-alignment pass.
+   - Updated GitHub Actions to use `v0.1.6` for non-tag package builds.
+   - Added a CI preview-generation step that fails when `docs/assets/product-preview.png` is not reproducible.
+   - Updated the release checklist to mark preview-asset verification as automated.
 
 3. 提升
-   - In the next release, make the current release line a single source of truth so scripts, docs, and tests do not require scattered manual edits.
+   - The repository now treats marketing assets as part of the release surface, not a side artifact outside automation.
 
-### 2026-05-20 Cycle T
+### 2026-05-18 Cycle T
 
 1. 审视
-   - Mature release pipelines keep the current release identifier in one obvious place instead of repeating it across shell scripts and CI.
-   - The v0.1.6 alignment pass reduced drift, but future releases would still require editing several defaults by hand.
+   - Competitive dashboards make trend exploration prominent, while the app still buried a token-only trend near the bottom of the popover.
+   - A token-only chart also missed the user's more important question: whether cost or request volume changed, not just token volume.
 
 2. 执行
-   - Added a root `VERSION` file as the default release version source.
-   - Updated build, package, verify, notarize, and non-tag CI package steps to read that file when `VERSION` is not explicitly provided.
-   - Added a test that compares the app fallback version with the repository release file.
+   - Replaced the token-only display state with a Usage Trend model that supports Tokens, Spend, and Requests modes.
+   - Moved Usage Trend into the first refreshable dashboard area so it remains visible even when lower cards push content down.
+   - Updated tests, README, and product-preview HTML to reflect the broader trend feature.
 
 3. 提升
-   - A later pass can generate `AppBuildInfo.fallbackVersion` from the same source at build time, but the current test now catches manual drift before release.
+   - Trend is now a core product surface instead of a trailing chart: the user can compare volume, money, and request activity without opening the web dashboard.
 
-### 2026-05-20 Cycle U
+### 2026-05-19 Cycle U
 
 1. 审视
-   - Mature macOS releases often provide a DMG with an `/Applications` shortcut, not only a raw zip archive.
-   - The local `dist/` folder had a historical DMG artifact, but the maintained release scripts and CI still produced only zip assets.
+   - LiteLLM-style products make budget protection a first-class guardrail, but this app only inferred risk from balance and spend spikes.
+   - For a personal menu bar monitor, the useful slice is not team budget administration; it is a local monthly budget warning that stays private and simple.
 
 2. 执行
-   - Added `scripts/package-dmg.sh` to build the app, stage it with an `/Applications` shortcut, create a compressed DMG, and write a SHA-256 checksum.
-   - Added `scripts/verify-dmg.sh` to validate the checksum, mount the DMG, verify the app bundle plist, check the `/Applications` shortcut, and verify the app signature.
-   - Updated CI, README, release checklist, contributor guidance, changelog, and v0.1.6 release notes so DMG packaging is part of the release promise.
+   - Added an optional monthly budget threshold to local insight settings.
+   - Added a Monthly budget Usage Insight that projects 30-day spend from recent daily actual cost.
+   - Added Settings and diagnostics surfaces so the budget is user-editable and support-visible without exposing tokens.
 
 3. 提升
-   - Once Developer ID credentials are available, run the DMG path after notarization so the user-facing installer carries a trusted, stapled app.
+   - The product now protects against quota exhaustion, balance exhaustion, spend spikes, and budget overrun, covering the main usage-risk loop without becoming an admin dashboard.
 
-### 2026-05-20 Cycle V
+### 2026-05-19 Cycle V
 
 1. 审视
-   - Mature release pages expose checksums and asset metadata in a form users and automation can verify without reading CI logs.
-   - The project had zip, DMG, and checksum files, but no single manifest tying asset names, sizes, and digests together.
+   - Local notarization was documented, but tag builds on GitHub still produced ad-hoc artifacts unless someone manually ran the Apple signing flow.
+   - For public distribution, silently publishing an unnotarized tag artifact is worse than failing loudly.
 
 2. 执行
-   - Added `scripts/generate-release-manifest.sh` to produce a JSON manifest for the zip and DMG assets.
-   - Added `scripts/verify-release-manifest.sh` to verify manifest version fields, asset names, file sizes, and SHA-256 digests against local artifacts.
-   - Changed package scripts so `.sha256` files contain release-friendly file names instead of local absolute paths, then wired manifest generation into CI and release docs.
+   - Added a GitHub Actions signing gate that detects whether the complete Apple signing and notarization secret set is present.
+   - Added a temporary-keychain Developer ID certificate import step for CI.
+   - Changed tag packaging to run `scripts/notarize-release.sh` when signing is configured, and to fail tagged releases when signing secrets are absent or partial.
+   - Documented the required GitHub secrets in README and the release checklist.
 
 3. 提升
-   - Future signed update or Homebrew Cask work can consume the manifest instead of re-discovering asset metadata from release files.
+   - The release pipeline now has a real path from source to notarized public artifact; the remaining blocker is supplying Apple credentials, not missing automation.
 
-### 2026-05-20 Cycle W
+### 2026-05-19 Cycle W
 
 1. 审视
-   - Mature release workflows collapse the release gate into one repeatable command so CI and humans do not drift apart.
-   - The project had strong individual checks, but maintainers still had to remember the exact sequence for tests, build, zip, DMG, and manifest validation.
+   - A monitoring product must distinguish fresh data from old-but-still-visible data.
+   - The app showed the last successful values indefinitely if refreshes stopped succeeding, which could make the menu bar look healthier than reality.
 
 2. 执行
-   - Added `scripts/verify-release-candidate.sh` as the single release gate for Swift tests, debug build, zip package/verify, DMG package/verify, and manifest generation/verification.
-   - Updated GitHub Actions to call the same release candidate script used locally.
-   - Simplified README, contributor guidance, release checklist, changelog, and v0.1.6 release notes around the single gate.
+   - Added stale-data detection based on the last successful refresh time and the configured refresh interval.
+   - Updated status labels, menu bar summaries, and tooltips to show `Stale Data` / `Stale` when cached data is too old.
+   - Added a lightweight clock tick so the UI can become stale even without a new network response.
+   - Added diagnostics output for data freshness and regression coverage for stale behavior.
 
 3. 提升
-   - When Developer ID credentials are available, extend this release candidate gate with signed and notarized verification instead of adding a parallel release path.
+   - The app now behaves more like a trustworthy monitor: old usage numbers remain visible, but they are clearly labeled as old instead of masquerading as current state.
 
-### 2026-05-20 Cycle X
+### 2026-05-19 Cycle X
 
 1. 审视
-   - Mature macOS release gates must make trusted distribution explicit: if a release requires notarization, the gate should fail without Apple credentials instead of silently producing ad-hoc assets.
-   - The project had a notarization script, but the one-command release gate ignored `REQUIRE_NOTARIZATION=true`, and notarization only refreshed the zip/checksum path.
+   - Mature monitoring tools do not only label stale data; they notify when the monitor itself stops receiving fresh data.
+   - The app had stale labels, but a user could still miss the problem unless they opened the popover or looked closely at the menu bar.
 
 2. 执行
-   - Updated `scripts/verify-release-candidate.sh` so `REQUIRE_NOTARIZATION=true` routes through `scripts/notarize-release.sh`.
-   - Updated notarization output to refresh release-friendly zip checksums, rebuild the DMG from the stapled app bundle, and regenerate the release manifest after stapling.
-   - Hardened DMG packaging so it removes FinderInfo/resource-fork detritus from the staged app bundle before creating the disk image.
-   - Documented the trusted release gate in README, release checklist, changelog, and v0.1.6 release notes.
+   - Added stale-data alerts to the same local notification policy used by Usage Insights.
+   - Reused the existing alert cooldown map so stale refresh warnings do not repeat noisily.
+   - Triggered stale alert checks from the lightweight clock tick, so the warning can appear without another network response.
 
 3. 提升
-   - Once Apple credentials are configured in GitHub secrets, tag builds can require the notarized release gate before draft release assets are created.
+   - The app now guards the monitor itself: if usage visibility stops updating, the user can be notified before making decisions from stale numbers.
 
-### 2026-05-20 Cycle Y
+### 2026-05-19 Cycle Y
 
 1. 审视
-   - Mature desktop release automation should use signing credentials automatically once maintainers configure them, rather than requiring a separate manual CI edit.
-   - The project had a notarized release gate, but tag builds still called the default gate without inspecting Apple signing secrets.
+   - Competitive usage products expose exports or shareable summaries so users can reconcile spend, discuss spikes, or ask for help without stitching screenshots together.
+   - For this menu bar product, a full export system would be too heavy; the best fit is a clean local usage report that omits credentials.
 
 2. 执行
-   - Wired GitHub Actions tag builds to expose Apple signing secrets to the package step.
-   - Added CI logic that enables `REQUIRE_NOTARIZATION=true` when `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` are all present.
-   - Documented that tag builds produce ad-hoc signed draft assets when secrets are incomplete and notarized draft assets when secrets are complete.
+   - Added a core Usage Report generator covering account, balance, spend, requests, tokens, token mix, quota, latest trend, model spend, and prioritized insights.
+   - Added a Copy Usage Report action in the connected popover and Settings diagnostics area.
+   - Kept support diagnostics separate from user-facing reports: diagnostics help debug the app, while usage reports help explain usage.
 
 3. 提升
-   - After Apple secrets are configured, run a real tag build and inspect the draft release assets before publishing.
+   - The product now has a lightweight reporting loop: see usage, understand risk, and share a safe summary without opening the web dashboard.
 
-### 2026-05-20 Cycle Z
+### 2026-05-19 Cycle Z
 
 1. 审视
-   - Mature public projects separate build automation from release approval: draft assets still need a visible checklist before publishing.
-   - The project had strong CI and artifact verification, but no GitHub issue workflow for the human release review step.
+   - Quota is the highest-stakes surface for users, but the card still read like raw daily/weekly/monthly telemetry.
+   - Best-in-class usage monitors make the remaining amount, reset time, and danger level visible without forcing the user to parse the numbers.
 
 2. 执行
-   - Added a release checklist issue template covering version/tag preflight, local release candidate verification, tag CI, draft asset review, checksum/manifest checks, DMG mount testing, Gatekeeper trust review, and publish decision.
-   - Linked release publishing guidance from README and release checklist documentation.
-   - Recorded the new release-operations gate in changelog and v0.1.6 release notes.
+   - Added a tested Quota Window display model for percent, amount, remaining value, reset text, and severity.
+   - Refactored subscription quota rows to show percent, used/limit, remaining quota, reset countdown, and risk color consistently.
+   - Added a compact subscription summary row that highlights the most pressured quota window and expiration window.
 
 3. 提升
-   - Once a real draft release exists, use the issue checklist to capture workflow and download evidence before publishing.
+   - The quota card now answers the user's real question faster: how close am I to the limit, how much is left, and when does it recover?
 
-### 2026-05-20 Cycle AA
+### 2026-05-19 Cycle AA
 
 1. 审视
-   - Mature macOS open-source projects often provide a Homebrew Cask path after notarized public releases exist.
-   - The project had release assets and a manifest, but no cask draft that could reuse the manifest's DMG SHA-256 instead of duplicating metadata by hand.
+   - Users have different monitoring priorities: some watch spend, some watch quota, some watch token volume or request pressure.
+   - The app already had optional menu bar text, but the content was fixed to one blended summary.
 
 2. 执行
-   - Added `scripts/generate-homebrew-cask.sh` to generate a `sub2api-status-bar` cask draft from the release manifest.
-   - Added `scripts/verify-homebrew-cask.sh` to ensure the cask version, DMG URL, SHA-256, app stanza, homepage, description, and macOS requirement match release metadata.
-   - Wired cask generation into the release candidate gate, CI artifact upload, README output list, release checklist, release issue template, changelog, and v0.1.6 release notes.
+   - Added a persisted menu bar metric preference with Auto, Spend, Quota, Tokens, and Requests modes.
+   - Updated menu bar summary generation so each mode has a compact purpose-built string while preserving stale-data prefixes.
+   - Added the metric picker in Settings and surfaced the selected metric in diagnostics.
 
 3. 提升
-   - Only submit or publish the cask after a real notarized public release exists and the downloaded DMG has passed the release checklist.
+   - The menu bar now acts more like a personal instrument: users can choose the one signal they care about most without opening the popover.
 
-### 2026-05-20 Cycle AB
+### 2026-05-19 Cycle AB
 
 1. 审视
-   - Mature release workflows verify the artifacts users actually download, not only the workspace copies that produced them.
-   - The project had strong local zip, DMG, manifest, and cask checks, but the draft-release checklist still required maintainers to manually reassemble those checks from a clean download directory.
+   - Marketable utilities need a crisp first-run path; a blank login form feels like a developer tool even if the dashboard is strong.
+   - New users need to know whether they are missing a server URL, account login, password, or manual token.
 
 2. 执行
-   - Added `scripts/verify-downloaded-release.sh` to verify downloaded zip, DMG, checksum, manifest, and Homebrew Cask draft files from any clean directory.
-   - Updated the release candidate gate to copy generated assets into a temporary download directory and run the same downloaded-asset verification.
-   - Documented the command in README, release notes, release checklist, issue template, and changelog.
+   - Added a tested onboarding checklist model that summarizes connection readiness.
+   - Added a Connection Checklist to the login panel with completion icons and short field-level guidance.
+   - Kept manual token setup visible while making it clear that password or token can complete the credential step.
 
 3. 提升
-   - Once a real tag draft exists, download the draft assets from GitHub and attach the verification output to the release checklist before publishing.
+   - The first launch now gives users a visible path to success before any network request happens.
 
-### 2026-05-20 Cycle AC
+### 2026-05-19 Cycle AC
 
 1. 审视
-   - Mature public release pipelines distinguish experimental draft assets from publishable release candidates.
-   - The project could create ad-hoc tag drafts when Apple credentials were incomplete, but it did not yet have a repository-level guard that prevents accidental public release mode from producing untrusted assets.
+   - Competitive strategy called out balance/runway as a first-class personal monitoring signal, but the menu bar metric picker did not include it.
+   - For a user-owned account, "how many days can I keep spending like today?" is often more actionable than raw spend alone.
 
 2. 执行
-   - Added `scripts/resolve-release-trust.sh` to choose the release trust path from tag context, Apple credential presence, and `PUBLIC_RELEASE=true`.
-   - Updated `scripts/verify-release-candidate.sh` so `REQUIRE_NOTARIZATION=auto` uses the shared trust resolver.
-   - Updated GitHub Actions, release checklist, release issue template, README, release notes, and changelog to document the public-release guard.
+   - Added Balance as a menu bar metric option.
+   - Added a compact balance summary that shows available balance and estimated runway from today's spend.
+   - Updated README and competitive strategy docs so the documented product surface matches the implemented choices.
 
 3. 提升
-   - Configure `PUBLIC_RELEASE=true` in the repository only after Apple Developer ID secrets are ready, then prove a real tag run fails closed or notarizes successfully before publishing.
+   - The menu bar can now act as a runway monitor, not only a spend or quota monitor.
 
-### 2026-05-20 Cycle AD
+### 2026-05-19 Cycle AD
 
 1. 审视
-   - Mature product repositories keep public screenshots aligned with the current product promise instead of letting marketing assets drift behind shipped behavior.
-   - The README preview existed, but it did not show the newer local alerts, Settings, or diagnostics surfaces, and the release gate did not verify preview freshness.
+   - The model distribution card showed model cost and token volume, but did not explain why a model was expensive.
+   - Observability products make model-level unit economics visible so users can compare model mix, cost share, and token mix quickly.
 
 2. 执行
-   - Added `scripts/verify-product-preview.sh` to validate the README preview reference, PNG dimensions, and HTML coverage of spend, token trends, subscriptions, local alerts, Settings, and diagnostics.
-   - Wired product preview verification into the release candidate gate.
-   - Refreshed `docs/assets/product-preview.html` and regenerated `docs/assets/product-preview.png` to include current productization features.
-   - Documented preview upkeep in README, release checklist, release issue template, release notes, and changelog.
+   - Added a tested Model Usage display model with cost share, Cost/MTok, token mix, and normalized cost/token progress.
+   - Refactored the model distribution card to lead with cost share and unit economics instead of only token progress.
+   - Updated README and competitive strategy docs to reflect model-level unit economics as part of the product surface.
 
 3. 提升
-   - After the next meaningful UI change, regenerate the preview as part of the release checklist and attach before/after visual evidence to the release issue.
+   - Model Distribution now answers "which model is driving spend, and is it expensive per token?" without opening the web dashboard.
 
-### 2026-05-20 Cycle AE
+### 2026-05-19 Cycle AE
 
 1. 审视
-   - Mature public repositories make issue routing explicit with a maintained label set, so bugs, support, release work, security-sensitive discussion, and docs work do not collapse into one queue.
-   - The project had issue templates and support guidance, but labels were implicit and could drift from template front matter.
+   - The release path produced a zip archive, which is useful for automation but less familiar for ordinary macOS users.
+   - A marketable macOS utility should provide a DMG installer image with an Applications shortcut while keeping zip artifacts for CI and verification.
 
 2. 执行
-   - Added `.github/labels.yml` with product, release, support, privacy, security, installation, update, and triage labels.
-   - Added `scripts/verify-github-labels.sh` to validate required labels and ensure issue templates only reference defined labels.
-   - Wired label verification into the release candidate gate and updated issue templates to start with `needs-triage`.
-   - Documented label usage in SUPPORT, CONTRIBUTING, release checklist, release notes, and changelog.
+   - Extended release packaging to produce both zip and DMG artifacts with SHA-256 checksums.
+   - Extended release verification to validate the zip from clean extraction and the DMG from a clean temporary mount.
+   - Updated GitHub Actions artifact upload and release documentation to include DMG output.
 
 3. 提升
-   - Once the repository is public, sync `.github/labels.yml` to GitHub and use real issue flow to decide whether automation or saved replies are worth adding.
+   - Distribution now looks more like a real macOS product: users get a familiar installer image, while maintainers keep deterministic verification.
 
-### 2026-05-20 Cycle AF
+### 2026-05-19 Cycle AF
 
 1. 审视
-   - Mature public repositories give vulnerability reporters a private path and keep public issue templates from becoming an accidental disclosure channel.
-   - The project had a security policy, but it still allowed a fallback public issue asking for private contact and did not configure issue-template contact links.
+   - Usage tools become more marketable when users can share a tasteful snapshot of their work, not only copy a support-style report.
+   - The existing Usage Report is useful and safe, but it is too dense for social posts and does not create a recognizable product loop.
 
 2. 执行
-   - Added `.github/ISSUE_TEMPLATE/config.yml` to disable blank public issues and route security reports to GitHub private vulnerability reporting.
-   - Added `scripts/verify-security-reporting.sh` to verify the private security route, support contact link, and removal of the public-issue fallback.
-   - Wired security reporting verification into the release candidate gate.
-   - Updated SECURITY, SUPPORT, CONTRIBUTING, release checklist, release notes, and changelog.
+   - Added a tested `SocialShareSummary` model that turns today's tokens, spend, requests, top model, Cost/MTok, quota pressure, and trend into a short anonymous share summary.
+   - Added a SwiftUI-rendered social card copied to the pasteboard with text fallback, plus a one-click X draft from the connected popover.
+   - Kept the share payload free of auth tokens, refresh tokens, server URL, email, and account display name.
 
 3. 提升
-   - Before the repository is made public, enable GitHub private vulnerability reporting in repository settings and confirm the Security tab resolves for outside reporters.
-
-### 2026-05-20 Cycle AG
-
-1. 审视
-   - Mature public repositories treat branch protection, required checks, issue settings, and private vulnerability reporting as part of the release system, not as tribal knowledge.
-   - The project had CI, labels, and security reporting checks, but no committed contract for the repository settings that make those checks enforceable on GitHub.
-
-2. 执行
-   - Added `.github/repository-settings.yml` with the expected public settings for private vulnerability reporting, issue handling, branch cleanup, main branch protection, pull request reviews, linear history, and required `Test and Package` status checks.
-   - Added `scripts/verify-repository-settings.sh` to verify the repository settings contract and issue-template security link.
-   - Wired repository settings verification into the release candidate gate.
-   - Documented the settings contract in CONTRIBUTING, SECURITY, release checklist, release notes, and changelog.
-
-3. 提升
-   - Before publishing, apply `.github/repository-settings.yml` to the real GitHub repository and confirm branch protection blocks unverified changes to `main`.
-
-### 2026-05-20 Cycle AH
-
-1. 审视
-   - Mature desktop products standardize support packets so maintainers can request comparable evidence without collecting secrets.
-   - The app already had support-safe diagnostics and issue templates, but longer support follow-up still depended on ad-hoc details.
-
-2. 执行
-   - Added `docs/SUPPORT_BUNDLE.md` with diagnostics, environment, reproduction, expected and actual behavior, recent changes, and a local secret-review checklist.
-   - Added `scripts/verify-support-bundle.sh` and wired it into the release candidate gate.
-   - Linked the support guide and bug report template to the support bundle, then documented the check in release and contributor guidance.
-
-3. 提升
-   - A later app-level support bundle export could prefill safe fields, but the template keeps v0.1.6 support safer without expanding app scope.
-
-### 2026-05-20 Cycle AI
-
-1. 审视
-   - Mature desktop products move support evidence collection into the app so users do not have to manually assemble diagnostics.
-   - The repository had a safe support bundle template, but the product still asked users to copy diagnostics and then fill the longer packet by hand.
-
-2. 执行
-   - Added `SupportBundleReport` in the core layer so support bundle output is testable and reuses token-redacted diagnostics.
-   - Added Settings > Diagnostics > Copy Support Bundle to copy a ready-to-paste support packet.
-   - Extended support bundle verification to cover the core generator, UI action, tests, README, support guide, and issue template links.
-
-3. 提升
-   - After real support issues arrive, refine the support bundle fields around the evidence maintainers actually need most often.
+   - The app now has a small growth loop: people can share impressive token days without exposing credentials or personal account details, while the card carries the Sub2API Status Bar name.

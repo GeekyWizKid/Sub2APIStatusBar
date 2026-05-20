@@ -1,31 +1,19 @@
 # Changelog
 
+## Unreleased
+
 ## v0.1.6
 
-- Added MAGI productization design, implementation plan, and integration audit documentation.
-- Added a release-readiness matrix for product maturity, public trust, update delivery, distribution channels, and support.
-- Added local alert thresholds for daily spend, daily tokens, and subscription quota pressure.
-- Surfaced active alerts in status labels, detail text, diagnostics, Settings controls, and the popover.
-- Added compact panel density, dashboard section visibility, stale-data status detail, and menu bar summary modes.
-- Added contributor guidance and a pull request checklist for public collaboration.
-- Aligned default build, package, CI, and documentation examples with the v0.1.6 release line.
-- Added a repository `VERSION` file as the default release version source for scripts and non-tag CI builds.
-- Added repeatable DMG packaging and verification for macOS-style installation assets.
-- Added a release manifest with zip/DMG file names, SHA-256 digests, and file sizes.
-- Added a one-command release candidate verification script.
-- Extended the release candidate gate to require the notarized zip, DMG, and manifest path when Apple credentials are provided.
-- Wired tag CI to use the notarized release gate when Apple signing secrets are configured.
-- Added a GitHub release checklist issue template for draft asset and trust review.
-- Added Homebrew Cask draft generation and verification from the release manifest.
-- Added downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
-- Added public release mode to fail tag builds unless Apple signing and notarization secrets are complete.
-- Added product preview asset verification and refreshed the README preview for alerts, Settings, and diagnostics.
-- Added GitHub label configuration and verification for public issue triage.
-- Added private security reporting verification through GitHub Security policy and issue contact links.
-- Added repository settings verification for branch protection, required checks, issues, and private vulnerability reporting.
-- Added a support bundle template and verification gate for support-safe diagnostics follow-up.
-- Added an in-app Copy Support Bundle action with token-redacted diagnostics and support prompts.
-- Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
+- Added Usage Insights for quota pressure, balance runway, monthly budget runway, token trend changes, model cost concentration, and latency.
+- Added local proactive alerts for important Usage Insights, with Settings controls for severity and cooldown.
+- Added visible notification-permission status and diagnostics so blocked macOS alerts are easier to identify.
+- Added configurable Usage Insight thresholds in Settings, including optional monthly budget protection.
+- Added spend-surge Usage Insights so cost spikes are caught even when token volume is steady.
+- Added a blended Cost / MTok dashboard metric and diagnostics line.
+- Improved quota insights to name the subscription and show reset timing when the server provides it.
+- Added guided recovery suggestions for onboarding and connection failures.
+- Added Usage Insights to diagnostics so support reports explain the current top signal without exposing tokens.
+- Documented the product direction against usage dashboards and LLM observability tools.
 
 ## v0.1.5
 

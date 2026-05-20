@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${VERSION:-$(< "$ROOT_DIR/VERSION")}"
+VERSION="${VERSION:-v0.1.9}"
 APP_NAME="Sub2APIStatusBar"
 BUNDLE_ID="${BUNDLE_ID:-com.geekywizkid.sub2api-statusbar}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
@@ -54,6 +54,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>NSUserNotificationsUsageDescription</key>
+  <string>Sub2API Status Bar sends local alerts when usage, quota, or balance signals need attention.</string>
   <key>NSSupportsAutomaticTermination</key>
   <true/>
   <key>NSSupportsSuddenTermination</key>

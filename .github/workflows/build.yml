@@ -11,9 +11,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   macos:
     name: Test and Package
@@ -32,21 +29,102 @@ jobs:
       - name: Build Debug
         run: swift build
 
-      - name: Package App
+      - name: Verify Product Preview
+        run: |
+          ./scripts/capture-product-preview.swift
+          bytes="$(stat -f%z docs/assets/product-preview.png)"
+          if [[ "$bytes" -le 10000 ]]; then
+            echo "Product preview PNG is unexpectedly small: ${bytes} bytes" >&2
+            exit 1
+          fi
+          dimensions="$(sips -g pixelWidth -g pixelHeight docs/assets/product-preview.png)"
+          echo "$dimensions"
+          grep -q "pixelWidth: 1200" <<< "$dimensions"
+          grep -q "pixelHeight: 820" <<< "$dimensions"
+
+      - name: Resolve Release Signing
+        id: signing
         env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
           APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-          SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
-          PUBLIC_RELEASE: ${{ vars.PUBLIC_RELEASE }}
         run: |
+          set -euo pipefail
+          required=(
+            APPLE_CERTIFICATE_BASE64
+            APPLE_CERTIFICATE_PASSWORD
+            APPLE_KEYCHAIN_PASSWORD
+            DEVELOPER_ID_APPLICATION
+            APPLE_ID
+            TEAM_ID
+            APP_SPECIFIC_PASSWORD
+          )
+          present=0
+          for name in "${required[@]}"; do
+            if [[ -n "${!name:-}" ]]; then
+              present=$((present + 1))
+            fi
+          done
+          if [[ "$present" -eq "${#required[@]}" ]]; then
+            echo "signing_ready=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$present" -eq 0 ]]; then
+            echo "signing_ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release signing is partially configured. Provide all Apple signing and notarization secrets, or remove them all for ad-hoc builds." >&2
+            exit 1
+          fi
+
+      - name: Import Developer ID Certificate
+        if: github.ref_type == 'tag' && steps.signing.outputs.signing_ready == 'true'
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$APPLE_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Package App
+        env:
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: |
+          set -euo pipefail
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
           else
-            VERSION="$(cat VERSION)"
+            VERSION="v0.1.9"
           fi
-
-          REQUIRE_NOTARIZATION=auto VERSION="$VERSION" ./scripts/verify-release-candidate.sh
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${{ steps.signing.outputs.signing_ready }}" == "true" ]]; then
+            VERSION="$VERSION" \
+              SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION" \
+              APPLE_ID="$APPLE_ID" \
+              TEAM_ID="$TEAM_ID" \
+              APP_SPECIFIC_PASSWORD="$APP_SPECIFIC_PASSWORD" \
+              ./scripts/notarize-release.sh
+          elif [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            echo "Tagged releases require Apple signing and notarization secrets." >&2
+            exit 1
+          else
+            VERSION="$VERSION" ./scripts/package-release.sh
+          fi
+          VERSION="$VERSION" ./scripts/verify-release.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4
@@ -55,22 +133,5 @@ jobs:
           path: |
             dist/*.zip
             dist/*.dmg
-            dist/*-manifest.json
-            dist/sub2api-status-bar.rb
             dist/*.sha256
           if-no-files-found: error
-
-      - name: Create Draft GitHub Release
-        if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          prerelease: false
-          name: Sub2API Status Bar ${{ github.ref_name }}
-          body_path: docs/RELEASE_NOTES_${{ github.ref_name }}.md
-          files: |
-            dist/*.zip
-            dist/*.dmg
-            dist/*-manifest.json
-            dist/sub2api-status-bar.rb
-            dist/*.sha256

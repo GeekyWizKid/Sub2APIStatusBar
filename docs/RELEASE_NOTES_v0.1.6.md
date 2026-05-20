@@ -1,50 +1,24 @@
-# Release Notes v0.1.6
+# Sub2API Status Bar v0.1.6
 
-This release continues the MAGI productization pass. It makes usage pressure more actionable while keeping the menu bar experience compact and quiet.
+This release turns Sub2API Status Bar from a passive menu bar dashboard into a proactive personal usage guardrail. It keeps the user-focused dashboard, then adds smarter insights, local alerts, and clearer cost signals.
 
-## Added
+## What's New
 
-- Local warning thresholds for daily spend, daily tokens, and highest subscription quota usage.
-- Alert-aware status text, diagnostics, and menu bar detail.
-- Productization roadmap documentation and release-readiness matrix.
-- Contributor guidance, issue flow, security policy, and pull request checklist for public collaboration.
-- Repository-level release version source for local scripts and non-tag CI builds.
-- DMG packaging and verification scripts for a macOS-style install artifact.
-- Release manifest generation and verification for asset names, checksums, and sizes.
-- One-command release candidate verification for tests, build, zip, DMG, and manifest checks.
-- Optional notarized release candidate path that rebuilds trusted zip, DMG, and manifest assets after stapling.
-- Tag CI automatically uses the notarized release gate when all Apple signing secrets are configured.
-- Release checklist issue template for tag CI, draft assets, checksums, manifest review, DMG testing, and publish decision.
-- Homebrew Cask draft generation and verification from the release manifest.
-- Downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
-- Public release mode that fails tag builds unless Apple signing and notarization secrets are complete.
-- Product preview asset verification for README image dimensions and current feature coverage.
-- GitHub label configuration and verification for public issue triage.
-- Private security reporting route through GitHub Security policy and issue contact links.
-- Repository settings contract for branch protection, required checks, issue settings, and private vulnerability reporting.
-- Support bundle template and verification gate for support-safe diagnostics follow-up.
-- In-app Copy Support Bundle action that pre-fills the support packet with token-redacted diagnostics.
+- Added Usage Insights for quota pressure, balance runway, monthly budget runway, token trend, spend surge, model concentration, and latency.
+- Added local macOS alerts for important insights, with warning/error level and quiet-period controls.
+- Added notification permission status in Settings, including a quick path to macOS notification settings when alerts are blocked.
+- Added configurable insight thresholds for quota, balance, monthly budget, token surge, spend surge, model concentration, and latency.
+- Added Copy Share Card for an anonymous visual token/spend snapshot with social post text fallback.
+- Added a one-click X draft from the connected popover for sharing usage wins without account details.
+- Added a blended Cost / MTok metric so users can see when the same token volume becomes more expensive.
+- Improved quota insight text with subscription names and reset timing when available.
+- Added guided recovery cards for setup and connection failures.
+- Added release verification for notification-purpose metadata in the packaged app.
 
-## Verification
+## Verify The Download
 
-- `swift test`
-- `swift build`
-- `VERSION=v0.1.6 ./scripts/package-release.sh`
-- `VERSION=v0.1.6 ./scripts/verify-release.sh`
-- `VERSION=v0.1.6 ./scripts/package-dmg.sh`
-- `VERSION=v0.1.6 ./scripts/verify-dmg.sh`
-- `VERSION=v0.1.6 ./scripts/generate-release-manifest.sh`
-- `VERSION=v0.1.6 ./scripts/verify-release-manifest.sh`
-- `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh`
-- `./scripts/verify-product-preview.sh`
-- `./scripts/verify-github-labels.sh`
-- `./scripts/verify-security-reporting.sh`
-- `./scripts/verify-repository-settings.sh`
-- `./scripts/verify-support-bundle.sh`
-- `VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh <download-directory>`
-- `PUBLIC_RELEASE=true GITHUB_REF_TYPE=tag REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when validating the public-release trust gate
-- `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when Apple signing credentials are available
-- `VERSION=v0.1.6 ./scripts/generate-homebrew-cask.sh`
-- `VERSION=v0.1.6 ./scripts/verify-homebrew-cask.sh`
+After downloading the zip and checksum:
 
-All commands passed during the v0.1.6 productization verification pass.
+```bash
+shasum -a 256 -c Sub2APIStatusBar-0.1.6-macOS.zip.sha256
+```
