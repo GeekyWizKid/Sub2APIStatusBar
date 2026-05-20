@@ -25,14 +25,19 @@
 - [x] Support-safe diagnostics copy action with token redaction
 - [x] Local config reveal action
 
-## Before Public Distribution
+## Productization Readiness Matrix
 
-- [x] Choose a public version tag, for example `v0.1.5`
-- [ ] Build with a Developer ID Application certificate
-- [ ] Notarize the app with Apple
-- [x] Attach the release zip and checksum to a GitHub Release
-- [x] Add product screenshots or a short demo GIF to the README
-- [x] Decide whether the repository should stay private or become public
+| Area | Current Status | Verification | Next Gate |
+| --- | --- | --- | --- |
+| App identity | Ready | `Resources/AppIcon.icns`, bundle metadata from `scripts/build-app.sh` | Keep screenshots current for each public release |
+| User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, and menu bar summaries | Add local alert coverage in v0.1.6 |
+| Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
+| Menu bar maturity | In progress | Summary modes, section visibility, compact density, and stale detection are covered by unit tests and README copy | Verify compact layout manually before release |
+| Release archive | Ready | `VERSION=v0.1.5 ./scripts/package-release.sh` and `VERSION=v0.1.5 ./scripts/verify-release.sh` | Update the version for each tag |
+| Public trust | Blocked by Apple credentials | Developer ID signing and notarization scripts exist | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
+| Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
+| Distribution channels | Planned | GitHub Release zip and checksum are produced by CI | Consider Homebrew Cask after a notarized public release exists |
+| Support | In progress | Copy Diagnostics and Show Config exist | Add issue templates or support bundle structure after v0.1.6 |
 
 ## Release Commands
 
@@ -41,6 +46,15 @@ swift test
 swift build
 VERSION=v0.1.5 ./scripts/package-release.sh
 VERSION=v0.1.5 ./scripts/verify-release.sh
+```
+
+For the v0.1.6 productization pass:
+
+```bash
+swift test
+swift build
+VERSION=v0.1.6 ./scripts/package-release.sh
+VERSION=v0.1.6 ./scripts/verify-release.sh
 ```
 
 Developer ID signing:

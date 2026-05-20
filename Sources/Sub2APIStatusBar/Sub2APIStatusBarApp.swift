@@ -58,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        switch snapshot.severity {
+        switch snapshot.severity(using: model.config.alertRules) {
         case .healthy:
             button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Sub2API OK")
         case .warning:
@@ -71,12 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.title = snapshot.connected && model.config.showsMenuBarText ? " \(snapshot.menuBarSummary(displayMode: model.config.menuBarDisplayMode))" : ""
 
         if let stats = snapshot.stats, snapshot.connected {
-            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
-            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let label = snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
             button.toolTip = "Sub2API \(label) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm)). \(detail)"
         } else {
-            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
-            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let label = snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds)
             button.toolTip = "Sub2API \(label). \(detail)"
         }
     }
@@ -538,7 +538,7 @@ struct MonitorPanel: View {
     private var statusSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(model.snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
+                Text(model.snapshot.statusLabel(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds))
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(iconColor)
                 Spacer()
@@ -554,7 +554,7 @@ struct MonitorPanel: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } else {
-                Text(model.snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
+                Text(model.snapshot.statusDetail(using: model.config.alertRules, refreshIntervalSeconds: model.config.refreshIntervalSeconds))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -562,7 +562,12 @@ struct MonitorPanel: View {
     }
 
     private var userSection: some View {
-        VStack(alignment: .leading, spacing: sectionSpacing) {
+        let alerts = model.snapshot.localAlerts(using: model.config.alertRules)
+        return VStack(alignment: .leading, spacing: sectionSpacing) {
+            if !alerts.isEmpty {
+                AlertSummaryView(alerts: alerts, density: density)
+            }
+
             if model.config.dashboardSections.accountOverview, let user = model.snapshot.currentUser {
                 UserAccountCard(user: user, density: density)
             }
@@ -883,6 +888,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     AccountSettingsSection(model: model)
                     GeneralSettingsSection(model: model)
+                    AlertSettingsSection(model: model)
                     LayoutSettingsSection(model: model)
                     UpdateSettingsSection(model: model)
                     LoginSettingsSection(model: model, dismiss: dismiss)
@@ -988,6 +994,60 @@ struct GeneralSettingsSection: View {
 
             if let error = model.launchAtLoginError {
                 MessageRow(message: error)
+            }
+        }
+    }
+}
+
+struct AlertSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    private var dailySpendBinding: Binding<Double> {
+        Binding(
+            get: { model.settingsDraft.alertRules.dailySpendUSD ?? 0 },
+            set: { value in
+                model.settingsDraft.alertRules.dailySpendUSD = value > 0 ? value : nil
+            }
+        )
+    }
+
+    private var dailyTokensBinding: Binding<Double> {
+        Binding(
+            get: { Double(model.settingsDraft.alertRules.dailyTokens ?? 0) },
+            set: { value in
+                model.settingsDraft.alertRules.dailyTokens = value > 0 ? Int64(value) : nil
+            }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Alerts")
+                .font(.headline)
+
+            VStack(spacing: 8) {
+                SettingsControlRow(title: "Spend") {
+                    TextField("Off", value: dailySpendBinding, format: .number.precision(.fractionLength(2)))
+                        .textFieldStyle(.roundedBorder)
+                    Text("USD/day")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                SettingsControlRow(title: "Tokens") {
+                    TextField("Off", value: dailyTokensBinding, format: .number.precision(.fractionLength(0)))
+                        .textFieldStyle(.roundedBorder)
+                    Text("per day")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                SettingsControlRow(title: "Quota") {
+                    Slider(value: $model.settingsDraft.alertRules.quotaProgress, in: 0.5...1, step: 0.05)
+                    Text(StatusFormatters.percent(model.settingsDraft.alertRules.quotaProgress))
+                        .font(.callout.monospacedDigit())
+                        .frame(width: 44, alignment: .trailing)
+                }
             }
         }
     }
@@ -1168,6 +1228,32 @@ struct UpdateAvailableBanner: View {
         }
         .padding(10)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct AlertSummaryView: View {
+    let alerts: [LocalAlert]
+    let density: PanelDensity
+
+    var body: some View {
+        SectionBlock(title: "Alerts", density: density) {
+            VStack(alignment: .leading, spacing: density == .compact ? 6 : 8) {
+                ForEach(Array(alerts.enumerated()), id: \.offset) { _, alert in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(alert.title)
+                                .font(.callout.weight(.medium))
+                            Text(alert.message)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+        }
     }
 }
 

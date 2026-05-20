@@ -85,6 +85,28 @@ import Testing
     #expect(loaded.panelDensity == .compact)
 }
 
+@Test func appConfigPersistsLocalAlertPreferences() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        alertRules: LocalAlertRules(
+            dailySpendUSD: 25,
+            dailyTokens: 1_000_000,
+            quotaProgress: 0.72
+        )
+    )
+
+    try store.save(config)
+    let loaded = store.load()
+
+    #expect(loaded.alertRules.dailySpendUSD == 25)
+    #expect(loaded.alertRules.dailyTokens == 1_000_000)
+    #expect(loaded.alertRules.quotaProgress == 0.72)
+}
+
 @Test func configStoreSavesTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
@@ -242,6 +264,37 @@ import Testing
     let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
 
     #expect(config.panelDensity == .regular)
+}
+
+@Test func appConfigDefaultsAlertPreferencesForLegacyConfigs() throws {
+    let data = """
+    {
+      "baseURL": "http://127.0.0.1:8080"
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.alertRules.dailySpendUSD == nil)
+    #expect(config.alertRules.dailyTokens == nil)
+    #expect(config.alertRules.quotaProgress == 0.85)
+}
+
+@Test func appConfigNormalizesAlertPreferences() {
+    var config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        alertRules: LocalAlertRules(
+            dailySpendUSD: -1,
+            dailyTokens: -20,
+            quotaProgress: 3
+        )
+    )
+
+    config.normalize()
+
+    #expect(config.alertRules.dailySpendUSD == nil)
+    #expect(config.alertRules.dailyTokens == nil)
+    #expect(config.alertRules.quotaProgress == 1)
 }
 
 @Test func appConfigClearsAuthTokens() {
@@ -627,7 +680,7 @@ import Testing
         realtime: nil,
         accountHealth: nil,
         subscriptionSummary: nil,
-        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        lastUpdatedAt: nil,
         message: nil
     )
 
@@ -668,6 +721,81 @@ import Testing
 
     #expect(snapshot.isStale(referenceDate: referenceDate, refreshIntervalSeconds: 30) == false)
     #expect(snapshot.statusLabel(referenceDate: referenceDate, refreshIntervalSeconds: 30) == "OK")
+}
+
+@Test func localAlertEvaluationDetectsSpendTokenAndQuotaPressure() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: SubscriptionSummary(
+            activeCount: 1,
+            subscriptions: [
+                SubscriptionSummaryItem(
+                    id: 1,
+                    groupName: "Team",
+                    status: "active",
+                    dailyProgress: 0.91,
+                    weeklyProgress: nil,
+                    monthlyProgress: nil,
+                    expiresAt: nil,
+                    daysRemaining: nil
+                )
+            ]
+        ),
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+    let alerts = snapshot.localAlerts(using: LocalAlertRules(
+        dailySpendUSD: 10,
+        dailyTokens: 1_000,
+        quotaProgress: 0.9
+    ))
+
+    #expect(alerts.count == 3)
+    #expect(alerts.map(\.kind) == [.dailySpend, .dailyTokens, .quotaProgress])
+    #expect(alerts.first?.title == "Daily spend alert")
+}
+
+@Test func monitorSnapshotUsesLocalAlertsInStatusDetail() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: nil,
+        message: nil
+    )
+    let rules = LocalAlertRules(dailySpendUSD: 10, dailyTokens: nil, quotaProgress: 0.9)
+
+    #expect(snapshot.severity(using: rules) == .warning)
+    #expect(snapshot.statusLabel(using: rules, refreshIntervalSeconds: 30) == "Budget Alert")
+    #expect(snapshot.statusDetail(using: rules, refreshIntervalSeconds: 30) == "Daily spend is $12.5000, above the $10.0000 alert.")
+}
+
+@Test func monitorSnapshotIgnoresDisabledSpendAndTokenAlerts() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: nil,
+        message: nil
+    )
+    let alerts = snapshot.localAlerts(using: LocalAlertRules(
+        dailySpendUSD: nil,
+        dailyTokens: nil,
+        quotaProgress: 0.9
+    ))
+
+    #expect(alerts.isEmpty)
+    #expect(snapshot.statusLabel(using: LocalAlertRules(), refreshIntervalSeconds: 30) == "OK")
 }
 
 @Test func diagnosticReportRedactsStoredTokenValues() {
@@ -712,6 +840,35 @@ import Testing
     #expect(report.contains("Refresh Token: present"))
     #expect(report.contains("secret-access-token") == false)
     #expect(report.contains("secret-refresh-token") == false)
+}
+
+@Test func diagnosticReportIncludesLocalAlertState() {
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        alertRules: LocalAlertRules(dailySpendUSD: 5, dailyTokens: 1_000, quotaProgress: 0.9)
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 2_000, todayActualCost: 9),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+
+    let report = DiagnosticReport.make(
+        config: config,
+        snapshot: snapshot,
+        appVersion: "0.1.6",
+        osVersion: "macOS 15.0"
+    )
+
+    #expect(report.contains("Daily Spend Alert: $5.0000"))
+    #expect(report.contains("Daily Token Alert: 1000"))
+    #expect(report.contains("Quota Alert: 90%"))
+    #expect(report.contains("Active Alerts: Daily spend alert, Daily token alert"))
 }
 
 @Test func loginFormStateRequiresURLAccountAndPassword() {

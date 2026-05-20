@@ -110,6 +110,33 @@ public enum PanelDensity: String, Codable, CaseIterable, Identifiable, Sendable 
     }
 }
 
+public struct LocalAlertRules: Codable, Equatable, Sendable {
+    public var dailySpendUSD: Double?
+    public var dailyTokens: Int64?
+    public var quotaProgress: Double
+
+    public init(
+        dailySpendUSD: Double? = nil,
+        dailyTokens: Int64? = nil,
+        quotaProgress: Double = 0.85
+    ) {
+        self.dailySpendUSD = dailySpendUSD
+        self.dailyTokens = dailyTokens
+        self.quotaProgress = quotaProgress
+        normalize()
+    }
+
+    public mutating func normalize() {
+        if let dailySpendUSD, dailySpendUSD <= 0 {
+            self.dailySpendUSD = nil
+        }
+        if let dailyTokens, dailyTokens <= 0 {
+            self.dailyTokens = nil
+        }
+        quotaProgress = min(max(quotaProgress, 0.5), 1)
+    }
+}
+
 public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
@@ -181,6 +208,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var menuBarDisplayMode: MenuBarDisplayMode
     public var dashboardSections: DashboardSectionVisibility
     public var panelDensity: PanelDensity
+    public var alertRules: LocalAlertRules
     public var accounts: [StoredAccount]
     public var selectedAccountID: String?
 
@@ -195,6 +223,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         menuBarDisplayMode: MenuBarDisplayMode = .spendRequestsRPM,
         dashboardSections: DashboardSectionVisibility = DashboardSectionVisibility(),
         panelDensity: PanelDensity = .regular,
+        alertRules: LocalAlertRules = LocalAlertRules(),
         accounts: [StoredAccount] = [],
         selectedAccountID: String? = nil
     ) {
@@ -208,6 +237,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.menuBarDisplayMode = menuBarDisplayMode
         self.dashboardSections = dashboardSections
         self.panelDensity = panelDensity
+        self.alertRules = alertRules
         self.accounts = accounts
         self.selectedAccountID = selectedAccountID
         normalize()
@@ -224,6 +254,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case menuBarDisplayMode
         case dashboardSections
         case panelDensity
+        case alertRules
         case accounts
         case selectedAccountID
     }
@@ -240,6 +271,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         menuBarDisplayMode = try container.decodeIfPresent(MenuBarDisplayMode.self, forKey: .menuBarDisplayMode) ?? .spendRequestsRPM
         dashboardSections = try container.decodeIfPresent(DashboardSectionVisibility.self, forKey: .dashboardSections) ?? DashboardSectionVisibility()
         panelDensity = try container.decodeIfPresent(PanelDensity.self, forKey: .panelDensity) ?? .regular
+        alertRules = try container.decodeIfPresent(LocalAlertRules.self, forKey: .alertRules) ?? LocalAlertRules()
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
@@ -257,6 +289,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(menuBarDisplayMode, forKey: .menuBarDisplayMode)
         try container.encode(dashboardSections, forKey: .dashboardSections)
         try container.encode(panelDensity, forKey: .panelDensity)
+        try container.encode(alertRules, forKey: .alertRules)
         try container.encode(accounts, forKey: .accounts)
         try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
@@ -273,7 +306,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
             showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased()),
             menuBarDisplayMode: .spendRequestsRPM,
             dashboardSections: DashboardSectionVisibility(),
-            panelDensity: .regular
+            panelDensity: .regular,
+            alertRules: LocalAlertRules()
         )
     }
 
@@ -283,6 +317,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         refreshToken = refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshIntervalSeconds = min(max(refreshIntervalSeconds, 5), 300)
         monitorMode = .user
+        alertRules.normalize()
 
         accounts = accounts.map { account in
             var normalized = account

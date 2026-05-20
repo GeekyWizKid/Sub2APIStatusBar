@@ -16,6 +16,8 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - Multiple saved accounts with quick switching
 - Launch at Login, manual refresh, copied diagnostics, and config-file reveal actions
 - Stale-data detection so delayed refreshes are called out as `Needs Refresh`
+- Local alert thresholds for daily spend, daily tokens, and subscription quota pressure
+- MAGI productization roadmap with release-readiness gates and maturity backlog
 - Local config storage; no telemetry or third-party analytics
 - GitHub Releases update checking from Settings
 
@@ -129,6 +131,16 @@ VERSION=v0.1.5 \
 The app checks GitHub Releases once on launch and lets users check manually from Settings > Updates. When a newer release is available, the popover shows a small update banner with a link to the download page.
 
 GitHub only exposes published releases through the public latest-release API. Draft releases are intentionally not shown to users.
+
+## Productization Roadmap
+
+The project uses a MAGI spiral for product work:
+
+- 审视: compare the current app with mature menu bar, AI observability, and macOS distribution products.
+- 执行: ship one small, verifiable product improvement.
+- 提升: record the next quality bar in `docs/PRODUCT_REVIEW.md`.
+
+The current roadmap lives in `docs/superpowers/specs/2026-05-20-magi-productization-design.md`.
 
 ## Development Checks
 
