@@ -11,6 +11,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   macos:
     name: Test and Package
@@ -47,3 +50,15 @@ jobs:
             dist/*.zip
             dist/*.sha256
           if-no-files-found: error
+
+      - name: Create Draft GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: false
+          name: Sub2API Status Bar ${{ github.ref_name }}
+          body_path: docs/RELEASE_NOTES_${{ github.ref_name }}.md
+          files: |
+            dist/*.zip
+            dist/*.sha256

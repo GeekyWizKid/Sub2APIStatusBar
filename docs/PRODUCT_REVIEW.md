@@ -249,3 +249,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - The next support pass should add labels or triage automation once the public repository workflow is active.
+
+### 2026-05-20 Cycle P
+
+1. 审视
+   - Mature desktop projects turn verified tag builds into release assets instead of leaving maintainers to upload archives by hand.
+   - The project already built and uploaded CI artifacts, but tag builds did not yet create a GitHub Release record.
+
+2. 执行
+   - Added tag-based draft GitHub Release creation after tests, build, package, and archive verification pass.
+   - Uploaded the release zip and checksum to the draft release while preserving normal artifact upload for all CI runs.
+   - Documented that draft release status is intentional until release notes and trust posture are reviewed.
+
+3. 提升
+   - Once Developer ID credentials are available, wire signing and notarization into the tag release path before publishing final releases.
