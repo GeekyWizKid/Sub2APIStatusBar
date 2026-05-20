@@ -85,6 +85,28 @@ import Testing
     #expect(loaded.panelDensity == .compact)
 }
 
+@Test func appConfigPersistsLocalAlertPreferences() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        alertRules: LocalAlertRules(
+            dailySpendUSD: 25,
+            dailyTokens: 1_000_000,
+            quotaProgress: 0.72
+        )
+    )
+
+    try store.save(config)
+    let loaded = store.load()
+
+    #expect(loaded.alertRules.dailySpendUSD == 25)
+    #expect(loaded.alertRules.dailyTokens == 1_000_000)
+    #expect(loaded.alertRules.quotaProgress == 0.72)
+}
+
 @Test func configStoreSavesTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
@@ -242,6 +264,37 @@ import Testing
     let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
 
     #expect(config.panelDensity == .regular)
+}
+
+@Test func appConfigDefaultsAlertPreferencesForLegacyConfigs() throws {
+    let data = """
+    {
+      "baseURL": "http://127.0.0.1:8080"
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.alertRules.dailySpendUSD == nil)
+    #expect(config.alertRules.dailyTokens == nil)
+    #expect(config.alertRules.quotaProgress == 0.85)
+}
+
+@Test func appConfigNormalizesAlertPreferences() {
+    var config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        alertRules: LocalAlertRules(
+            dailySpendUSD: -1,
+            dailyTokens: -20,
+            quotaProgress: 3
+        )
+    )
+
+    config.normalize()
+
+    #expect(config.alertRules.dailySpendUSD == nil)
+    #expect(config.alertRules.dailyTokens == nil)
+    #expect(config.alertRules.quotaProgress == 1)
 }
 
 @Test func appConfigClearsAuthTokens() {
