@@ -24,20 +24,23 @@
 - [x] Launch at Login setting
 - [x] Support-safe diagnostics copy action with token redaction
 - [x] Local config reveal action
+- [x] Local alert thresholds for daily spend, daily tokens, and quota pressure
+- [x] Alert-aware status labels, diagnostics, Settings controls, and popover summary
+- [x] MAGI productization design, implementation plan, and v0.1.6 integration audit
 
 ## Productization Readiness Matrix
 
 | Area | Current Status | Verification | Next Gate |
 | --- | --- | --- | --- |
 | App identity | Ready | `Resources/AppIcon.icns`, bundle metadata from `scripts/build-app.sh` | Keep screenshots current for each public release |
-| User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, and menu bar summaries | Add local alert coverage in v0.1.6 |
+| User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, menu bar summaries, and local alerts | Add anomaly or model-cost concentration insights after alert rules prove useful |
 | Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
-| Menu bar maturity | In progress | Summary modes, section visibility, compact density, and stale detection are covered by unit tests and README copy | Verify compact layout manually before release |
-| Release archive | Ready | `VERSION=v0.1.5 ./scripts/package-release.sh` and `VERSION=v0.1.5 ./scripts/verify-release.sh` | Update the version for each tag |
+| Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
+| Release archive | Ready | `VERSION=v0.1.6 ./scripts/package-release.sh` and `VERSION=v0.1.6 ./scripts/verify-release.sh` | Update the version for each tag |
 | Public trust | Blocked by Apple credentials | Developer ID signing and notarization scripts exist | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
 | Distribution channels | Planned | GitHub Release zip and checksum are produced by CI | Consider Homebrew Cask after a notarized public release exists |
-| Support | In progress | Copy Diagnostics and Show Config exist | Add issue templates or support bundle structure after v0.1.6 |
+| Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, and integration audit exist | Add issue templates or support bundle structure in a later MAGI pass |
 
 ## Release Commands
 
