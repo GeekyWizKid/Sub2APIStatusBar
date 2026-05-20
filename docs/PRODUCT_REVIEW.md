@@ -263,3 +263,16 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once Developer ID credentials are available, wire signing and notarization into the tag release path before publishing final releases.
+
+### 2026-05-20 Cycle Q
+
+1. 审视
+   - Mature public repositories separate ordinary support from vulnerability disclosure.
+   - The app handles local credentials, so public issues should steer users away from sharing secrets or exploit details.
+
+2. 执行
+   - Added `SECURITY.md` with private vulnerability reporting guidance, sensitive-data boundaries, current security posture, and supported-version policy.
+   - Linked support and README guidance to the security policy.
+
+3. 提升
+   - Once the repository is public, publish a real private security contact or GitHub private vulnerability reporting configuration.

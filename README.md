@@ -159,6 +159,8 @@ For bugs and product feedback, open a GitHub Issue using the bug or feature temp
 
 Do not share `config.json`, access tokens, refresh tokens, passwords, or private server logs. See [SUPPORT.md](SUPPORT.md) for the support checklist and privacy boundary.
 
+For vulnerabilities, use the private reporting guidance in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+
 ## Troubleshooting
 
 If Swift reports that a PCH was compiled with a different module cache path, the project was probably moved or renamed while `.build` still points at the old folder. Clean the local build cache and run again:
