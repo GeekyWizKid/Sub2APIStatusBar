@@ -207,3 +207,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - The next maturity pass should add section density controls or compact cards, so advanced users can reduce both count and visual weight of visible blocks.
+
+### 2026-05-20 Cycle M
+
+1. 审视
+   - Compared the app against mature macOS menu bar utilities and LLM observability products.
+   - Confirmed the next product jump should preserve menu bar calmness while making usage pressure actionable.
+
+2. 执行
+   - Added a committed MAGI productization design spec.
+   - Promoted release readiness into a matrix that separates ready, in-progress, credential-blocked, and planned work.
+   - Chose local budget and quota alerts as the next feature slice.
+
+3. 提升
+   - Implement local alert rules for daily spend, daily tokens, and highest quota usage, then surface them in status, diagnostics, and Settings.

@@ -1,0 +1,16 @@
+# Release Notes v0.1.6
+
+This release continues the MAGI productization pass. It makes usage pressure more actionable while keeping the menu bar experience compact and quiet.
+
+## Added
+
+- Local warning thresholds for daily spend, daily tokens, and highest subscription quota usage.
+- Alert-aware status text, diagnostics, and menu bar detail.
+- Productization roadmap documentation and release-readiness matrix.
+
+## Verification
+
+- `swift test`
+- `swift build`
+- `VERSION=v0.1.6 ./scripts/package-release.sh`
+- `VERSION=v0.1.6 ./scripts/verify-release.sh`
