@@ -20,6 +20,8 @@ Paste Settings > Diagnostics > Copy Diagnostics output here.
 
 Do not paste `config.json`, access tokens, refresh tokens, passwords, or private server logs.
 
+If a maintainer asks for a longer support packet, use `docs/SUPPORT_BUNDLE.md` and review it for secrets before posting.
+
 ```text
 
 ```

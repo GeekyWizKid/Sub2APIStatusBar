@@ -22,6 +22,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - GitHub label configuration and verification for public issue triage.
 - Private security reporting route through GitHub Security policy and issue contact links.
 - Repository settings contract for branch protection, required checks, issue settings, and private vulnerability reporting.
+- Support bundle template and verification gate for support-safe diagnostics follow-up.
 
 ## Verification
 
@@ -38,6 +39,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `./scripts/verify-github-labels.sh`
 - `./scripts/verify-security-reporting.sh`
 - `./scripts/verify-repository-settings.sh`
+- `./scripts/verify-support-bundle.sh`
 - `VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh <download-directory>`
 - `PUBLIC_RELEASE=true GITHUB_REF_TYPE=tag REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when validating the public-release trust gate
 - `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when Apple signing credentials are available

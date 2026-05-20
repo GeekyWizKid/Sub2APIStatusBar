@@ -173,6 +173,8 @@ For tagged releases, open a GitHub Release Checklist issue before publishing the
 
 For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.
 
+If a maintainer asks for a longer support packet, use [docs/SUPPORT_BUNDLE.md](docs/SUPPORT_BUNDLE.md) and review it for secrets before posting.
+
 Do not share `config.json`, access tokens, refresh tokens, passwords, or private server logs. See [SUPPORT.md](SUPPORT.md) for the support checklist and privacy boundary.
 
 For vulnerabilities, use the private reporting guidance in [SECURITY.md](SECURITY.md) rather than opening a public issue.

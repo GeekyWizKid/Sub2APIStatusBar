@@ -25,9 +25,10 @@ VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 
 Use the version you are preparing, not necessarily `v0.1.6`.
 
-For repository operations changes, also run:
+For support, issue-template, or repository operations changes, also run:
 
 ```bash
+./scripts/verify-support-bundle.sh
 ./scripts/verify-github-labels.sh
 ./scripts/verify-security-reporting.sh
 ./scripts/verify-repository-settings.sh
@@ -41,6 +42,7 @@ For repository operations changes, also run:
 - Do not add telemetry.
 - Do not require admin-only Sub2API endpoints for ordinary user monitoring.
 - Keep diagnostics support-safe and token-redacted.
+- Keep support bundle templates focused on safe diagnostics, environment, and reproduction details.
 
 ## Documentation
 

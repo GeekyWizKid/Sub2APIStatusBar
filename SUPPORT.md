@@ -23,7 +23,8 @@ New public issues should be labeled from `.github/labels.yml`:
 1. Update to the newest GitHub Release when possible.
 2. Open Settings > Diagnostics > Copy Diagnostics.
 3. Paste the diagnostics report into the issue.
-4. Do not paste `config.json`, access tokens, refresh tokens, passwords, or private server logs.
+4. If a maintainer asks for more detail, use `docs/SUPPORT_BUNDLE.md` as the support bundle template.
+5. Do not paste `config.json`, access tokens, refresh tokens, passwords, or private server logs.
 
 The diagnostics report is designed to be support-safe: it reports whether tokens are present, but it does not include token values.
 
@@ -42,6 +43,7 @@ For release or installation issues, include:
 - Whether the build came from GitHub Releases or local source.
 - Whether the app was ad-hoc signed, Developer ID signed, or notarized.
 - The exact release archive name and checksum file used.
+- The filled `docs/SUPPORT_BUNDLE.md` template when the issue needs a longer diagnostics packet.
 
 ## Privacy Boundary
 

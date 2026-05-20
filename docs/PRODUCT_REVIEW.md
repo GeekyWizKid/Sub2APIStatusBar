@@ -505,3 +505,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Before publishing, apply `.github/repository-settings.yml` to the real GitHub repository and confirm branch protection blocks unverified changes to `main`.
+
+### 2026-05-20 Cycle AH
+
+1. 审视
+   - Mature desktop products standardize support packets so maintainers can request comparable evidence without collecting secrets.
+   - The app already had support-safe diagnostics and issue templates, but longer support follow-up still depended on ad-hoc details.
+
+2. 执行
+   - Added `docs/SUPPORT_BUNDLE.md` with diagnostics, environment, reproduction, expected and actual behavior, recent changes, and a local secret-review checklist.
+   - Added `scripts/verify-support-bundle.sh` and wired it into the release candidate gate.
+   - Linked the support guide and bug report template to the support bundle, then documented the check in release and contributor guidance.
+
+3. 提升
+   - A later app-level support bundle export could prefill safe fields, but the template keeps v0.1.6 support safer without expanding app scope.

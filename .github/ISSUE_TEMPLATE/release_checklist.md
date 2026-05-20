@@ -27,6 +27,7 @@ assignees: ""
 
 - [ ] `VERSION=<tag> ./scripts/verify-release-candidate.sh`
 - [ ] `./scripts/verify-product-preview.sh`
+- [ ] `./scripts/verify-support-bundle.sh`
 - [ ] For trusted public release: `REQUIRE_NOTARIZATION=true VERSION=<tag> ./scripts/verify-release-candidate.sh`
 - [ ] Zip checksum verifies from `dist/`.
 - [ ] DMG checksum verifies from `dist/`.
