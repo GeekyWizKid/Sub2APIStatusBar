@@ -153,6 +153,12 @@ swift build
 
 GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
 
+## Support
+
+For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.
+
+Do not share `config.json`, access tokens, refresh tokens, passwords, or private server logs. See [SUPPORT.md](SUPPORT.md) for the support checklist and privacy boundary.
+
 ## Troubleshooting
 
 If Swift reports that a PCH was compiled with a different module cache path, the project was probably moved or renamed while `.build` still points at the old folder. Clean the local build cache and run again:

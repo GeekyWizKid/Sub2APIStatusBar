@@ -235,3 +235,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - The next maturity pass should evaluate signed update installation and distribution channels after Apple Developer ID notarization is available.
+
+### 2026-05-20 Cycle O
+
+1. 审视
+   - Mature open-source products make support paths explicit so users can report issues without exposing secrets.
+   - The app already had support-safe diagnostics, but the repository did not yet guide users into a safe issue shape.
+
+2. 执行
+   - Added `SUPPORT.md` with the diagnostics checklist, useful environment details, release-installation details, and privacy boundary.
+   - Added GitHub issue templates for bug reports and product feature requests.
+   - Linked README support guidance to diagnostics and the support checklist.
+
+3. 提升
+   - The next support pass should add labels or triage automation once the public repository workflow is active.
