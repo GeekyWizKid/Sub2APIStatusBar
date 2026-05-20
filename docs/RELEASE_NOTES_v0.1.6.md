@@ -9,6 +9,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Productization roadmap documentation and release-readiness matrix.
 - Contributor guidance, issue flow, security policy, and pull request checklist for public collaboration.
 - Repository-level release version source for local scripts and non-tag CI builds.
+- DMG packaging and verification scripts for a macOS-style install artifact.
 
 ## Verification
 
@@ -16,5 +17,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `swift build`
 - `VERSION=v0.1.6 ./scripts/package-release.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release.sh`
+- `VERSION=v0.1.6 ./scripts/package-dmg.sh`
+- `VERSION=v0.1.6 ./scripts/verify-dmg.sh`
 
 All commands passed during the v0.1.6 productization verification pass.

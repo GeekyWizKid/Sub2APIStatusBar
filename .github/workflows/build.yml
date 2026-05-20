@@ -41,6 +41,8 @@ jobs:
           fi
           VERSION="$VERSION" ./scripts/package-release.sh
           VERSION="$VERSION" ./scripts/verify-release.sh
+          VERSION="$VERSION" ./scripts/package-dmg.sh
+          VERSION="$VERSION" ./scripts/verify-dmg.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4
@@ -48,6 +50,7 @@ jobs:
           name: Sub2APIStatusBar-macOS
           path: |
             dist/*.zip
+            dist/*.dmg
             dist/*.sha256
           if-no-files-found: error
 
@@ -61,4 +64,5 @@ jobs:
           body_path: docs/RELEASE_NOTES_${{ github.ref_name }}.md
           files: |
             dist/*.zip
+            dist/*.dmg
             dist/*.sha256

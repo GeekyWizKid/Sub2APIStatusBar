@@ -318,3 +318,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - A later pass can generate `AppBuildInfo.fallbackVersion` from the same source at build time, but the current test now catches manual drift before release.
+
+### 2026-05-20 Cycle U
+
+1. 审视
+   - Mature macOS releases often provide a DMG with an `/Applications` shortcut, not only a raw zip archive.
+   - The local `dist/` folder had a historical DMG artifact, but the maintained release scripts and CI still produced only zip assets.
+
+2. 执行
+   - Added `scripts/package-dmg.sh` to build the app, stage it with an `/Applications` shortcut, create a compressed DMG, and write a SHA-256 checksum.
+   - Added `scripts/verify-dmg.sh` to validate the checksum, mount the DMG, verify the app bundle plist, check the `/Applications` shortcut, and verify the app signature.
+   - Updated CI, README, release checklist, contributor guidance, changelog, and v0.1.6 release notes so DMG packaging is part of the release promise.
+
+3. 提升
+   - Once Developer ID credentials are available, run the DMG path after notarization so the user-facing installer carries a trusted, stapled app.

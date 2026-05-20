@@ -10,7 +10,9 @@
 - [x] App icon generation and `AppIcon.icns`
 - [x] macOS `.app` bundle script
 - [x] Release zip and SHA-256 checksum script
+- [x] Release DMG and SHA-256 checksum script with `/Applications` shortcut
 - [x] Release verification script that checks the zip from a clean temporary extraction
+- [x] DMG verification script that checks checksum, mountability, bundle plist, app alias, and code signature
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
@@ -37,7 +39,7 @@
 | User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, menu bar summaries, and local alerts | Add anomaly or model-cost concentration insights after alert rules prove useful |
 | Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
 | Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
-| Release archive | Ready | `VERSION=v0.1.6 ./scripts/package-release.sh` and `VERSION=v0.1.6 ./scripts/verify-release.sh` | Update the version for each tag |
+| Release archive | Ready | `VERSION=v0.1.6 ./scripts/package-release.sh`, `VERSION=v0.1.6 ./scripts/verify-release.sh`, `VERSION=v0.1.6 ./scripts/package-dmg.sh`, and `VERSION=v0.1.6 ./scripts/verify-dmg.sh` | Update the version for each tag |
 | GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, and creates a draft GitHub Release | Publish the draft only after release notes and trust posture are reviewed |
 | Public trust | Blocked by Apple credentials | Developer ID signing and notarization scripts exist | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
@@ -53,6 +55,8 @@ swift test
 swift build
 VERSION=v0.1.6 ./scripts/package-release.sh
 VERSION=v0.1.6 ./scripts/verify-release.sh
+VERSION=v0.1.6 ./scripts/package-dmg.sh
+VERSION=v0.1.6 ./scripts/verify-dmg.sh
 ```
 
 For the v0.1.6 productization pass:
@@ -62,6 +66,8 @@ swift test
 swift build
 VERSION=v0.1.6 ./scripts/package-release.sh
 VERSION=v0.1.6 ./scripts/verify-release.sh
+VERSION=v0.1.6 ./scripts/package-dmg.sh
+VERSION=v0.1.6 ./scripts/verify-dmg.sh
 ```
 
 When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.
