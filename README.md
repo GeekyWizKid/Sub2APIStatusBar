@@ -153,6 +153,8 @@ swift build
 
 GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.
 
+For contribution workflow, product standards, documentation expectations, and PR checks, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Support
 
 For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.

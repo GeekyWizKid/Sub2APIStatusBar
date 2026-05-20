@@ -276,3 +276,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once the repository is public, publish a real private security contact or GitHub private vulnerability reporting configuration.
+
+### 2026-05-20 Cycle R
+
+1. 审视
+   - Mature public projects make contribution expectations explicit so future changes do not erode product quality.
+   - The repository had support and security paths, but no contributor guide or pull request checklist.
+
+2. 执行
+   - Added `CONTRIBUTING.md` with local setup, verification commands, product standards, documentation expectations, and privacy rules.
+   - Added a pull request template covering product area, verification, documentation, MAGI notes, diagnostics redaction, and secret hygiene.
+   - Linked README development guidance to the contributor guide.
+
+3. 提升
+   - After the first external contributions, refine PR checks based on the failure modes reviewers actually see.
