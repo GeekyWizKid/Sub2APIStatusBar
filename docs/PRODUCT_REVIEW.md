@@ -490,3 +490,18 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Before the repository is made public, enable GitHub private vulnerability reporting in repository settings and confirm the Security tab resolves for outside reporters.
+
+### 2026-05-20 Cycle AG
+
+1. 审视
+   - Mature public repositories treat branch protection, required checks, issue settings, and private vulnerability reporting as part of the release system, not as tribal knowledge.
+   - The project had CI, labels, and security reporting checks, but no committed contract for the repository settings that make those checks enforceable on GitHub.
+
+2. 执行
+   - Added `.github/repository-settings.yml` with the expected public settings for private vulnerability reporting, issue handling, branch cleanup, main branch protection, pull request reviews, linear history, and required `Test and Package` status checks.
+   - Added `scripts/verify-repository-settings.sh` to verify the repository settings contract and issue-template security link.
+   - Wired repository settings verification into the release candidate gate.
+   - Documented the settings contract in CONTRIBUTING, SECURITY, release checklist, release notes, and changelog.
+
+3. 提升
+   - Before publishing, apply `.github/repository-settings.yml` to the real GitHub repository and confirm branch protection blocks unverified changes to `main`.

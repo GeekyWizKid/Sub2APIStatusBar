@@ -16,6 +16,8 @@ Report privately to the project maintainer with:
 
 Do not include exploit details, secrets, server URLs, tokens, or private logs in public issues.
 
+Repository settings for private vulnerability reporting are tracked in `.github/repository-settings.yml`.
+
 ## Sensitive Data
 
 Do not share:

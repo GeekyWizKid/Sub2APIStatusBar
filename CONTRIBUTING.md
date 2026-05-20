@@ -30,6 +30,7 @@ For repository operations changes, also run:
 ```bash
 ./scripts/verify-github-labels.sh
 ./scripts/verify-security-reporting.sh
+./scripts/verify-repository-settings.sh
 ```
 
 ## Product Standards
@@ -60,6 +61,14 @@ The canonical label set lives in `.github/labels.yml`. Keep issue template label
 ```
 
 Use `needs-triage` for newly reviewed issues that need routing and `needs-info` when diagnostics or reproduction details are missing.
+
+## Repository Settings
+
+The expected public repository settings live in `.github/repository-settings.yml`. Keep branch protection, required checks, issue settings, and private vulnerability reporting aligned with:
+
+```bash
+./scripts/verify-repository-settings.sh
+```
 
 ## Security And Privacy
 

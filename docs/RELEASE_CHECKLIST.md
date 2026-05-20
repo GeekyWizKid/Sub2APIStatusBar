@@ -21,6 +21,7 @@
 - [x] Product preview asset verification for README image, dimensions, and current feature coverage
 - [x] GitHub label configuration and verification for public issue triage
 - [x] Private security reporting route through GitHub Security policy and issue contact links
+- [x] Repository settings contract for main branch protection, required checks, issues, and private vulnerability reporting
 - [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
@@ -53,7 +54,7 @@
 | Public trust | Blocked by Apple credentials | `PUBLIC_RELEASE=true REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` fails unless Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
 | Distribution channels | Prepared | Homebrew Cask draft is generated from the release manifest and uploaded as a CI/release asset | Submit or publish a cask only after a notarized public release exists |
-| Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, GitHub issue templates, verified labels, and private security reporting route exist | Add support bundle structure in a later MAGI pass |
+| Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, GitHub issue templates, verified labels, private security reporting route, and repository settings contract exist | Add support bundle structure in a later MAGI pass |
 
 ## Release Commands
 
@@ -85,6 +86,12 @@ The release candidate gate also verifies security reporting. Vulnerability repor
 
 ```bash
 ./scripts/verify-security-reporting.sh
+```
+
+The release candidate gate also verifies expected public repository settings. Before publishing the repository or release, align GitHub settings with `.github/repository-settings.yml` and run:
+
+```bash
+./scripts/verify-repository-settings.sh
 ```
 
 When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. If `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` secrets are all configured, tag builds run the notarized release gate. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.

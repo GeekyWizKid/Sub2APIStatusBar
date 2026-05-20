@@ -22,6 +22,7 @@
 - Added product preview asset verification and refreshed the README preview for alerts, Settings, and diagnostics.
 - Added GitHub label configuration and verification for public issue triage.
 - Added private security reporting verification through GitHub Security policy and issue contact links.
+- Added repository settings verification for branch protection, required checks, issues, and private vulnerability reporting.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

@@ -88,6 +88,9 @@ step "Verify GitHub labels"
 step "Verify security reporting"
 "$ROOT_DIR/scripts/verify-security-reporting.sh"
 
+step "Verify repository settings"
+"$ROOT_DIR/scripts/verify-repository-settings.sh"
+
 if [[ "$NOTARIZATION_REQUESTED" == "true" ]]; then
   step "Package and notarize release"
   VERSION="$VERSION" "$ROOT_DIR/scripts/notarize-release.sh"

@@ -1,0 +1,21 @@
+repository:
+  private_vulnerability_reporting: true
+  delete_branch_on_merge: true
+  issues: true
+  discussions: false
+
+branches:
+  - name: main
+    protection:
+      required_pull_request_reviews: true
+      dismiss_stale_reviews: true
+      required_linear_history: true
+      required_status_checks:
+        strict: true
+        contexts:
+          - Test and Package
+      enforce_admins: false
+
+issues:
+  blank_issues_enabled: false
+  security_contact_link: https://github.com/GeekyWizKid/Sub2APIStatusBar/security/policy
