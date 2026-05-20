@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.1.10
+
+- Redesigned Copy Share Card as a social-ready Build Log poster with a warm sticker/receipt visual style.
+- Updated share-card copy to emphasize a public-safe AI work counter without prompts, keys, or account details.
+- Added a local preview renderer for checking the generated share-card image before release.
+- Updated default release version wiring to v0.1.10.
+
 ## v0.1.6
 
 - Added Usage Insights for quota pressure, balance runway, monthly budget runway, token trend changes, model cost concentration, and latency.

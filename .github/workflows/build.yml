@@ -109,7 +109,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
           else
-            VERSION="v0.1.9"
+            VERSION="v0.1.10"
           fi
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${{ steps.signing.outputs.signing_ready }}" == "true" ]]; then
             VERSION="$VERSION" \

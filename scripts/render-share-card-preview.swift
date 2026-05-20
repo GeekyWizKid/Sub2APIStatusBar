@@ -1,42 +1,47 @@
+#!/usr/bin/env swift
+
 import AppKit
-import Sub2APIStatusCore
+import Foundation
 
-enum SocialShareCardRenderer {
-    static let cardSize = CGSize(width: 900, height: 1_125)
+let outputURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    .appending(path: "dist/share-card-preview.png")
 
-    @MainActor
-    static func image(for summary: SocialShareSummary) -> NSImage? {
-        let scale: CGFloat = 2
-        let pixelSize = CGSize(width: cardSize.width * scale, height: cardSize.height * scale)
-        guard let bitmap = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: Int(pixelSize.width),
-            pixelsHigh: Int(pixelSize.height),
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else {
-            return nil
-        }
+let size = CGSize(width: 900, height: 1_125)
+let scale: CGFloat = 2
+let pixelSize = CGSize(width: size.width * scale, height: size.height * scale)
 
-        bitmap.size = cardSize
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
-        SocialShareCardCanvas(summary: summary, size: cardSize).draw()
-        NSGraphicsContext.restoreGraphicsState()
-
-        let image = NSImage(size: cardSize)
-        image.addRepresentation(bitmap)
-        return image
-    }
+guard let bitmap = NSBitmapImageRep(
+    bitmapDataPlanes: nil,
+    pixelsWide: Int(pixelSize.width),
+    pixelsHigh: Int(pixelSize.height),
+    bitsPerSample: 8,
+    samplesPerPixel: 4,
+    hasAlpha: true,
+    isPlanar: false,
+    colorSpaceName: .deviceRGB,
+    bytesPerRow: 0,
+    bitsPerPixel: 0
+) else {
+    FileHandle.standardError.write(Data("Could not allocate preview bitmap.\n".utf8))
+    exit(1)
 }
 
-private struct SocialShareCardCanvas {
-    let summary: SocialShareSummary
+bitmap.size = size
+NSGraphicsContext.saveGraphicsState()
+NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+PreviewCanvas(size: size).draw()
+NSGraphicsContext.restoreGraphicsState()
+
+guard let png = bitmap.representation(using: .png, properties: [:]) else {
+    FileHandle.standardError.write(Data("Could not encode preview PNG.\n".utf8))
+    exit(1)
+}
+
+try FileManager.default.createDirectory(at: outputURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+try png.write(to: outputURL, options: .atomic)
+print(outputURL.path)
+
+private struct PreviewCanvas {
     let size: CGSize
 
     private let margin: CGFloat = 56
@@ -61,7 +66,6 @@ private struct SocialShareCardCanvas {
 
         drawRadialGlow(center: CGPoint(x: 760, y: 168), radius: 260, color: .coral.withAlphaComponent(0.22))
         drawRadialGlow(center: CGPoint(x: 170, y: 105), radius: 210, color: .sun.withAlphaComponent(0.18))
-
         drawRoundedRect(
             CGRect(x: 26, y: 26, width: size.width - 52, height: size.height - 52),
             radius: 24,
@@ -76,8 +80,7 @@ private struct SocialShareCardCanvas {
         for y in stride(from: CGFloat(76), through: size.height - 92, by: 54) {
             for x in stride(from: CGFloat(52), through: size.width - 52, by: 54) {
                 let offset = Int(y / 48).isMultiple(of: 2) ? CGFloat(0) : CGFloat(24)
-                let dot = CGRect(x: x + offset, y: y, width: 7, height: 7)
-                NSBezierPath(ovalIn: topRect(dot)).fill()
+                NSBezierPath(ovalIn: topRect(CGRect(x: x + offset, y: y, width: 7, height: 7))).fill()
             }
         }
 
@@ -98,7 +101,7 @@ private struct SocialShareCardCanvas {
         let pill = CGRect(x: size.width - margin - 152, y: 54, width: 152, height: 38)
         drawCapsule(rect: pill, fill: .clear, stroke: .ink, lineWidth: 2)
         drawText(
-            summary.personaText.uppercased(),
+            "BUILD LOG",
             in: pill.insetBy(dx: 16, dy: 10),
             font: .rounded(size: 12, weight: .heavy),
             color: .ink,
@@ -109,15 +112,14 @@ private struct SocialShareCardCanvas {
 
     private func drawHero() {
         drawText(
-            summary.primaryMetric,
+            "126.4M",
             in: CGRect(x: margin, y: 170, width: contentWidth * 0.86, height: 146),
             font: .rounded(size: 142, weight: .heavy),
             color: .ink,
             fitWidth: true
         )
-
         drawText(
-            summary.punchlineText,
+            "The AI work counter for today.",
             in: CGRect(x: margin + 2, y: 342, width: 540, height: 72),
             font: .rounded(size: 32, weight: .bold),
             color: .ink,
@@ -126,50 +128,34 @@ private struct SocialShareCardCanvas {
     }
 
     private func drawTrendSticker() {
-        let shadow = CGRect(x: 658, y: 332, width: 168, height: 118)
-        drawRoundedRect(shadow.offsetBy(dx: 8, dy: 8), radius: 19, fill: .ink, stroke: nil)
-
-        drawRoundedRect(
-            shadow,
-            radius: 19,
-            fill: .mint,
-            stroke: .ink,
-            lineWidth: 2.5
-        )
-
-        let context = NSGraphicsContext.current?.cgContext
-        context?.saveGState()
-        context?.translateBy(x: shadow.midX, y: size.height - shadow.midY)
-        context?.rotate(by: 0.08)
-        context?.translateBy(x: -shadow.midX, y: -(size.height - shadow.midY))
-
+        let sticker = CGRect(x: 658, y: 332, width: 168, height: 118)
+        drawRoundedRect(sticker.offsetBy(dx: 8, dy: 8), radius: 19, fill: .ink, stroke: nil)
+        drawRoundedRect(sticker, radius: 19, fill: .mint, stroke: .ink, lineWidth: 2.5)
         drawText(
-            trendLeadText,
-            in: CGRect(x: shadow.minX + 18, y: shadow.minY + 20, width: shadow.width - 36, height: 42),
+            "+33%",
+            in: CGRect(x: sticker.minX + 18, y: sticker.minY + 20, width: sticker.width - 36, height: 42),
             font: .rounded(size: 32, weight: .heavy),
             color: .ink,
             alignment: .center,
             fitWidth: true
         )
         drawText(
-            trendTailText,
-            in: CGRect(x: shadow.minX + 14, y: shadow.minY + 66, width: shadow.width - 28, height: 34),
+            "vs 6-day avg",
+            in: CGRect(x: sticker.minX + 14, y: sticker.minY + 66, width: sticker.width - 28, height: 34),
             font: .rounded(size: 13, weight: .bold),
             color: .ink.withAlphaComponent(0.66),
             alignment: .center,
             lineBreakMode: .byWordWrapping
         )
-
-        context?.restoreGState()
     }
 
     private func drawReceiptRows() {
         let top: CGFloat = 704
-        let rows: [(String, String)] = [
-            ("Spend", summary.spendText),
-            ("Model", summary.flexBadges.indices.contains(1) ? summary.flexBadges[1] : summary.topModelText),
-            ("Requests", summary.requestsText),
-            ("Quota", summary.flexBadges.indices.contains(2) ? summary.flexBadges[2] : summary.quotaText),
+        let rows = [
+            ("Spend", "$117.57"),
+            ("Model", "gpt-5.5"),
+            ("Requests", "1186"),
+            ("Quota", "93% quota"),
         ]
 
         for (index, row) in rows.enumerated() {
@@ -201,13 +187,13 @@ private struct SocialShareCardCanvas {
 
     private func drawFooter() {
         drawText(
-            summary.privacyText,
+            "No prompts. No keys.",
             in: CGRect(x: margin, y: 1_018, width: contentWidth * 0.48, height: 22),
             font: .rounded(size: 14, weight: .bold),
             color: .ink.withAlphaComponent(0.56)
         )
         drawText(
-            summary.generatedText,
+            "May 20, 2026 at 9:14 PM",
             in: CGRect(x: margin + contentWidth * 0.48, y: 1_018, width: contentWidth * 0.52, height: 22),
             font: .rounded(size: 14, weight: .bold),
             color: .ink.withAlphaComponent(0.56),
@@ -219,18 +205,6 @@ private struct SocialShareCardCanvas {
             font: .rounded(size: 18, weight: .heavy),
             color: .ink
         )
-    }
-
-    private var trendLeadText: String {
-        summary.trendText.split(separator: " ").first.map(String.init) ?? "+0%"
-    }
-
-    private var trendTailText: String {
-        let pieces = summary.trendText.split(separator: " ")
-        guard pieces.count > 1 else {
-            return "trend"
-        }
-        return pieces.dropFirst().joined(separator: " ")
     }
 
     private func drawDashedRule(y: CGFloat, from minX: CGFloat, to maxX: CGFloat) {
@@ -256,7 +230,6 @@ private struct SocialShareCardCanvas {
         guard let gradient else {
             return
         }
-
         context.saveGState()
         context.drawRadialGradient(
             gradient,
@@ -309,8 +282,10 @@ private struct SocialShareCardCanvas {
 
     private func drawRoundedRect(_ rect: CGRect, radius: CGFloat, fill: NSColor, stroke: NSColor?, lineWidth: CGFloat = 1) {
         let path = NSBezierPath(roundedRect: topRect(rect), xRadius: radius, yRadius: radius)
-        fill.setFill()
-        path.fill()
+        if fill.alphaComponent > 0 {
+            fill.setFill()
+            path.fill()
+        }
         if let stroke {
             stroke.setStroke()
             path.lineWidth = lineWidth

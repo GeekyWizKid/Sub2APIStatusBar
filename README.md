@@ -88,6 +88,7 @@ Settings also includes:
 - **Copy Share Card** for an anonymous visual usage card and social post text without account details
 - **Copy Usage Report** for a shareable usage summary with credentials omitted
 - **Copy Diagnostics** for support-safe status details with tokens redacted
+- **Copy Support Bundle** for an issue-ready template with safe diagnostics included
 - **Show Config** to reveal the local `config.json`
 
 If refreshes stop succeeding, the menu bar and popover mark the data as stale after roughly three refresh intervals, and insight alerts can notify you locally so old usage numbers are not mistaken for current state.
@@ -104,7 +105,7 @@ swift run Sub2APIStatusBar
 ## Build A macOS App
 
 ```bash
-VERSION=v0.1.6 ./scripts/build-app.sh
+VERSION=v0.1.10 ./scripts/build-app.sh
 ```
 
 Output:
@@ -117,23 +118,23 @@ The build script generates the app icon, copies bundle resources, and applies ad
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.6 \
+VERSION=v0.1.10 \
 ./scripts/build-app.sh
 ```
 
 ## Package A Release
 
 ```bash
-VERSION=v0.1.6 ./scripts/package-release.sh
+VERSION=v0.1.10 ./scripts/package-release.sh
 ```
 
 Output:
 
 ```text
-dist/Sub2APIStatusBar-0.1.6-macOS.zip
-dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
-dist/Sub2APIStatusBar-0.1.6-macOS.dmg
-dist/Sub2APIStatusBar-0.1.6-macOS.dmg.sha256
+dist/Sub2APIStatusBar-0.1.10-macOS.zip
+dist/Sub2APIStatusBar-0.1.10-macOS.zip.sha256
+dist/Sub2APIStatusBar-0.1.10-macOS.dmg
+dist/Sub2APIStatusBar-0.1.10-macOS.dmg.sha256
 ```
 
 The `.dmg` is the user-facing installer image with an Applications shortcut. The `.zip` remains available for automation and release verification.
@@ -147,7 +148,7 @@ APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-VERSION=v0.1.6 \
+VERSION=v0.1.10 \
 ./scripts/notarize-release.sh
 ```
 

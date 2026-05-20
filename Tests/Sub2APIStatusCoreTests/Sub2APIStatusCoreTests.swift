@@ -1402,6 +1402,46 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(report.contains("secret-refresh-token") == false)
 }
 
+@Test func supportBundleReportIncludesSafeDiagnosticsAndTemplateSections() {
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token",
+        refreshIntervalSeconds: 30
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: false,
+        currentUser: nil,
+        stats: nil,
+        trend: nil,
+        modelDistribution: nil,
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+        message: "Unauthorized"
+    )
+
+    let report = SupportBundleReport.make(
+        config: config,
+        snapshot: snapshot,
+        appVersion: "0.1.10"
+    )
+
+    #expect(report.contains("Sub2API Status Bar Support Bundle"))
+    #expect(report.contains("Diagnostics"))
+    #expect(report.contains("Reproduction"))
+    #expect(report.contains("Expected Behavior"))
+    #expect(report.contains("Actual Behavior"))
+    #expect(report.contains("Diagnostics report contains token presence only, not token values"))
+    #expect(report.contains("App version: 0.1.10"))
+    #expect(report.contains("Access Token: present"))
+    #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("secret-access-token") == false)
+    #expect(report.contains("secret-refresh-token") == false)
+}
+
 @Test func socialShareSummaryBuildsViralSafeUsageCardWithoutSecrets() {
     let config = AppConfig(
         baseURL: "https://sub2api.example.com",
@@ -1472,7 +1512,7 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
         now: Date(timeIntervalSince1970: 1_060)
     )
 
-    #expect(summary.title == "I shipped 126.4M AI tokens today")
+    #expect(summary.title == "126.4M AI tokens today")
     #expect(summary.primaryMetric == "126.4M")
     #expect(summary.primaryLabel == "AI tokens today")
     #expect(summary.spendText == "$117.57")
@@ -1481,11 +1521,20 @@ private func pngSize(_ data: Data) -> (width: Int, height: Int)? {
     #expect(summary.unitCostText == "$0.9302/MTok")
     #expect(summary.quotaText == "Codex daily 93%, resets in 2h")
     #expect(summary.trendText == "+33% vs 6-day avg")
-    #expect(summary.shareText.contains("I shipped 126.4M AI tokens today"))
+    #expect(summary.personaText == "Build Log")
+    #expect(summary.punchlineText == "The AI work counter for today.")
+    #expect(summary.privacyText == "No prompts. No keys.")
+    #expect(summary.skylineValues == [0.63, 0.71, 0.79, 0.87, 0.79, 0.71, 1.0])
+    #expect(summary.flexBadges == ["$117.57", "gpt-5.5", "93% quota"])
+    #expect(summary.shareText.contains("126.4M AI tokens today"))
+    #expect(summary.shareText.contains("Build Log"))
+    #expect(summary.shareText.contains("The AI work counter for today."))
+    #expect(summary.shareText.contains("No prompts. No keys."))
     #expect(summary.shareText.contains("$117.57 spend | 1186 requests | $0.9302/MTok"))
     #expect(summary.shareText.contains("Top model: gpt-5.5 (73% cost)"))
     #expect(summary.shareText.contains("Quota: Codex daily 93%, resets in 2h"))
     #expect(summary.shareText.contains("#AIUsage #BuildInPublic"))
+    #expect(summary.shareText.contains("#VibeCoding") == false)
     #expect(summary.shareText.contains("Sub2API Status Bar"))
     #expect(summary.shareText.contains("secret-access-token") == false)
     #expect(summary.shareText.contains("secret-refresh-token") == false)
