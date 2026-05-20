@@ -2,8 +2,8 @@
 
 ## Branch
 
-- Feature branch: `codex/magi-productization`
-- Worktree: `/Users/das/.config/superpowers/worktrees/substautsbar/magi-productization`
+- Integrated branch: `main`
+- Source feature branch: `codex/magi-productization`
 - Base branch at split: `main` commit `d0d7a04`
 
 ## Productization Scope
@@ -27,7 +27,7 @@ This branch advances Sub2API Status Bar toward product readiness by applying the
 
 ## Verification Evidence
 
-Fresh verification performed on `codex/magi-productization`:
+Fresh verification performed on `main` after merge:
 
 - `swift test`: passed with 40 Swift Testing tests.
 - `swift build`: passed.
