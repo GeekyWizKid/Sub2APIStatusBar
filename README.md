@@ -120,15 +120,16 @@ dist/Sub2APIStatusBar-0.1.6-macOS-manifest.json
 
 ## Notarize A Release
 
-After signing with a Developer ID Application certificate, notarize and staple the app with:
+After signing with a Developer ID Application certificate, notarize and staple the app through the release candidate gate:
 
 ```bash
 APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+REQUIRE_NOTARIZATION=true \
 VERSION=v0.1.6 \
-./scripts/notarize-release.sh
+./scripts/verify-release-candidate.sh
 ```
 
 ## Updates

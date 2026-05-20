@@ -9,6 +9,8 @@ DIST_DIR="$ROOT_DIR/dist"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
 ZIP_PATH="$DIST_DIR/$APP_NAME-${VERSION#v}-macOS.zip"
 CHECKSUM_PATH="$ZIP_PATH.sha256"
+DMG_PATH="$DIST_DIR/$APP_NAME-${VERSION#v}-macOS.dmg"
+DMG_CHECKSUM_PATH="$DMG_PATH.sha256"
 
 require_env() {
   local name="$1"
@@ -42,8 +44,14 @@ rm -f "$ZIP_PATH" "$CHECKSUM_PATH"
 (
   cd "$DIST_DIR"
   COPYFILE_DISABLE=1 /usr/bin/zip -qry "$ZIP_PATH" "$APP_NAME.app"
+  shasum -a 256 "$(basename "$ZIP_PATH")" > "$(basename "$CHECKSUM_PATH")"
 )
-shasum -a 256 "$ZIP_PATH" > "$CHECKSUM_PATH"
+
+rm -f "$DMG_PATH" "$DMG_CHECKSUM_PATH"
+SKIP_BUILD=true VERSION="$VERSION" "$ROOT_DIR/scripts/package-dmg.sh" >/dev/null
+VERSION="$VERSION" "$ROOT_DIR/scripts/generate-release-manifest.sh" >/dev/null
 
 echo "$ZIP_PATH"
 echo "$CHECKSUM_PATH"
+echo "$DMG_PATH"
+echo "$DMG_CHECKSUM_PATH"

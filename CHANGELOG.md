@@ -13,6 +13,7 @@
 - Added repeatable DMG packaging and verification for macOS-style installation assets.
 - Added a release manifest with zip/DMG file names, SHA-256 digests, and file sizes.
 - Added a one-command release candidate verification script.
+- Extended the release candidate gate to require the notarized zip, DMG, and manifest path when Apple credentials are provided.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

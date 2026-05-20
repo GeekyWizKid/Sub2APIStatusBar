@@ -360,3 +360,18 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - When Developer ID credentials are available, extend this release candidate gate with signed and notarized verification instead of adding a parallel release path.
+
+### 2026-05-20 Cycle X
+
+1. 审视
+   - Mature macOS release gates must make trusted distribution explicit: if a release requires notarization, the gate should fail without Apple credentials instead of silently producing ad-hoc assets.
+   - The project had a notarization script, but the one-command release gate ignored `REQUIRE_NOTARIZATION=true`, and notarization only refreshed the zip/checksum path.
+
+2. 执行
+   - Updated `scripts/verify-release-candidate.sh` so `REQUIRE_NOTARIZATION=true` routes through `scripts/notarize-release.sh`.
+   - Updated notarization output to refresh release-friendly zip checksums, rebuild the DMG from the stapled app bundle, and regenerate the release manifest after stapling.
+   - Hardened DMG packaging so it removes FinderInfo/resource-fork detritus from the staged app bundle before creating the disk image.
+   - Documented the trusted release gate in README, release checklist, changelog, and v0.1.6 release notes.
+
+3. 提升
+   - Once Apple credentials are configured in GitHub secrets, tag builds can require the notarized release gate before draft release assets are created.

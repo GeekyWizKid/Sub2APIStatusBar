@@ -43,7 +43,7 @@
 | Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
 | Release archive | Ready | `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs tests, build, zip, DMG, and manifest checks | Update the version for each tag |
 | GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, and creates a draft GitHub Release | Publish the draft only after release notes and trust posture are reviewed |
-| Public trust | Blocked by Apple credentials | Developer ID signing and notarization scripts exist | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
+| Public trust | Blocked by Apple credentials | `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs the notarized release path when Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
 | Distribution channels | Planned | GitHub Release zip and checksum are produced by CI | Consider Homebrew Cask after a notarized public release exists |
 | Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, and integration audit exist | Add issue templates or support bundle structure in a later MAGI pass |
@@ -72,13 +72,14 @@ VERSION=v0.1.6 \
 ./scripts/package-release.sh
 ```
 
-Notarization requires Apple Developer account credentials and is intentionally not automated until those secrets are available in GitHub Actions or the local keychain.
+Notarization requires Apple Developer account credentials. When they are available locally or in CI secrets, require the trusted release gate:
 
 ```bash
 APPLE_ID="you@example.com" \
 TEAM_ID="TEAMID" \
 APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx" \
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+REQUIRE_NOTARIZATION=true \
 VERSION=v0.1.6 \
-./scripts/notarize-release.sh
+./scripts/verify-release-candidate.sh
 ```

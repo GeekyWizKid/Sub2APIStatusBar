@@ -12,6 +12,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - DMG packaging and verification scripts for a macOS-style install artifact.
 - Release manifest generation and verification for asset names, checksums, and sizes.
 - One-command release candidate verification for tests, build, zip, DMG, and manifest checks.
+- Optional notarized release candidate path that rebuilds trusted zip, DMG, and manifest assets after stapling.
 
 ## Verification
 
@@ -24,5 +25,6 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `VERSION=v0.1.6 ./scripts/generate-release-manifest.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release-manifest.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh`
+- `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when Apple signing credentials are available
 
 All commands passed during the v0.1.6 productization verification pass.
