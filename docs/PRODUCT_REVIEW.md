@@ -179,3 +179,31 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - The next product pass should notarize once Apple Developer credentials are available.
+
+### 2026-05-20 Cycle K
+
+1. 审视
+   - The app had enough data, but the menu bar surface was still too fixed compared with mature menu bar products.
+   - Refresh failures were visible only as connection breaks; stale but still-connected data did not feel clearly different from healthy data.
+
+2. 执行
+   - Added selectable menu bar summary modes for spend-focused, token-throughput, and quota-focused monitoring.
+   - Added stale-data detection that promotes long-delayed snapshots to `Needs Refresh`.
+   - Added richer status detail text in the popover tooltip, status card, and diagnostics output.
+
+3. 提升
+   - The next maturity pass should let users choose which dashboard sections stay visible, so the popover becomes as compressible as mature menu bar utilities.
+
+### 2026-05-20 Cycle L
+
+1. 审视
+   - The popover already exposed strong usage data, but it still forced every section onto every user.
+   - Mature menu bar apps usually let people hide secondary sections so the interface stays compact and personal.
+
+2. 执行
+   - Added persisted panel-layout preferences to the app config.
+   - Added a new Settings > Layout section with per-block toggles for account overview, usage metrics, subscriptions, model distribution, and token trend.
+   - Wired the main popover to respect those choices so users can compress the monitor to the parts they care about.
+
+3. 提升
+   - The next maturity pass should add section density controls or compact cards, so advanced users can reduce both count and visual weight of visible blocks.

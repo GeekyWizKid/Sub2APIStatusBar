@@ -10,10 +10,12 @@ Sub2API Status Bar is a macOS menu bar companion for Sub2API users. It keeps dai
 - User dashboard cards for balance, API keys, requests, spend, token totals, RPM/TPM, and response time
 - Subscription quota card with separate daily, weekly, and monthly progress bars
 - Seven-day token trend and model distribution
-- Optional menu bar text summary, for example `$120.75 · 1219 req · 3 RPM`
+- Optional menu bar text summary with multiple compact modes, for example `$120.75 · 1219 req · 3 RPM`
+- Customizable panel layout so users can hide less important dashboard sections
 - First-run login and optional manual Bearer token setup
 - Multiple saved accounts with quick switching
 - Launch at Login, manual refresh, copied diagnostics, and config-file reveal actions
+- Stale-data detection so delayed refreshes are called out as `Needs Refresh`
 - Local config storage; no telemetry or third-party analytics
 - GitHub Releases update checking from Settings
 
@@ -61,6 +63,8 @@ To switch accounts or remove saved credentials, open Settings and choose **Disco
 Settings also includes:
 
 - **Show text in menu bar** for a compact always-visible usage summary
+- **Summary mode** to switch the menu bar text between spend, token throughput, and quota emphasis
+- **Layout** controls to show or hide account, metrics, subscriptions, model distribution, and token trend sections
 - **Launch at login** so the monitor starts with macOS
 - **Copy Diagnostics** for support-safe status details with tokens redacted
 - **Show Config** to reveal the local `config.json`

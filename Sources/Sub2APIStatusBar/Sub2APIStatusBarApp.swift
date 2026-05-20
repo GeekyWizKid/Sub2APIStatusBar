@@ -68,12 +68,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         button.image?.isTemplate = true
         button.imagePosition = .imageLeading
-        button.title = snapshot.connected && model.config.showsMenuBarText ? " \(snapshot.menuBarSummary)" : ""
+        button.title = snapshot.connected && model.config.showsMenuBarText ? " \(snapshot.menuBarSummary(displayMode: model.config.menuBarDisplayMode))" : ""
 
         if let stats = snapshot.stats, snapshot.connected {
-            button.toolTip = "Sub2API \(snapshot.statusLabel) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm))"
+            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            button.toolTip = "Sub2API \(label) - Today \(StatusFormatters.currency(stats.todayActualCost)), RPM \(String(format: "%.1f", stats.rpm)). \(detail)"
         } else {
-            button.toolTip = "Sub2API \(snapshot.statusLabel)"
+            let label = snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            let detail = snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds)
+            button.toolTip = "Sub2API \(label). \(detail)"
         }
     }
 }
@@ -435,6 +439,22 @@ struct MonitorPanel: View {
     @ObservedObject var model: MonitorViewModel
     @State private var showingSettings = false
 
+    private var density: PanelDensity {
+        model.config.panelDensity
+    }
+
+    private var panelWidth: CGFloat {
+        density == .compact ? 460 : 520
+    }
+
+    private var contentPadding: CGFloat {
+        density == .compact ? 12 : 16
+    }
+
+    private var sectionSpacing: CGFloat {
+        density == .compact ? 10 : 14
+    }
+
     var body: some View {
         Group {
             if model.config.authToken.isEmpty {
@@ -445,7 +465,7 @@ struct MonitorPanel: View {
                     Divider()
 
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: sectionSpacing) {
                             statusSection
 
                             if let updateInfo = model.updateInfo, updateInfo.isUpdateAvailable {
@@ -460,7 +480,7 @@ struct MonitorPanel: View {
                                 MessageRow(message: message)
                             }
                         }
-                        .padding(16)
+                        .padding(contentPadding)
                     }
 
                     Divider()
@@ -468,7 +488,7 @@ struct MonitorPanel: View {
                 }
             }
         }
-        .frame(width: 520, height: 680)
+        .frame(width: panelWidth, height: density == .compact ? 620 : 680)
         .sheet(isPresented: $showingSettings) {
             SettingsView(model: model)
                 .frame(width: 450, height: 690)
@@ -512,13 +532,13 @@ struct MonitorPanel: View {
             .help("Settings")
         }
         .buttonStyle(.borderless)
-        .padding(16)
+        .padding(contentPadding)
     }
 
     private var statusSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(model.snapshot.statusLabel)
+                Text(model.snapshot.statusLabel(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(iconColor)
                 Spacer()
@@ -533,17 +553,21 @@ struct MonitorPanel: View {
                 Text("Set Base URL and token to start monitoring.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            } else {
+                Text(model.snapshot.statusDetail(refreshIntervalSeconds: model.config.refreshIntervalSeconds))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
         }
     }
 
     private var userSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if let user = model.snapshot.currentUser {
-                UserAccountCard(user: user)
+        VStack(alignment: .leading, spacing: sectionSpacing) {
+            if model.config.dashboardSections.accountOverview, let user = model.snapshot.currentUser {
+                UserAccountCard(user: user, density: density)
             }
 
-            if let stats = model.snapshot.stats {
+            if model.config.dashboardSections.usageMetrics, let stats = model.snapshot.stats {
                 MetricGrid(items: [
                     MetricItem(title: "Balance", value: balanceText, caption: "Available", systemImage: "banknote", tint: .green),
                     MetricItem(title: "API Keys", value: "\(stats.totalAPIKeys)", caption: "\(stats.activeAPIKeys) active", systemImage: "key", tint: .blue),
@@ -553,34 +577,40 @@ struct MonitorPanel: View {
                     MetricItem(title: "Total Tokens", value: StatusFormatters.compactNumber(stats.totalTokens), caption: tokenBreakdown(input: stats.totalInputTokens, output: stats.totalOutputTokens), systemImage: "archivebox.fill", tint: .indigo),
                     MetricItem(title: "Performance", value: "\(StatusFormatters.menuBarRate(stats.rpm)) RPM", caption: "\(StatusFormatters.compactNumber(Int64(stats.tpm))) TPM", systemImage: "bolt", tint: .purple),
                     MetricItem(title: "Avg Response", value: latencyText(milliseconds: stats.averageDurationMs), caption: "Average time", systemImage: "clock", tint: .pink),
-                ])
+                ], density: density)
             }
 
             if let summary = model.snapshot.subscriptionSummary {
-                if model.snapshot.stats == nil {
+                if model.config.dashboardSections.usageMetrics, model.snapshot.stats == nil {
                     MetricGrid(items: [
                         MetricItem(title: "Balance", value: balanceText, systemImage: "banknote", tint: .green),
                         MetricItem(title: "Active Subs", value: "\(summary.activeCount)", systemImage: "checkmark.seal", tint: .green),
                         MetricItem(title: "Peak Usage", value: StatusFormatters.percent(summary.highestProgress), systemImage: "gauge.with.dots.needle.67percent", tint: .orange),
                         MetricItem(title: "Total Used", value: StatusFormatters.preciseCurrency(summary.totalUsedUSD), systemImage: "dollarsign.circle", tint: .purple),
-                    ])
+                    ], density: density)
                 }
 
-                SectionBlock(title: "Subscriptions") {
-                    VStack(spacing: 10) {
-                        ForEach(summary.subscriptions.prefix(5)) { item in
-                            SubscriptionQuotaCard(item: item)
+                if model.config.dashboardSections.subscriptions {
+                    SectionBlock(title: "Subscriptions", density: density) {
+                        VStack(spacing: 10) {
+                            ForEach(summary.subscriptions.prefix(5)) { item in
+                                SubscriptionQuotaCard(item: item)
+                            }
                         }
                     }
                 }
             }
 
-            if let models = model.snapshot.modelDistribution, !models.isEmpty {
-                ModelDistributionView(models: models)
+            if model.config.dashboardSections.modelDistribution,
+               let models = model.snapshot.modelDistribution,
+               !models.isEmpty {
+                ModelDistributionView(models: models, density: density)
             }
 
-            SectionBlock(title: "Token Trend") {
-                TokenTrendSection(state: TokenTrendDisplayState.make(points: model.snapshot.trend))
+            if model.config.dashboardSections.tokenTrend {
+                SectionBlock(title: "Token Trend", density: density) {
+                    TokenTrendSection(state: TokenTrendDisplayState.make(points: model.snapshot.trend))
+                }
             }
         }
     }
@@ -631,6 +661,9 @@ struct MonitorPanel: View {
     private var lastUpdatedText: String {
         guard let date = model.snapshot.lastUpdatedAt else {
             return "Waiting for first refresh"
+        }
+        if model.snapshot.isStale(refreshIntervalSeconds: model.config.refreshIntervalSeconds) {
+            return "Last good update \(StatusFormatters.relativeAge(seconds: Date().timeIntervalSince(date))) ago"
         }
         return "Updated \(date.formatted(date: .omitted, time: .shortened))"
     }
@@ -850,6 +883,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     AccountSettingsSection(model: model)
                     GeneralSettingsSection(model: model)
+                    LayoutSettingsSection(model: model)
                     UpdateSettingsSection(model: model)
                     LoginSettingsSection(model: model, dismiss: dismiss)
                     DiagnosticsSettingsSection(model: model)
@@ -923,6 +957,13 @@ struct GeneralSettingsSection: View {
 
                 SettingsControlRow(title: "Menu Bar") {
                     Toggle("Show text", isOn: $model.settingsDraft.showsMenuBarText)
+                    Picker("Summary", selection: $model.settingsDraft.menuBarDisplayMode) {
+                        ForEach(MenuBarDisplayMode.allCases) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: 220)
                 }
 
                 SettingsControlRow(title: "Startup") {
@@ -964,6 +1005,25 @@ struct SettingsControlRow<Content: View>: View {
                 .frame(width: 76, alignment: .leading)
             HStack(spacing: 8) {
                 content
+            }
+        }
+    }
+}
+
+struct LayoutSettingsSection: View {
+    @ObservedObject var model: MonitorViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Layout")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle("Account overview", isOn: $model.settingsDraft.dashboardSections.accountOverview)
+                Toggle("Usage metrics", isOn: $model.settingsDraft.dashboardSections.usageMetrics)
+                Toggle("Subscriptions", isOn: $model.settingsDraft.dashboardSections.subscriptions)
+                Toggle("Model distribution", isOn: $model.settingsDraft.dashboardSections.modelDistribution)
+                Toggle("Token trend", isOn: $model.settingsDraft.dashboardSections.tokenTrend)
             }
         }
     }
@@ -1130,6 +1190,7 @@ struct MetricItem: Identifiable {
 
 struct UserAccountCard: View {
     let user: CurrentUser
+    let density: PanelDensity
 
     private var displayName: String {
         guard let username = user.username, !username.isEmpty else {
@@ -1139,16 +1200,16 @@ struct UserAccountCard: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: density == .compact ? 10 : 12) {
             Image(systemName: "person.crop.circle.fill")
-                .font(.system(size: 28, weight: .semibold))
+                .font(.system(size: density == .compact ? 24 : 28, weight: .semibold))
                 .foregroundStyle(.blue)
-                .frame(width: 42, height: 42)
+                .frame(width: density == .compact ? 36 : 42, height: density == .compact ? 36 : 42)
                 .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(displayName)
-                    .font(.headline)
+                    .font(density == .compact ? .callout.weight(.semibold) : .headline)
                     .lineLimit(1)
                 Text(user.email)
                     .font(.caption)
@@ -1168,32 +1229,33 @@ struct UserAccountCard: View {
                     .background((status.lowercased() == "active" ? Color.green : Color.secondary).opacity(0.14), in: Capsule())
             }
         }
-        .padding(10)
+        .padding(density == .compact ? 8 : 10)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
 struct MetricGrid: View {
     let items: [MetricItem]
+    let density: PanelDensity
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: density == .compact ? 6 : 8) {
             ForEach(items) { item in
-                HStack(spacing: 10) {
+                HStack(spacing: density == .compact ? 8 : 10) {
                     if let systemImage = item.systemImage {
                         SafeSystemImage(systemName: systemImage)
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: density == .compact ? 14 : 16, weight: .semibold))
                             .foregroundStyle(item.tint)
-                            .frame(width: 32, height: 32)
+                            .frame(width: density == .compact ? 28 : 32, height: density == .compact ? 28 : 32)
                             .background(item.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 6))
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: density == .compact ? 3 : 4) {
                         Text(item.title)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(item.value)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .font(.system(size: density == .compact ? 16 : 18, weight: .semibold, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                         if let caption = item.caption {
@@ -1206,7 +1268,7 @@ struct MetricGrid: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
+                .padding(density == .compact ? 8 : 10)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             }
         }
@@ -1332,6 +1394,7 @@ struct QuotaProgressRow: View {
 
 struct ModelDistributionView: View {
     let models: [ModelUsageSummary]
+    let density: PanelDensity
 
     private var visibleModels: [ModelUsageSummary] {
         Array(models.prefix(5))
@@ -1342,10 +1405,10 @@ struct ModelDistributionView: View {
     }
 
     var body: some View {
-        SectionBlock(title: "Model Distribution") {
-            VStack(spacing: 10) {
+        SectionBlock(title: "Model Distribution", density: density) {
+            VStack(spacing: density == .compact ? 8 : 10) {
                 ForEach(visibleModels) { item in
-                    VStack(spacing: 7) {
+                    VStack(spacing: density == .compact ? 5 : 7) {
                         HStack {
                             Text(item.model)
                                 .font(.callout.weight(.medium))
@@ -1459,14 +1522,15 @@ struct LegendDot: View {
 
 struct SectionBlock<Content: View>: View {
     let title: String
+    var density: PanelDensity = .regular
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: density == .compact ? 6 : 8) {
             Text(title)
-                .font(.headline)
+                .font(density == .compact ? .callout.weight(.semibold) : .headline)
             content
-                .padding(10)
+                .padding(density == .compact ? 8 : 10)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
         }
     }

@@ -888,6 +888,14 @@ public struct MonitorSnapshot: Equatable, Sendable {
         )
     }
 
+    public func isStale(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> Bool {
+        guard connected, let lastUpdatedAt else {
+            return false
+        }
+        let staleAfter = max(refreshIntervalSeconds * 3, 90)
+        return referenceDate.timeIntervalSince(lastUpdatedAt) >= staleAfter
+    }
+
     public var severity: MonitorSeverity {
         if !connected {
             return .error
@@ -919,7 +927,7 @@ public struct MonitorSnapshot: Equatable, Sendable {
         return .healthy
     }
 
-    public var statusLabel: String {
+    private var baseStatusLabel: String {
         if !connected {
             return "Disconnected"
         }
@@ -946,19 +954,74 @@ public struct MonitorSnapshot: Equatable, Sendable {
         }
     }
 
+    public var statusLabel: String {
+        baseStatusLabel
+    }
+
+    public func statusLabel(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> String {
+        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return "Needs Refresh"
+        }
+        return baseStatusLabel
+    }
+
+    public func statusDetail(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> String {
+        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds),
+           let lastUpdatedAt {
+            let age = StatusFormatters.relativeAge(seconds: referenceDate.timeIntervalSince(lastUpdatedAt))
+            return "Last successful update was \(age) ago."
+        }
+
+        if !connected {
+            return message ?? "Reconnect to resume monitoring."
+        }
+
+        if let message, !message.isEmpty {
+            return message
+        }
+
+        if let subscriptionSummary {
+            if subscriptionSummary.highestProgress >= 0.95 {
+                return "Quota usage is close to the current limit."
+            }
+            if subscriptionSummary.highestProgress >= 0.8 {
+                return "Usage is elevated and worth watching."
+            }
+            if subscriptionSummary.expiringSoonCount > 0 {
+                return "One or more subscriptions are expiring soon."
+            }
+        }
+
+        return "Everything looks normal."
+    }
+
     public var menuBarSummary: String {
+        menuBarSummary()
+    }
+
+    public func menuBarSummary(displayMode: MenuBarDisplayMode = .spendRequestsRPM) -> String {
         guard connected else {
-            return "Sub2API \(statusLabel)"
+            return "Sub2API \(baseStatusLabel)"
         }
 
         if let stats {
-            return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            switch displayMode {
+            case .spendRequestsRPM:
+                return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.menuBarRate(stats.rpm)) RPM"
+            case .requestsAndTokens:
+                return "\(StatusFormatters.menuBarCount(stats.todayRequests)) req · \(StatusFormatters.compactNumber(stats.todayTokens)) tok · \(StatusFormatters.compactDouble(stats.tpm)) TPM"
+            case .quotaSnapshot:
+                if let subscriptionSummary {
+                    return "\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
+                }
+                return "\(StatusFormatters.currency(stats.todayActualCost)) · \(StatusFormatters.compactNumber(stats.todayTokens)) tok"
+            }
         }
 
         if let subscriptionSummary {
             return "\(subscriptionSummary.activeCount) subs · \(StatusFormatters.percent(subscriptionSummary.highestProgress)) peak"
         }
 
-        return "Sub2API \(statusLabel)"
+        return "Sub2API \(baseStatusLabel)"
     }
 }

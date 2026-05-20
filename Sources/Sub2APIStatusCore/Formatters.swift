@@ -12,6 +12,10 @@ public enum StatusFormatters {
         return String(value)
     }
 
+    public static func compactDouble(_ value: Double) -> String {
+        compactNumber(Int64(value.rounded()))
+    }
+
     public static func menuBarCount(_ value: Int64) -> String {
         if value < 10_000 {
             return String(value)
@@ -53,5 +57,16 @@ public enum StatusFormatters {
             return "\(seconds / 60)m"
         }
         return "\(seconds)s"
+    }
+
+    public static func relativeAge(seconds: Double) -> String {
+        let clamped = max(seconds, 0)
+        if clamped >= 3_600 {
+            return "\(Int(clamped / 3_600))h"
+        }
+        if clamped >= 60 {
+            return "\(Int(clamped / 60))m"
+        }
+        return "\(Int(clamped))s"
     }
 }

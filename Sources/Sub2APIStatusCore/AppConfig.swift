@@ -53,6 +53,63 @@ public enum MonitorMode: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public enum MenuBarDisplayMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case spendRequestsRPM
+    case requestsAndTokens
+    case quotaSnapshot
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .spendRequestsRPM:
+            "Spend, Requests, RPM"
+        case .requestsAndTokens:
+            "Requests, Tokens, TPM"
+        case .quotaSnapshot:
+            "Quota Snapshot"
+        }
+    }
+}
+
+public struct DashboardSectionVisibility: Codable, Equatable, Sendable {
+    public var accountOverview: Bool
+    public var usageMetrics: Bool
+    public var subscriptions: Bool
+    public var modelDistribution: Bool
+    public var tokenTrend: Bool
+
+    public init(
+        accountOverview: Bool = true,
+        usageMetrics: Bool = true,
+        subscriptions: Bool = true,
+        modelDistribution: Bool = true,
+        tokenTrend: Bool = true
+    ) {
+        self.accountOverview = accountOverview
+        self.usageMetrics = usageMetrics
+        self.subscriptions = subscriptions
+        self.modelDistribution = modelDistribution
+        self.tokenTrend = tokenTrend
+    }
+}
+
+public enum PanelDensity: String, Codable, CaseIterable, Identifiable, Sendable {
+    case regular
+    case compact
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .regular:
+            "Comfortable"
+        case .compact:
+            "Compact"
+        }
+    }
+}
+
 public struct StoredAccount: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
@@ -121,6 +178,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var language: AppLanguage
     public var monitorMode: MonitorMode
     public var showsMenuBarText: Bool
+    public var menuBarDisplayMode: MenuBarDisplayMode
+    public var dashboardSections: DashboardSectionVisibility
+    public var panelDensity: PanelDensity
     public var accounts: [StoredAccount]
     public var selectedAccountID: String?
 
@@ -132,6 +192,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language: AppLanguage = .auto,
         monitorMode: MonitorMode = .user,
         showsMenuBarText: Bool = false,
+        menuBarDisplayMode: MenuBarDisplayMode = .spendRequestsRPM,
+        dashboardSections: DashboardSectionVisibility = DashboardSectionVisibility(),
+        panelDensity: PanelDensity = .regular,
         accounts: [StoredAccount] = [],
         selectedAccountID: String? = nil
     ) {
@@ -142,6 +205,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.language = language
         self.monitorMode = monitorMode
         self.showsMenuBarText = showsMenuBarText
+        self.menuBarDisplayMode = menuBarDisplayMode
+        self.dashboardSections = dashboardSections
+        self.panelDensity = panelDensity
         self.accounts = accounts
         self.selectedAccountID = selectedAccountID
         normalize()
@@ -155,6 +221,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case language
         case monitorMode
         case showsMenuBarText
+        case menuBarDisplayMode
+        case dashboardSections
+        case panelDensity
         case accounts
         case selectedAccountID
     }
@@ -168,6 +237,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .auto
         monitorMode = try container.decodeIfPresent(MonitorMode.self, forKey: .monitorMode) ?? .user
         showsMenuBarText = try container.decodeIfPresent(Bool.self, forKey: .showsMenuBarText) ?? false
+        menuBarDisplayMode = try container.decodeIfPresent(MenuBarDisplayMode.self, forKey: .menuBarDisplayMode) ?? .spendRequestsRPM
+        dashboardSections = try container.decodeIfPresent(DashboardSectionVisibility.self, forKey: .dashboardSections) ?? DashboardSectionVisibility()
+        panelDensity = try container.decodeIfPresent(PanelDensity.self, forKey: .panelDensity) ?? .regular
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         selectedAccountID = try container.decodeIfPresent(String.self, forKey: .selectedAccountID)
         normalize()
@@ -182,6 +254,9 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try container.encode(language, forKey: .language)
         try container.encode(monitorMode, forKey: .monitorMode)
         try container.encode(showsMenuBarText, forKey: .showsMenuBarText)
+        try container.encode(menuBarDisplayMode, forKey: .menuBarDisplayMode)
+        try container.encode(dashboardSections, forKey: .dashboardSections)
+        try container.encode(panelDensity, forKey: .panelDensity)
         try container.encode(accounts, forKey: .accounts)
         try container.encodeIfPresent(selectedAccountID, forKey: .selectedAccountID)
     }
@@ -195,7 +270,10 @@ public struct AppConfig: Codable, Equatable, Sendable {
             refreshIntervalSeconds: Double(env["SUB2API_REFRESH_SECONDS"] ?? "") ?? 15,
             language: AppLanguage.fromEnvironment(env["SUB2API_LANGUAGE"]),
             monitorMode: .user,
-            showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased())
+            showsMenuBarText: ["1", "true", "yes", "on"].contains((env["SUB2API_SHOW_MENU_BAR_TEXT"] ?? "").lowercased()),
+            menuBarDisplayMode: .spendRequestsRPM,
+            dashboardSections: DashboardSectionVisibility(),
+            panelDensity: .regular
         )
     }
 

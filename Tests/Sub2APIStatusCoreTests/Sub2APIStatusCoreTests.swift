@@ -28,6 +28,63 @@ import Testing
     #expect(loaded.showsMenuBarText == true)
 }
 
+@Test func appConfigPersistsMenuBarDisplayMode() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        showsMenuBarText: true,
+        menuBarDisplayMode: .requestsAndTokens
+    )
+
+    try store.save(config)
+    let loaded = store.load()
+
+    #expect(loaded.menuBarDisplayMode == .requestsAndTokens)
+}
+
+@Test func appConfigPersistsDashboardSectionVisibility() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        dashboardSections: DashboardSectionVisibility(
+            accountOverview: true,
+            usageMetrics: true,
+            subscriptions: false,
+            modelDistribution: false,
+            tokenTrend: true
+        )
+    )
+
+    try store.save(config)
+    let loaded = store.load()
+
+    #expect(loaded.dashboardSections.subscriptions == false)
+    #expect(loaded.dashboardSections.modelDistribution == false)
+    #expect(loaded.dashboardSections.tokenTrend == true)
+}
+
+@Test func appConfigPersistsPanelDensityPreference() throws {
+    let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathComponent("config.json")
+    let store = ConfigStore(configURL: configURL)
+    let config = AppConfig(
+        baseURL: "http://127.0.0.1:8080",
+        panelDensity: .compact
+    )
+
+    try store.save(config)
+    let loaded = store.load()
+
+    #expect(loaded.panelDensity == .compact)
+}
+
 @Test func configStoreSavesTokensInConfigJSON() throws {
     let configURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
@@ -157,6 +214,34 @@ import Testing
     let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
 
     #expect(config.monitorMode == .user)
+}
+
+@Test func appConfigDefaultsDashboardSectionsToVisibleForLegacyConfigs() throws {
+    let data = """
+    {
+      "baseURL": "http://127.0.0.1:8080"
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.dashboardSections.accountOverview == true)
+    #expect(config.dashboardSections.usageMetrics == true)
+    #expect(config.dashboardSections.subscriptions == true)
+    #expect(config.dashboardSections.modelDistribution == true)
+    #expect(config.dashboardSections.tokenTrend == true)
+}
+
+@Test func appConfigDefaultsPanelDensityToRegularForLegacyConfigs() throws {
+    let data = """
+    {
+      "baseURL": "http://127.0.0.1:8080"
+    }
+    """.data(using: .utf8)!
+
+    let config = try JSONDecoder.sub2api.decode(AppConfig.self, from: data)
+
+    #expect(config.panelDensity == .regular)
 }
 
 @Test func appConfigClearsAuthTokens() {
@@ -538,7 +623,7 @@ import Testing
     let snapshot = MonitorSnapshot(
         mode: .user,
         connected: true,
-        stats: DashboardStats(todayRequests: 1119, todayActualCost: 113.3052, rpm: 3),
+        stats: DashboardStats(todayRequests: 1119, todayTokens: 121_800_000, todayActualCost: 113.3052, rpm: 3, tpm: 12_200),
         realtime: nil,
         accountHealth: nil,
         subscriptionSummary: nil,
@@ -546,7 +631,43 @@ import Testing
         message: nil
     )
 
-    #expect(snapshot.menuBarSummary == "$113.31 · 1119 req · 3 RPM")
+    #expect(snapshot.menuBarSummary() == "$113.31 · 1119 req · 3 RPM")
+    #expect(snapshot.menuBarSummary(displayMode: .requestsAndTokens) == "1119 req · 121.8M tok · 12.2K TPM")
+}
+
+@Test func monitorSnapshotMarksStaleDataAndExplainsWhy() {
+    let staleDate = Date(timeIntervalSince1970: 0)
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 20, todayActualCost: 1.2, rpm: 4, tpm: 2048),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: staleDate,
+        message: nil
+    )
+
+    #expect(snapshot.isStale(referenceDate: staleDate.addingTimeInterval(91), refreshIntervalSeconds: 30) == true)
+    #expect(snapshot.statusLabel(referenceDate: staleDate.addingTimeInterval(91), refreshIntervalSeconds: 30) == "Needs Refresh")
+    #expect(snapshot.statusDetail(referenceDate: staleDate.addingTimeInterval(91), refreshIntervalSeconds: 30) == "Last successful update was 1m ago.")
+}
+
+@Test func monitorSnapshotKeepsHealthyStatusWhenDataIsFresh() {
+    let referenceDate = Date(timeIntervalSince1970: 1_000)
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 20, todayActualCost: 1.2, rpm: 4, tpm: 2048),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: referenceDate.addingTimeInterval(-20),
+        message: nil
+    )
+
+    #expect(snapshot.isStale(referenceDate: referenceDate, refreshIntervalSeconds: 30) == false)
+    #expect(snapshot.statusLabel(referenceDate: referenceDate, refreshIntervalSeconds: 30) == "OK")
 }
 
 @Test func diagnosticReportRedactsStoredTokenValues() {
