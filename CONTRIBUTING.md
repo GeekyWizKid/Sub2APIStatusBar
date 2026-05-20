@@ -25,6 +25,12 @@ VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 
 Use the version you are preparing, not necessarily `v0.1.6`.
 
+For repository operations changes, also run:
+
+```bash
+./scripts/verify-github-labels.sh
+```
+
 ## Product Standards
 
 - Keep the menu bar status glanceable.
@@ -43,6 +49,16 @@ Update docs when behavior changes:
 - `docs/RELEASE_CHECKLIST.md` for release process or readiness changes.
 - `docs/PRODUCT_REVIEW.md` for MAGI cycle notes when a change moves the product maturity bar.
 - Release notes under `docs/RELEASE_NOTES_<tag>.md` for tagged releases.
+
+## Issue Triage
+
+The canonical label set lives in `.github/labels.yml`. Keep issue template labels and triage labels in sync with:
+
+```bash
+./scripts/verify-github-labels.sh
+```
+
+Use `needs-triage` for newly reviewed issues that need routing and `needs-info` when diagnostics or reproduction details are missing.
 
 ## Security And Privacy
 

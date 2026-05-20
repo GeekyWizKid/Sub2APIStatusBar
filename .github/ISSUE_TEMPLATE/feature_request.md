@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest a product improvement for Sub2API Status Bar
 title: "[Feature]: "
-labels: enhancement
+labels: enhancement, needs-triage
 assignees: ""
 ---
 

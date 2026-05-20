@@ -460,3 +460,18 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - After the next meaningful UI change, regenerate the preview as part of the release checklist and attach before/after visual evidence to the release issue.
+
+### 2026-05-20 Cycle AE
+
+1. 审视
+   - Mature public repositories make issue routing explicit with a maintained label set, so bugs, support, release work, security-sensitive discussion, and docs work do not collapse into one queue.
+   - The project had issue templates and support guidance, but labels were implicit and could drift from template front matter.
+
+2. 执行
+   - Added `.github/labels.yml` with product, release, support, privacy, security, installation, update, and triage labels.
+   - Added `scripts/verify-github-labels.sh` to validate required labels and ensure issue templates only reference defined labels.
+   - Wired label verification into the release candidate gate and updated issue templates to start with `needs-triage`.
+   - Documented label usage in SUPPORT, CONTRIBUTING, release checklist, release notes, and changelog.
+
+3. 提升
+   - Once the repository is public, sync `.github/labels.yml` to GitHub and use real issue flow to decide whether automation or saved replies are worth adding.

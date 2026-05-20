@@ -20,6 +20,7 @@
 - Added downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
 - Added public release mode to fail tag builds unless Apple signing and notarization secrets are complete.
 - Added product preview asset verification and refreshed the README preview for alerts, Settings, and diagnostics.
+- Added GitHub label configuration and verification for public issue triage.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

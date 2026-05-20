@@ -2,7 +2,7 @@
 name: Release checklist
 about: Track a tagged Sub2API Status Bar release from candidate build to published assets
 title: "[Release]: v"
-labels: release
+labels: release, needs-triage
 assignees: ""
 ---
 

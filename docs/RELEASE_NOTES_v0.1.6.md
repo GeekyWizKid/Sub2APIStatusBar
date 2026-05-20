@@ -19,6 +19,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
 - Public release mode that fails tag builds unless Apple signing and notarization secrets are complete.
 - Product preview asset verification for README image dimensions and current feature coverage.
+- GitHub label configuration and verification for public issue triage.
 
 ## Verification
 
@@ -32,6 +33,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `VERSION=v0.1.6 ./scripts/verify-release-manifest.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh`
 - `./scripts/verify-product-preview.sh`
+- `./scripts/verify-github-labels.sh`
 - `VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh <download-directory>`
 - `PUBLIC_RELEASE=true GITHUB_REF_TYPE=tag REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when validating the public-release trust gate
 - `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when Apple signing credentials are available

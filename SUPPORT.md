@@ -4,6 +4,20 @@ Use GitHub Issues for bugs, product feedback, and release questions.
 
 For security vulnerabilities, do not open a public issue. Follow [SECURITY.md](SECURITY.md).
 
+## Issue Routing
+
+New public issues should be labeled from `.github/labels.yml`:
+
+- `bug` for broken behavior.
+- `enhancement` for product improvements.
+- `release` for packaging, notarization, Homebrew Cask, or publish checks.
+- `support` for diagnostics and reproduction follow-up.
+- `installation` for app bundle, DMG, Gatekeeper, or install problems.
+- `updates` for GitHub Releases update checking or future signed update delivery.
+- `privacy` for token handling, local config storage, or data exposure.
+- `security` only for security-sensitive coordination that is safe to track publicly.
+- `needs-triage` and `needs-info` for routing state.
+
 ## Before Opening An Issue
 
 1. Update to the newest GitHub Release when possible.

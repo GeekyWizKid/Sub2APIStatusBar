@@ -1,0 +1,36 @@
+- name: bug
+  color: d73a4a
+  description: Something is broken or behaves incorrectly.
+- name: enhancement
+  color: a2eeef
+  description: Product improvement or new capability.
+- name: release
+  color: 0e8a16
+  description: Release planning, packaging, verification, or publishing.
+- name: support
+  color: fef2c0
+  description: User support, diagnostics, reproduction, or environment follow-up.
+- name: security
+  color: ee0701
+  description: Security-sensitive work or vulnerability-response coordination.
+- name: privacy
+  color: bfdadc
+  description: Token handling, local config storage, telemetry, or data exposure.
+- name: documentation
+  color: 0075ca
+  description: README, release notes, support docs, or contribution docs.
+- name: installation
+  color: cfd3d7
+  description: macOS app bundle, DMG, Homebrew Cask, Gatekeeper, or install flow.
+- name: updates
+  color: 5319e7
+  description: GitHub Releases update checking or future signed update delivery.
+- name: needs-triage
+  color: fbca04
+  description: Needs initial maintainer review and routing.
+- name: needs-info
+  color: d876e3
+  description: Waiting for diagnostics, reproduction details, or release evidence.
+- name: good first issue
+  color: 7057ff
+  description: Small, well-scoped contribution suitable for first-time contributors.

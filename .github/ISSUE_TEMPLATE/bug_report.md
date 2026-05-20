@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a problem with Sub2API Status Bar
 title: "[Bug]: "
-labels: bug
+labels: bug, needs-triage
 assignees: ""
 ---
 
