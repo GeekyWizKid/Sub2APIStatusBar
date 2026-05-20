@@ -18,6 +18,7 @@ assignees: ""
 - [ ] `VERSION` matches the intended tag.
 - [ ] `CHANGELOG.md` includes the release-visible changes.
 - [ ] `docs/RELEASE_NOTES_<tag>.md` exists and matches the asset set.
+- [ ] README product preview image reflects the current release-visible product surface.
 - [ ] Public trust posture is decided before tag creation.
 - [ ] Apple signing secrets are configured when publishing a trusted public release.
 - [ ] Repository variable `PUBLIC_RELEASE=true` is set when this tag is intended to become a public release.
@@ -25,6 +26,7 @@ assignees: ""
 ## Local Verification
 
 - [ ] `VERSION=<tag> ./scripts/verify-release-candidate.sh`
+- [ ] `./scripts/verify-product-preview.sh`
 - [ ] For trusted public release: `REQUIRE_NOTARIZATION=true VERSION=<tag> ./scripts/verify-release-candidate.sh`
 - [ ] Zip checksum verifies from `dist/`.
 - [ ] DMG checksum verifies from `dist/`.

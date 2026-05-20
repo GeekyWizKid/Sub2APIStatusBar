@@ -18,6 +18,7 @@
 - [x] One-command release candidate verification for tests, build, zip, DMG, and manifest
 - [x] Downloaded release asset verification for draft zip, DMG, checksums, manifest, and cask files
 - [x] Public release mode that fails tag builds unless Apple notarization credentials are complete
+- [x] Product preview asset verification for README image, dimensions, and current feature coverage
 - [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
@@ -41,7 +42,7 @@
 
 | Area | Current Status | Verification | Next Gate |
 | --- | --- | --- | --- |
-| App identity | Ready | `Resources/AppIcon.icns`, bundle metadata from `scripts/build-app.sh` | Keep screenshots current for each public release |
+| App identity | Ready | `Resources/AppIcon.icns`, bundle metadata from `scripts/build-app.sh`, and `scripts/verify-product-preview.sh` | Keep screenshots current for each public release |
 | User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, menu bar summaries, and local alerts | Add anomaly or model-cost concentration insights after alert rules prove useful |
 | Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
 | Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
@@ -64,6 +65,12 @@ For the v0.1.6 productization pass:
 
 ```bash
 VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
+```
+
+The release candidate gate also verifies the README product preview. After changing user-visible dashboard, alert, Settings, or diagnostics surfaces, update `docs/assets/product-preview.html`, regenerate `docs/assets/product-preview.png`, and run:
+
+```bash
+./scripts/verify-product-preview.sh
 ```
 
 When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. If `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` secrets are all configured, tag builds run the notarized release gate. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.

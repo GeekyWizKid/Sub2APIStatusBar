@@ -165,6 +165,8 @@ GitHub Actions runs the same checks on `main`, pull requests, tags, and manual w
 
 For contribution workflow, product standards, documentation expectations, and PR checks, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+The README preview is generated from `docs/assets/product-preview.html`. When user-visible product surfaces change, regenerate `docs/assets/product-preview.png` and run `./scripts/verify-product-preview.sh`.
+
 For tagged releases, open a GitHub Release Checklist issue before publishing the draft release. Set the repository variable `PUBLIC_RELEASE=true` only when tag builds must fail unless Apple signing and notarization secrets are configured.
 
 ## Support

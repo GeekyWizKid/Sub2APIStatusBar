@@ -445,3 +445,18 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Configure `PUBLIC_RELEASE=true` in the repository only after Apple Developer ID secrets are ready, then prove a real tag run fails closed or notarizes successfully before publishing.
+
+### 2026-05-20 Cycle AD
+
+1. 审视
+   - Mature product repositories keep public screenshots aligned with the current product promise instead of letting marketing assets drift behind shipped behavior.
+   - The README preview existed, but it did not show the newer local alerts, Settings, or diagnostics surfaces, and the release gate did not verify preview freshness.
+
+2. 执行
+   - Added `scripts/verify-product-preview.sh` to validate the README preview reference, PNG dimensions, and HTML coverage of spend, token trends, subscriptions, local alerts, Settings, and diagnostics.
+   - Wired product preview verification into the release candidate gate.
+   - Refreshed `docs/assets/product-preview.html` and regenerated `docs/assets/product-preview.png` to include current productization features.
+   - Documented preview upkeep in README, release checklist, release issue template, release notes, and changelog.
+
+3. 提升
+   - After the next meaningful UI change, regenerate the preview as part of the release checklist and attach before/after visual evidence to the release issue.
