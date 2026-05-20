@@ -830,6 +830,24 @@ public struct AccountUsageInfo: Decodable, Equatable, Sendable {
     public let isBanned: Bool?
 }
 
+public enum LocalAlertKind: String, Equatable, Sendable {
+    case dailySpend
+    case dailyTokens
+    case quotaProgress
+}
+
+public struct LocalAlert: Equatable, Sendable {
+    public let kind: LocalAlertKind
+    public let title: String
+    public let message: String
+
+    public init(kind: LocalAlertKind, title: String, message: String) {
+        self.kind = kind
+        self.title = title
+        self.message = message
+    }
+}
+
 public enum MonitorSeverity: String, Equatable, Sendable {
     case healthy
     case warning
@@ -896,6 +914,47 @@ public struct MonitorSnapshot: Equatable, Sendable {
         return referenceDate.timeIntervalSince(lastUpdatedAt) >= staleAfter
     }
 
+    public func localAlerts(using rules: LocalAlertRules) -> [LocalAlert] {
+        guard connected else {
+            return []
+        }
+
+        var normalized = rules
+        normalized.normalize()
+        var alerts: [LocalAlert] = []
+
+        if let limit = normalized.dailySpendUSD,
+           let actual = stats?.todayActualCost,
+           actual >= limit {
+            alerts.append(LocalAlert(
+                kind: .dailySpend,
+                title: "Daily spend alert",
+                message: "Daily spend is \(StatusFormatters.preciseCurrency(actual)), above the \(StatusFormatters.preciseCurrency(limit)) alert."
+            ))
+        }
+
+        if let limit = normalized.dailyTokens,
+           let actual = stats?.todayTokens,
+           actual >= limit {
+            alerts.append(LocalAlert(
+                kind: .dailyTokens,
+                title: "Daily token alert",
+                message: "Daily tokens are \(StatusFormatters.compactNumber(actual)), above the \(StatusFormatters.compactNumber(limit)) alert."
+            ))
+        }
+
+        if let progress = subscriptionSummary?.highestProgress,
+           progress >= normalized.quotaProgress {
+            alerts.append(LocalAlert(
+                kind: .quotaProgress,
+                title: "Quota alert",
+                message: "Highest subscription quota is \(StatusFormatters.percent(progress)), above the \(StatusFormatters.percent(normalized.quotaProgress)) alert."
+            ))
+        }
+
+        return alerts
+    }
+
     public var severity: MonitorSeverity {
         if !connected {
             return .error
@@ -925,6 +984,17 @@ public struct MonitorSnapshot: Equatable, Sendable {
         }
 
         return .healthy
+    }
+
+    public func severity(using rules: LocalAlertRules) -> MonitorSeverity {
+        let base = severity
+        if base == .error {
+            return .error
+        }
+        if !localAlerts(using: rules).isEmpty {
+            return .warning
+        }
+        return base
     }
 
     private var baseStatusLabel: String {
@@ -965,6 +1035,20 @@ public struct MonitorSnapshot: Equatable, Sendable {
         return baseStatusLabel
     }
 
+    public func statusLabel(
+        using rules: LocalAlertRules,
+        referenceDate: Date = .now,
+        refreshIntervalSeconds: Double
+    ) -> String {
+        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds) {
+            return "Needs Refresh"
+        }
+        if !localAlerts(using: rules).isEmpty {
+            return "Budget Alert"
+        }
+        return baseStatusLabel
+    }
+
     public func statusDetail(referenceDate: Date = .now, refreshIntervalSeconds: Double) -> String {
         if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds),
            let lastUpdatedAt {
@@ -993,6 +1077,24 @@ public struct MonitorSnapshot: Equatable, Sendable {
         }
 
         return "Everything looks normal."
+    }
+
+    public func statusDetail(
+        using rules: LocalAlertRules,
+        referenceDate: Date = .now,
+        refreshIntervalSeconds: Double
+    ) -> String {
+        if isStale(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds),
+           let lastUpdatedAt {
+            let age = StatusFormatters.relativeAge(seconds: referenceDate.timeIntervalSince(lastUpdatedAt))
+            return "Last successful update was \(age) ago."
+        }
+
+        if let alert = localAlerts(using: rules).first {
+            return alert.message
+        }
+
+        return statusDetail(referenceDate: referenceDate, refreshIntervalSeconds: refreshIntervalSeconds)
     }
 
     public var menuBarSummary: String {

@@ -680,7 +680,7 @@ import Testing
         realtime: nil,
         accountHealth: nil,
         subscriptionSummary: nil,
-        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        lastUpdatedAt: nil,
         message: nil
     )
 
@@ -721,6 +721,81 @@ import Testing
 
     #expect(snapshot.isStale(referenceDate: referenceDate, refreshIntervalSeconds: 30) == false)
     #expect(snapshot.statusLabel(referenceDate: referenceDate, refreshIntervalSeconds: 30) == "OK")
+}
+
+@Test func localAlertEvaluationDetectsSpendTokenAndQuotaPressure() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: SubscriptionSummary(
+            activeCount: 1,
+            subscriptions: [
+                SubscriptionSummaryItem(
+                    id: 1,
+                    groupName: "Team",
+                    status: "active",
+                    dailyProgress: 0.91,
+                    weeklyProgress: nil,
+                    monthlyProgress: nil,
+                    expiresAt: nil,
+                    daysRemaining: nil
+                )
+            ]
+        ),
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+    let alerts = snapshot.localAlerts(using: LocalAlertRules(
+        dailySpendUSD: 10,
+        dailyTokens: 1_000,
+        quotaProgress: 0.9
+    ))
+
+    #expect(alerts.count == 3)
+    #expect(alerts.map(\.kind) == [.dailySpend, .dailyTokens, .quotaProgress])
+    #expect(alerts.first?.title == "Daily spend alert")
+}
+
+@Test func monitorSnapshotUsesLocalAlertsInStatusDetail() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: nil,
+        message: nil
+    )
+    let rules = LocalAlertRules(dailySpendUSD: 10, dailyTokens: nil, quotaProgress: 0.9)
+
+    #expect(snapshot.severity(using: rules) == .warning)
+    #expect(snapshot.statusLabel(using: rules, refreshIntervalSeconds: 30) == "Budget Alert")
+    #expect(snapshot.statusDetail(using: rules, refreshIntervalSeconds: 30) == "Daily spend is $12.5000, above the $10.0000 alert.")
+}
+
+@Test func monitorSnapshotIgnoresDisabledSpendAndTokenAlerts() {
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayTokens: 1_500, todayActualCost: 12.5),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: nil
+    )
+    let alerts = snapshot.localAlerts(using: LocalAlertRules(
+        dailySpendUSD: nil,
+        dailyTokens: nil,
+        quotaProgress: 0.9
+    ))
+
+    #expect(alerts.isEmpty)
+    #expect(snapshot.statusLabel(using: LocalAlertRules(), refreshIntervalSeconds: 30) == "OK")
 }
 
 @Test func diagnosticReportRedactsStoredTokenValues() {
