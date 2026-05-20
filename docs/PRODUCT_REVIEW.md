@@ -375,3 +375,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once Apple credentials are configured in GitHub secrets, tag builds can require the notarized release gate before draft release assets are created.
+
+### 2026-05-20 Cycle Y
+
+1. 审视
+   - Mature desktop release automation should use signing credentials automatically once maintainers configure them, rather than requiring a separate manual CI edit.
+   - The project had a notarized release gate, but tag builds still called the default gate without inspecting Apple signing secrets.
+
+2. 执行
+   - Wired GitHub Actions tag builds to expose Apple signing secrets to the package step.
+   - Added CI logic that enables `REQUIRE_NOTARIZATION=true` when `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` are all present.
+   - Documented that tag builds produce ad-hoc signed draft assets when secrets are incomplete and notarized draft assets when secrets are complete.
+
+3. 提升
+   - After Apple secrets are configured, run a real tag build and inspect the draft release assets before publishing.

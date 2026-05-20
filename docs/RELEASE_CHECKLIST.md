@@ -42,7 +42,7 @@
 | Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
 | Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
 | Release archive | Ready | `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs tests, build, zip, DMG, and manifest checks | Update the version for each tag |
-| GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, and creates a draft GitHub Release | Publish the draft only after release notes and trust posture are reviewed |
+| GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, creates a draft GitHub Release, and requires notarization when all Apple secrets are configured | Publish the draft only after release notes and trust posture are reviewed |
 | Public trust | Blocked by Apple credentials | `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs the notarized release path when Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
 | Distribution channels | Planned | GitHub Release zip and checksum are produced by CI | Consider Homebrew Cask after a notarized public release exists |
@@ -62,7 +62,7 @@ For the v0.1.6 productization pass:
 VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 ```
 
-When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.
+When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. If `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` secrets are all configured, tag builds run the notarized release gate. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.
 
 Developer ID signing:
 
