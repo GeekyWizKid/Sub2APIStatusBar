@@ -11,6 +11,7 @@
 - Aligned default build, package, CI, and documentation examples with the v0.1.6 release line.
 - Added a repository `VERSION` file as the default release version source for scripts and non-tag CI builds.
 - Added repeatable DMG packaging and verification for macOS-style installation assets.
+- Added a release manifest with zip/DMG file names, SHA-256 digests, and file sizes.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

@@ -107,6 +107,7 @@ VERSION=v0.1.6 \
 ```bash
 VERSION=v0.1.6 ./scripts/package-release.sh
 VERSION=v0.1.6 ./scripts/package-dmg.sh
+VERSION=v0.1.6 ./scripts/generate-release-manifest.sh
 ```
 
 Output:
@@ -116,6 +117,7 @@ dist/Sub2APIStatusBar-0.1.6-macOS.zip
 dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg.sha256
+dist/Sub2APIStatusBar-0.1.6-macOS-manifest.json
 ```
 
 ## Notarize A Release

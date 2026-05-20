@@ -332,3 +332,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once Developer ID credentials are available, run the DMG path after notarization so the user-facing installer carries a trusted, stapled app.
+
+### 2026-05-20 Cycle V
+
+1. 审视
+   - Mature release pages expose checksums and asset metadata in a form users and automation can verify without reading CI logs.
+   - The project had zip, DMG, and checksum files, but no single manifest tying asset names, sizes, and digests together.
+
+2. 执行
+   - Added `scripts/generate-release-manifest.sh` to produce a JSON manifest for the zip and DMG assets.
+   - Added `scripts/verify-release-manifest.sh` to verify manifest version fields, asset names, file sizes, and SHA-256 digests against local artifacts.
+   - Changed package scripts so `.sha256` files contain release-friendly file names instead of local absolute paths, then wired manifest generation into CI and release docs.
+
+3. 提升
+   - Future signed update or Homebrew Cask work can consume the manifest instead of re-discovering asset metadata from release files.

@@ -30,7 +30,10 @@ hdiutil create \
   -format UDZO \
   "$DMG_PATH" >/dev/null
 
-shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
+(
+  cd "$DIST_DIR"
+  shasum -a 256 "$(basename "$DMG_PATH")" > "$(basename "$CHECKSUM_PATH")"
+)
 
 echo "$DMG_PATH"
 echo "$CHECKSUM_PATH"

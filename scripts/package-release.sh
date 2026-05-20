@@ -18,7 +18,10 @@ rm -f "$ZIP_PATH" "$CHECKSUM_PATH"
   cd "$DIST_DIR"
   COPYFILE_DISABLE=1 /usr/bin/zip -qry "$ZIP_PATH" "$APP_NAME.app"
 )
-shasum -a 256 "$ZIP_PATH" > "$CHECKSUM_PATH"
+(
+  cd "$DIST_DIR"
+  shasum -a 256 "$(basename "$ZIP_PATH")" > "$(basename "$CHECKSUM_PATH")"
+)
 
 echo "$ZIP_PATH"
 echo "$CHECKSUM_PATH"

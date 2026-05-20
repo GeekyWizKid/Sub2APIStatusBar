@@ -43,6 +43,8 @@ jobs:
           VERSION="$VERSION" ./scripts/verify-release.sh
           VERSION="$VERSION" ./scripts/package-dmg.sh
           VERSION="$VERSION" ./scripts/verify-dmg.sh
+          VERSION="$VERSION" ./scripts/generate-release-manifest.sh
+          VERSION="$VERSION" ./scripts/verify-release-manifest.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4
@@ -51,6 +53,7 @@ jobs:
           path: |
             dist/*.zip
             dist/*.dmg
+            dist/*-manifest.json
             dist/*.sha256
           if-no-files-found: error
 
@@ -65,4 +68,5 @@ jobs:
           files: |
             dist/*.zip
             dist/*.dmg
+            dist/*-manifest.json
             dist/*.sha256

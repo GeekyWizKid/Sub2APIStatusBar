@@ -18,8 +18,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+cd "$DIST_DIR"
+shasum -a 256 -c "$(basename "$CHECKSUM_PATH")"
 cd "$ROOT_DIR"
-shasum -a 256 -c "$CHECKSUM_PATH"
 hdiutil attach "$DMG_PATH" -mountpoint "$MOUNT_DIR" -nobrowse -quiet
 ATTACHED=1
 
