@@ -1,12 +1,12 @@
 # Support Bundle Template
 
-Use this template when a maintainer asks for a support bundle. Paste the filled template into the GitHub issue.
+Use Settings > Diagnostics > Copy Support Bundle when possible. If the app is not available, fill this template manually and paste the reviewed text into the GitHub issue.
 
 Do not attach `config.json`, access tokens, refresh tokens, passwords, private server logs, full Application Support directories, release archives, or crash dumps that have not been reviewed for secrets.
 
 ## Diagnostics
 
-Paste Settings > Diagnostics > Copy Diagnostics output here:
+Paste Settings > Diagnostics > Copy Diagnostics output here when filling this template manually. If you used Copy Support Bundle, the diagnostics section is already filled in the copied text.
 
 ```text
 

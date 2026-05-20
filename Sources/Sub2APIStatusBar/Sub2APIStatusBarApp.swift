@@ -392,6 +392,17 @@ final class MonitorViewModel: ObservableObject {
         updateStatusMessage = "Diagnostics copied."
     }
 
+    func copySupportBundle() {
+        let report = SupportBundleReport.make(
+            config: config,
+            snapshot: snapshot,
+            appVersion: currentAppVersion
+        )
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(report, forType: .string)
+        updateStatusMessage = "Support bundle copied."
+    }
+
     func revealConfigFile() {
         NSWorkspace.shared.activateFileViewerSelecting([store.configurationFileURL])
     }
@@ -1129,6 +1140,12 @@ struct DiagnosticsSettingsSection: View {
                     model.copyDiagnostics()
                 } label: {
                     Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    model.copySupportBundle()
+                } label: {
+                    Label("Copy Support Bundle", systemImage: "doc.text")
                 }
 
                 Button {

@@ -24,6 +24,7 @@
 - Added private security reporting verification through GitHub Security policy and issue contact links.
 - Added repository settings verification for branch protection, required checks, issues, and private vulnerability reporting.
 - Added a support bundle template and verification gate for support-safe diagnostics follow-up.
+- Added an in-app Copy Support Bundle action with token-redacted diagnostics and support prompts.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

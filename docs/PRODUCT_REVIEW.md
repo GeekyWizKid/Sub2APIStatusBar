@@ -519,3 +519,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - A later app-level support bundle export could prefill safe fields, but the template keeps v0.1.6 support safer without expanding app scope.
+
+### 2026-05-20 Cycle AI
+
+1. 审视
+   - Mature desktop products move support evidence collection into the app so users do not have to manually assemble diagnostics.
+   - The repository had a safe support bundle template, but the product still asked users to copy diagnostics and then fill the longer packet by hand.
+
+2. 执行
+   - Added `SupportBundleReport` in the core layer so support bundle output is testable and reuses token-redacted diagnostics.
+   - Added Settings > Diagnostics > Copy Support Bundle to copy a ready-to-paste support packet.
+   - Extended support bundle verification to cover the core generator, UI action, tests, README, support guide, and issue template links.
+
+3. 提升
+   - After real support issues arrive, refine the support bundle fields around the evidence maintainers actually need most often.

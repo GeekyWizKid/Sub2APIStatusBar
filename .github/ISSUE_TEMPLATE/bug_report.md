@@ -20,7 +20,7 @@ Paste Settings > Diagnostics > Copy Diagnostics output here.
 
 Do not paste `config.json`, access tokens, refresh tokens, passwords, or private server logs.
 
-If a maintainer asks for a longer support packet, use `docs/SUPPORT_BUNDLE.md` and review it for secrets before posting.
+If a maintainer asks for a longer support packet, use Settings > Diagnostics > Copy Support Bundle or `docs/SUPPORT_BUNDLE.md`, then review it for secrets before posting.
 
 ```text
 

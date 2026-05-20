@@ -42,7 +42,7 @@ For support, issue-template, or repository operations changes, also run:
 - Do not add telemetry.
 - Do not require admin-only Sub2API endpoints for ordinary user monitoring.
 - Keep diagnostics support-safe and token-redacted.
-- Keep support bundle templates focused on safe diagnostics, environment, and reproduction details.
+- Keep support bundle output focused on safe diagnostics, environment, and reproduction details.
 
 ## Documentation
 

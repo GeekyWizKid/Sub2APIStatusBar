@@ -69,6 +69,7 @@ Settings also includes:
 - **Layout** controls to show or hide account, metrics, subscriptions, model distribution, and token trend sections
 - **Launch at login** so the monitor starts with macOS
 - **Copy Diagnostics** for support-safe status details with tokens redacted
+- **Copy Support Bundle** for a ready-to-paste support packet with diagnostics and issue prompts
 - **Show Config** to reveal the local `config.json`
 
 Optional first-run environment variables:
@@ -173,7 +174,7 @@ For tagged releases, open a GitHub Release Checklist issue before publishing the
 
 For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.
 
-If a maintainer asks for a longer support packet, use [docs/SUPPORT_BUNDLE.md](docs/SUPPORT_BUNDLE.md) and review it for secrets before posting.
+If a maintainer asks for a longer support packet, use Settings > Diagnostics > Copy Support Bundle. It creates a ready-to-paste version of [docs/SUPPORT_BUNDLE.md](docs/SUPPORT_BUNDLE.md) with diagnostics included. Review it for secrets before posting.
 
 Do not share `config.json`, access tokens, refresh tokens, passwords, or private server logs. See [SUPPORT.md](SUPPORT.md) for the support checklist and privacy boundary.
 

@@ -91,7 +91,7 @@ step "Verify security reporting"
 step "Verify repository settings"
 "$ROOT_DIR/scripts/verify-repository-settings.sh"
 
-step "Verify support bundle template"
+step "Verify support bundle"
 "$ROOT_DIR/scripts/verify-support-bundle.sh"
 
 if [[ "$NOTARIZATION_REQUESTED" == "true" ]]; then

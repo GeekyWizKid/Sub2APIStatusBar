@@ -23,6 +23,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Private security reporting route through GitHub Security policy and issue contact links.
 - Repository settings contract for branch protection, required checks, issue settings, and private vulnerability reporting.
 - Support bundle template and verification gate for support-safe diagnostics follow-up.
+- In-app Copy Support Bundle action that pre-fills the support packet with token-redacted diagnostics.
 
 ## Verification
 

@@ -22,7 +22,7 @@
 - [x] GitHub label configuration and verification for public issue triage
 - [x] Private security reporting route through GitHub Security policy and issue contact links
 - [x] Repository settings contract for main branch protection, required checks, issues, and private vulnerability reporting
-- [x] Support bundle template and verification for support-safe follow-up details
+- [x] Support bundle template, in-app copy action, and verification for support-safe follow-up details
 - [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
@@ -36,6 +36,7 @@
 - [x] Troubleshooting path for stale Swift build cache errors
 - [x] Launch at Login setting
 - [x] Support-safe diagnostics copy action with token redaction
+- [x] In-app support bundle copy action with token-redacted diagnostics and issue prompts
 - [x] Local config reveal action
 - [x] Local alert thresholds for daily spend, daily tokens, and quota pressure
 - [x] Alert-aware status labels, diagnostics, Settings controls, and popover summary
@@ -55,7 +56,7 @@
 | Public trust | Blocked by Apple credentials | `PUBLIC_RELEASE=true REQUIRE_NOTARIZATION=auto VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` fails unless Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
 | Distribution channels | Prepared | Homebrew Cask draft is generated from the release manifest and uploaded as a CI/release asset | Submit or publish a cask only after a notarized public release exists |
-| Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, support bundle template, GitHub issue templates, verified labels, private security reporting route, and repository settings contract exist | Add app-generated support bundle export after real support volume proves the need |
+| Support | Ready for v0.1.6 | Copy Diagnostics, Copy Support Bundle, Show Config, token-redacted diagnostics, support bundle template, GitHub issue templates, verified labels, private security reporting route, and repository settings contract exist | Refine support bundle fields after real support volume proves the need |
 
 ## Release Commands
 
@@ -95,7 +96,7 @@ The release candidate gate also verifies expected public repository settings. Be
 ./scripts/verify-repository-settings.sh
 ```
 
-The release candidate gate also verifies the support bundle template and its links from support and bug-report guidance. After changing diagnostics, support, or issue-template guidance, run:
+The release candidate gate also verifies the support bundle generator, in-app copy action, template, and support guidance links. After changing diagnostics, support, or issue-template guidance, run:
 
 ```bash
 ./scripts/verify-support-bundle.sh

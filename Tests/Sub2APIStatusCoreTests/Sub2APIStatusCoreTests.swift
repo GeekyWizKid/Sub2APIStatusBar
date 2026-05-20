@@ -887,6 +887,62 @@ import Testing
     #expect(report.contains("Active Alerts: Daily spend alert, Daily token alert"))
 }
 
+@Test func supportBundleReportIncludesSafeDiagnosticsAndTemplateSections() {
+    let account = StoredAccount(
+        id: "work",
+        name: "Work",
+        email: "das@example.com",
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token"
+    )
+    let config = AppConfig(
+        baseURL: "https://sub2api.example.com",
+        authToken: "secret-access-token",
+        refreshToken: "secret-refresh-token",
+        refreshIntervalSeconds: 30,
+        alertRules: LocalAlertRules(dailySpendUSD: 5, dailyTokens: 1_000, quotaProgress: 0.9),
+        accounts: [account],
+        selectedAccountID: account.id
+    )
+    let snapshot = MonitorSnapshot(
+        mode: .user,
+        connected: true,
+        stats: DashboardStats(todayRequests: 42, todayTokens: 2_000, todayActualCost: 9, rpm: 2),
+        realtime: nil,
+        accountHealth: nil,
+        subscriptionSummary: nil,
+        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        message: "healthy"
+    )
+
+    let report = SupportBundleReport.make(
+        config: config,
+        snapshot: snapshot,
+        appVersion: "0.1.6",
+        osVersion: "macOS 15.0",
+        installSource: "GitHub Release"
+    )
+
+    #expect(report.contains("# Sub2API Status Bar Support Bundle"))
+    #expect(report.contains("## Diagnostics"))
+    #expect(report.contains("Sub2API Status Bar Diagnostics"))
+    #expect(report.contains("Version: 0.1.6"))
+    #expect(report.contains("OS: macOS 15.0"))
+    #expect(report.contains("Install source: GitHub Release"))
+    #expect(report.contains("Access Token: present"))
+    #expect(report.contains("Refresh Token: present"))
+    #expect(report.contains("Active Alerts: Daily spend alert, Daily token alert"))
+    #expect(report.contains("## Reproduction"))
+    #expect(report.contains("## Expected Behavior"))
+    #expect(report.contains("## Actual Behavior"))
+    #expect(report.contains("## Local Checks"))
+    #expect(report.contains("Diagnostics report contains token presence only, not token values."))
+    #expect(report.contains("No `config.json` content is included."))
+    #expect(report.contains("secret-access-token") == false)
+    #expect(report.contains("secret-refresh-token") == false)
+}
+
 @Test func loginFormStateRequiresURLAccountAndPassword() {
     #expect(LoginFormState(baseURL: "", email: "a@example.com", password: "secret").canSubmit == false)
     #expect(LoginFormState(baseURL: "http://127.0.0.1:8080", email: "", password: "secret").canSubmit == false)
