@@ -346,3 +346,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Future signed update or Homebrew Cask work can consume the manifest instead of re-discovering asset metadata from release files.
+
+### 2026-05-20 Cycle W
+
+1. 审视
+   - Mature release workflows collapse the release gate into one repeatable command so CI and humans do not drift apart.
+   - The project had strong individual checks, but maintainers still had to remember the exact sequence for tests, build, zip, DMG, and manifest validation.
+
+2. 执行
+   - Added `scripts/verify-release-candidate.sh` as the single release gate for Swift tests, debug build, zip package/verify, DMG package/verify, and manifest generation/verification.
+   - Updated GitHub Actions to call the same release candidate script used locally.
+   - Simplified README, contributor guidance, release checklist, changelog, and v0.1.6 release notes around the single gate.
+
+3. 提升
+   - When Developer ID credentials are available, extend this release candidate gate with signed and notarized verification instead of adding a parallel release path.

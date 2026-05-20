@@ -39,12 +39,7 @@ jobs:
           else
             VERSION="$(cat VERSION)"
           fi
-          VERSION="$VERSION" ./scripts/package-release.sh
-          VERSION="$VERSION" ./scripts/verify-release.sh
-          VERSION="$VERSION" ./scripts/package-dmg.sh
-          VERSION="$VERSION" ./scripts/verify-dmg.sh
-          VERSION="$VERSION" ./scripts/generate-release-manifest.sh
-          VERSION="$VERSION" ./scripts/verify-release-manifest.sh
+          VERSION="$VERSION" ./scripts/verify-release-candidate.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4

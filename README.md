@@ -105,9 +105,7 @@ VERSION=v0.1.6 \
 ## Package A Release
 
 ```bash
-VERSION=v0.1.6 ./scripts/package-release.sh
-VERSION=v0.1.6 ./scripts/package-dmg.sh
-VERSION=v0.1.6 ./scripts/generate-release-manifest.sh
+VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 ```
 
 Output:
@@ -152,10 +150,7 @@ The current roadmap lives in `docs/superpowers/specs/2026-05-20-magi-productizat
 ## Development Checks
 
 ```bash
-swift test
-swift build
-./scripts/package-release.sh
-./scripts/verify-release.sh
+./scripts/verify-release-candidate.sh
 ```
 
 GitHub Actions runs the same checks on `main`, pull requests, tags, and manual workflow dispatches.

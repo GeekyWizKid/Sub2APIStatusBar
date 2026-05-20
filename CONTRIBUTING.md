@@ -20,12 +20,7 @@ swift build
 For release-affecting changes, also run:
 
 ```bash
-VERSION=v0.1.6 ./scripts/package-release.sh
-VERSION=v0.1.6 ./scripts/verify-release.sh
-VERSION=v0.1.6 ./scripts/package-dmg.sh
-VERSION=v0.1.6 ./scripts/verify-dmg.sh
-VERSION=v0.1.6 ./scripts/generate-release-manifest.sh
-VERSION=v0.1.6 ./scripts/verify-release-manifest.sh
+VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 ```
 
 Use the version you are preparing, not necessarily `v0.1.6`.
