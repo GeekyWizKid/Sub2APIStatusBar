@@ -221,3 +221,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Implement local alert rules for daily spend, daily tokens, and highest quota usage, then surface them in status, diagnostics, and Settings.
+
+### 2026-05-20 Cycle N
+
+1. 审视
+   - Usage data became more actionable once the menu bar and popover could show local alert pressure.
+   - The alert rules stayed local, which matches the app's privacy and no-telemetry posture.
+
+2. 执行
+   - Added persisted alert thresholds for daily spend, daily tokens, and highest quota usage.
+   - Surfaced active alerts in status labels, detail text, diagnostics, Settings, and the popover.
+   - Verified the feature with Swift tests, build checks, and release package validation.
+
+3. 提升
+   - The next maturity pass should evaluate signed update installation and distribution channels after Apple Developer ID notarization is available.

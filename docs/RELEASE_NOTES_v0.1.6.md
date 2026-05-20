@@ -14,3 +14,5 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `swift build`
 - `VERSION=v0.1.6 ./scripts/package-release.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release.sh`
+
+All commands passed during the v0.1.6 productization verification pass.

@@ -785,7 +785,7 @@ import Testing
         realtime: nil,
         accountHealth: nil,
         subscriptionSummary: nil,
-        lastUpdatedAt: Date(timeIntervalSince1970: 0),
+        lastUpdatedAt: nil,
         message: nil
     )
     let alerts = snapshot.localAlerts(using: LocalAlertRules(
