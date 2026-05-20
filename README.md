@@ -165,7 +165,7 @@ GitHub Actions runs the same checks on `main`, pull requests, tags, and manual w
 
 For contribution workflow, product standards, documentation expectations, and PR checks, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-For tagged releases, open a GitHub Release Checklist issue before publishing the draft release.
+For tagged releases, open a GitHub Release Checklist issue before publishing the draft release. Set the repository variable `PUBLIC_RELEASE=true` only when tag builds must fail unless Apple signing and notarization secrets are configured.
 
 ## Support
 

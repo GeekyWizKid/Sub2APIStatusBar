@@ -45,6 +45,10 @@ verify_downloaded_release_assets() {
 
 cd "$ROOT_DIR"
 
+if [[ "$REQUIRE_NOTARIZATION" == "auto" ]]; then
+  REQUIRE_NOTARIZATION="$("$ROOT_DIR/scripts/resolve-release-trust.sh")"
+fi
+
 case "$REQUIRE_NOTARIZATION" in
   true|1|yes)
     NOTARIZATION_REQUESTED=true

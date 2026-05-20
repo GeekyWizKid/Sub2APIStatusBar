@@ -38,6 +38,7 @@ jobs:
           TEAM_ID: ${{ secrets.TEAM_ID }}
           APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
           SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
+          PUBLIC_RELEASE: ${{ vars.PUBLIC_RELEASE }}
         run: |
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             VERSION="$GITHUB_REF_NAME"
@@ -45,16 +46,7 @@ jobs:
             VERSION="$(cat VERSION)"
           fi
 
-          REQUIRE_NOTARIZATION=false
-          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
-            if [[ -n "${APPLE_ID:-}" && -n "${TEAM_ID:-}" && -n "${APP_SPECIFIC_PASSWORD:-}" && -n "${SIGN_IDENTITY:-}" ]]; then
-              REQUIRE_NOTARIZATION=true
-            else
-              echo "Apple notarization secrets are incomplete; creating ad-hoc signed draft assets."
-            fi
-          fi
-
-          REQUIRE_NOTARIZATION="$REQUIRE_NOTARIZATION" VERSION="$VERSION" ./scripts/verify-release-candidate.sh
+          REQUIRE_NOTARIZATION=auto VERSION="$VERSION" ./scripts/verify-release-candidate.sh
 
       - name: Upload App Archive
         uses: actions/upload-artifact@v4

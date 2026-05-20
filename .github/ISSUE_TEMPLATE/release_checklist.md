@@ -20,6 +20,7 @@ assignees: ""
 - [ ] `docs/RELEASE_NOTES_<tag>.md` exists and matches the asset set.
 - [ ] Public trust posture is decided before tag creation.
 - [ ] Apple signing secrets are configured when publishing a trusted public release.
+- [ ] Repository variable `PUBLIC_RELEASE=true` is set when this tag is intended to become a public release.
 
 ## Local Verification
 
@@ -37,6 +38,7 @@ assignees: ""
 - [ ] Draft assets include zip, DMG, manifest, and both `.sha256` files.
 - [ ] Draft assets include the generated Homebrew Cask draft.
 - [ ] If Apple secrets are complete, CI logs show the notarized release gate.
+- [ ] If `PUBLIC_RELEASE=true`, CI fails rather than creating ad-hoc draft assets when Apple secrets are incomplete.
 - [ ] If Apple secrets are incomplete, draft release is kept unpublished or clearly treated as ad-hoc.
 
 ## Draft Asset Review

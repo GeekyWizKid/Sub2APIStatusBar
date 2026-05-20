@@ -431,3 +431,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once a real tag draft exists, download the draft assets from GitHub and attach the verification output to the release checklist before publishing.
+
+### 2026-05-20 Cycle AC
+
+1. 审视
+   - Mature public release pipelines distinguish experimental draft assets from publishable release candidates.
+   - The project could create ad-hoc tag drafts when Apple credentials were incomplete, but it did not yet have a repository-level guard that prevents accidental public release mode from producing untrusted assets.
+
+2. 执行
+   - Added `scripts/resolve-release-trust.sh` to choose the release trust path from tag context, Apple credential presence, and `PUBLIC_RELEASE=true`.
+   - Updated `scripts/verify-release-candidate.sh` so `REQUIRE_NOTARIZATION=auto` uses the shared trust resolver.
+   - Updated GitHub Actions, release checklist, release issue template, README, release notes, and changelog to document the public-release guard.
+
+3. 提升
+   - Configure `PUBLIC_RELEASE=true` in the repository only after Apple Developer ID secrets are ready, then prove a real tag run fails closed or notarizes successfully before publishing.
