@@ -389,3 +389,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - After Apple secrets are configured, run a real tag build and inspect the draft release assets before publishing.
+
+### 2026-05-20 Cycle Z
+
+1. 审视
+   - Mature public projects separate build automation from release approval: draft assets still need a visible checklist before publishing.
+   - The project had strong CI and artifact verification, but no GitHub issue workflow for the human release review step.
+
+2. 执行
+   - Added a release checklist issue template covering version/tag preflight, local release candidate verification, tag CI, draft asset review, checksum/manifest checks, DMG mount testing, Gatekeeper trust review, and publish decision.
+   - Linked release publishing guidance from README and release checklist documentation.
+   - Recorded the new release-operations gate in changelog and v0.1.6 release notes.
+
+3. 提升
+   - Once a real draft release exists, use the issue checklist to capture workflow and download evidence before publishing.

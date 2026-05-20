@@ -158,6 +158,8 @@ GitHub Actions runs the same checks on `main`, pull requests, tags, and manual w
 
 For contribution workflow, product standards, documentation expectations, and PR checks, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+For tagged releases, open a GitHub Release Checklist issue before publishing the draft release.
+
 ## Support
 
 For bugs and product feedback, open a GitHub Issue using the bug or feature template. Settings > Diagnostics > Copy Diagnostics provides a support-safe report with token values redacted.

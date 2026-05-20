@@ -14,6 +14,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - One-command release candidate verification for tests, build, zip, DMG, and manifest checks.
 - Optional notarized release candidate path that rebuilds trusted zip, DMG, and manifest assets after stapling.
 - Tag CI automatically uses the notarized release gate when all Apple signing secrets are configured.
+- Release checklist issue template for tag CI, draft assets, checksums, manifest review, DMG testing, and publish decision.
 
 ## Verification
 

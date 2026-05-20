@@ -15,6 +15,7 @@
 - [x] DMG verification script that checks checksum, mountability, bundle plist, app alias, and code signature
 - [x] Release manifest generation and verification for zip/DMG asset names, sizes, and SHA-256 digests
 - [x] One-command release candidate verification for tests, build, zip, DMG, and manifest
+- [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
 - [x] Ad-hoc signing for local builds
 - [x] Notarization script ready for Apple credentials
 - [x] GitHub Actions workflow for tests, builds, and packaged artifacts
@@ -31,7 +32,7 @@
 - [x] Local alert thresholds for daily spend, daily tokens, and quota pressure
 - [x] Alert-aware status labels, diagnostics, Settings controls, and popover summary
 - [x] MAGI productization design, implementation plan, and v0.1.6 integration audit
-- [x] Tag-based CI creates a draft GitHub Release with zip and checksum assets
+- [x] Tag-based CI creates a draft GitHub Release with zip, DMG, checksum, and manifest assets
 
 ## Productization Readiness Matrix
 
@@ -63,6 +64,8 @@ VERSION=v0.1.6 ./scripts/verify-release-candidate.sh
 ```
 
 When a `v*` tag is pushed, GitHub Actions runs the same checks and creates a draft GitHub Release using `docs/RELEASE_NOTES_<tag>.md`, for example `docs/RELEASE_NOTES_v0.1.6.md`. If `APPLE_ID`, `TEAM_ID`, `APP_SPECIFIC_PASSWORD`, and `SIGN_IDENTITY` secrets are all configured, tag builds run the notarized release gate. Draft releases are intentional until the package is reviewed and, when available, Developer ID signing and notarization are complete.
+
+Use the GitHub release checklist issue template before publishing a draft release. It tracks the tag run, trust posture, downloaded assets, checksum verification, manifest review, DMG mount test, and final publish decision.
 
 Developer ID signing:
 

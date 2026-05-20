@@ -15,6 +15,7 @@
 - Added a one-command release candidate verification script.
 - Extended the release candidate gate to require the notarized zip, DMG, and manifest path when Apple credentials are provided.
 - Wired tag CI to use the notarized release gate when Apple signing secrets are configured.
+- Added a GitHub release checklist issue template for draft asset and trust review.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5
