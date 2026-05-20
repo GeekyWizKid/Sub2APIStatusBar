@@ -42,11 +42,8 @@ assignees: ""
 ## Draft Asset Review
 
 - [ ] Download zip, DMG, manifest, and checksum files from the draft release.
-- [ ] Verify zip checksum from a clean download directory.
-- [ ] Verify DMG checksum from a clean download directory.
-- [ ] Compare downloaded asset digests and sizes against the manifest.
-- [ ] Confirm the Homebrew Cask draft uses the DMG URL and SHA-256 from the release manifest.
-- [ ] Mount DMG and confirm the app plus `/Applications` shortcut are present.
+- [ ] Download the generated Homebrew Cask draft from the draft release.
+- [ ] `VERSION=<tag> ./scripts/verify-downloaded-release.sh <download-directory>`
 - [ ] For trusted public release, confirm Gatekeeper accepts the downloaded app.
 
 ## Publish Decision

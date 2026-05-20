@@ -16,6 +16,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Tag CI automatically uses the notarized release gate when all Apple signing secrets are configured.
 - Release checklist issue template for tag CI, draft assets, checksums, manifest review, DMG testing, and publish decision.
 - Homebrew Cask draft generation and verification from the release manifest.
+- Downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
 
 ## Verification
 
@@ -28,6 +29,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - `VERSION=v0.1.6 ./scripts/generate-release-manifest.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release-manifest.sh`
 - `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh`
+- `VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh <download-directory>`
 - `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` when Apple signing credentials are available
 - `VERSION=v0.1.6 ./scripts/generate-homebrew-cask.sh`
 - `VERSION=v0.1.6 ./scripts/verify-homebrew-cask.sh`

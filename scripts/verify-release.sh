@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="Sub2APIStatusBar"
 VERSION="${VERSION:-$(< "$ROOT_DIR/VERSION")}"
-DIST_DIR="$ROOT_DIR/dist"
+DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist}"
 ZIP_PATH="$DIST_DIR/$APP_NAME-${VERSION#v}-macOS.zip"
 CHECKSUM_PATH="$ZIP_PATH.sha256"
 VERIFY_DIR="$(mktemp -d /tmp/sub2api-release-verify.XXXXXX)"

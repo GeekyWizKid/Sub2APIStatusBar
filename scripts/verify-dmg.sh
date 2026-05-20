@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="Sub2APIStatusBar"
 VERSION="${VERSION:-$(< "$ROOT_DIR/VERSION")}"
-DIST_DIR="$ROOT_DIR/dist"
+DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist}"
 DMG_PATH="$DIST_DIR/$APP_NAME-${VERSION#v}-macOS.dmg"
 CHECKSUM_PATH="$DMG_PATH.sha256"
 MOUNT_DIR="$(mktemp -d /tmp/sub2api-dmg-mount.XXXXXX)"

@@ -17,6 +17,7 @@
 - Wired tag CI to use the notarized release gate when Apple signing secrets are configured.
 - Added a GitHub release checklist issue template for draft asset and trust review.
 - Added Homebrew Cask draft generation and verification from the release manifest.
+- Added downloaded release asset verification for draft zip, DMG, checksum, manifest, and cask files.
 - Verified the release with `swift test`, `swift build`, `VERSION=v0.1.6 ./scripts/package-release.sh`, and `VERSION=v0.1.6 ./scripts/verify-release.sh`.
 
 ## v0.1.5

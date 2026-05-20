@@ -417,3 +417,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Only submit or publish the cask after a real notarized public release exists and the downloaded DMG has passed the release checklist.
+
+### 2026-05-20 Cycle AB
+
+1. 审视
+   - Mature release workflows verify the artifacts users actually download, not only the workspace copies that produced them.
+   - The project had strong local zip, DMG, manifest, and cask checks, but the draft-release checklist still required maintainers to manually reassemble those checks from a clean download directory.
+
+2. 执行
+   - Added `scripts/verify-downloaded-release.sh` to verify downloaded zip, DMG, checksum, manifest, and Homebrew Cask draft files from any clean directory.
+   - Updated the release candidate gate to copy generated assets into a temporary download directory and run the same downloaded-asset verification.
+   - Documented the command in README, release notes, release checklist, issue template, and changelog.
+
+3. 提升
+   - Once a real tag draft exists, download the draft assets from GitHub and attach the verification output to the release checklist before publishing.

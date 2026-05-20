@@ -2,9 +2,19 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_NAME="Sub2APIStatusBar"
+CASK_TOKEN="sub2api-status-bar"
 VERSION="${VERSION:-$(< "$ROOT_DIR/VERSION")}"
 REQUIRE_NOTARIZATION="${REQUIRE_NOTARIZATION:-false}"
 NOTARIZATION_REQUESTED=false
+DOWNLOAD_VERIFY_DIR=""
+
+cleanup() {
+  if [[ -n "$DOWNLOAD_VERIFY_DIR" ]]; then
+    rm -rf "$DOWNLOAD_VERIFY_DIR"
+  fi
+}
+trap cleanup EXIT
 
 step() {
   printf '\n==> %s\n' "$1"
@@ -16,6 +26,21 @@ require_env() {
     echo "Missing required environment variable: $name" >&2
     exit 1
   fi
+}
+
+verify_downloaded_release_assets() {
+  local archive_base="$APP_NAME-${VERSION#v}-macOS"
+  local dist_dir="$ROOT_DIR/dist"
+
+  DOWNLOAD_VERIFY_DIR="$(mktemp -d /tmp/sub2api-downloaded-release.XXXXXX)"
+  cp "$dist_dir/$archive_base.zip" "$DOWNLOAD_VERIFY_DIR/"
+  cp "$dist_dir/$archive_base.zip.sha256" "$DOWNLOAD_VERIFY_DIR/"
+  cp "$dist_dir/$archive_base.dmg" "$DOWNLOAD_VERIFY_DIR/"
+  cp "$dist_dir/$archive_base.dmg.sha256" "$DOWNLOAD_VERIFY_DIR/"
+  cp "$dist_dir/$archive_base-manifest.json" "$DOWNLOAD_VERIFY_DIR/"
+  cp "$dist_dir/$CASK_TOKEN.rb" "$DOWNLOAD_VERIFY_DIR/"
+
+  VERSION="$VERSION" "$ROOT_DIR/scripts/verify-downloaded-release.sh" "$DOWNLOAD_VERIFY_DIR"
 }
 
 cd "$ROOT_DIR"
@@ -82,5 +107,8 @@ VERSION="$VERSION" "$ROOT_DIR/scripts/generate-homebrew-cask.sh"
 
 step "Verify Homebrew cask"
 VERSION="$VERSION" "$ROOT_DIR/scripts/verify-homebrew-cask.sh"
+
+step "Verify downloaded release assets"
+verify_downloaded_release_assets
 
 step "Release candidate verified for $VERSION"

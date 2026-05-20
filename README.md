@@ -119,6 +119,12 @@ dist/Sub2APIStatusBar-0.1.6-macOS-manifest.json
 dist/sub2api-status-bar.rb
 ```
 
+After GitHub creates a draft release, download the zip, DMG, checksum files, manifest, and cask draft into a clean folder, then verify those downloaded assets:
+
+```bash
+VERSION=v0.1.6 ./scripts/verify-downloaded-release.sh /path/to/downloaded-assets
+```
+
 ## Notarize A Release
 
 After signing with a Developer ID Application certificate, notarize and staple the app through the release candidate gate:
