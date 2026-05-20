@@ -8,6 +8,7 @@ This release continues the MAGI productization pass. It makes usage pressure mor
 - Alert-aware status text, diagnostics, and menu bar detail.
 - Productization roadmap documentation and release-readiness matrix.
 - Contributor guidance, issue flow, security policy, and pull request checklist for public collaboration.
+- Repository-level release version source for local scripts and non-tag CI builds.
 
 ## Verification
 

@@ -46,6 +46,8 @@
 
 ## Release Commands
 
+The repository `VERSION` file is the default release version used by local scripts and non-tag CI builds. Override `VERSION=...` only when preparing or validating a specific tag.
+
 ```bash
 swift test
 swift build

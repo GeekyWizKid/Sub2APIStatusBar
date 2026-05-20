@@ -86,6 +86,8 @@ swift run Sub2APIStatusBar
 VERSION=v0.1.6 ./scripts/build-app.sh
 ```
 
+If `VERSION` is omitted, release scripts read the current tag from the repository `VERSION` file.
+
 Output:
 
 ```text

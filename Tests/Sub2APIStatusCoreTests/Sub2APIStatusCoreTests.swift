@@ -380,6 +380,18 @@ import Testing
     #expect(AppBuildInfo.fallbackVersion == "0.1.6")
 }
 
+@Test func defaultBuildVersionMatchesReleaseFile() throws {
+    let packageRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+    let releaseVersionURL = packageRoot.appendingPathComponent("VERSION")
+    let releaseVersion = try String(contentsOf: releaseVersionURL, encoding: .utf8)
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    #expect(AppBuildInfo.fallbackVersion == releaseVersion.trimmingPrefix("v"))
+}
+
 @Test func currentUserResponseDecodesDirectUserPayload() throws {
     let json = """
     {

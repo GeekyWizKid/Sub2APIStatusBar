@@ -304,3 +304,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - In the next release, make the current release line a single source of truth so scripts, docs, and tests do not require scattered manual edits.
+
+### 2026-05-20 Cycle T
+
+1. 审视
+   - Mature release pipelines keep the current release identifier in one obvious place instead of repeating it across shell scripts and CI.
+   - The v0.1.6 alignment pass reduced drift, but future releases would still require editing several defaults by hand.
+
+2. 执行
+   - Added a root `VERSION` file as the default release version source.
+   - Updated build, package, verify, notarize, and non-tag CI package steps to read that file when `VERSION` is not explicitly provided.
+   - Added a test that compares the app fallback version with the repository release file.
+
+3. 提升
+   - A later pass can generate `AppBuildInfo.fallbackVersion` from the same source at build time, but the current test now catches manual drift before release.
