@@ -64,6 +64,7 @@ jobs:
             dist/*.zip
             dist/*.dmg
             dist/*-manifest.json
+            dist/sub2api-status-bar.rb
             dist/*.sha256
           if-no-files-found: error
 
@@ -79,4 +80,5 @@ jobs:
             dist/*.zip
             dist/*.dmg
             dist/*-manifest.json
+            dist/sub2api-status-bar.rb
             dist/*.sha256

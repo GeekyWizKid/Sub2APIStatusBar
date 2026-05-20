@@ -14,6 +14,7 @@
 - [x] Release verification script that checks the zip from a clean temporary extraction
 - [x] DMG verification script that checks checksum, mountability, bundle plist, app alias, and code signature
 - [x] Release manifest generation and verification for zip/DMG asset names, sizes, and SHA-256 digests
+- [x] Homebrew Cask draft generation and verification from the release manifest
 - [x] One-command release candidate verification for tests, build, zip, DMG, and manifest
 - [x] GitHub release checklist issue template for tag, draft asset, checksum, manifest, DMG, and trust review
 - [x] Ad-hoc signing for local builds
@@ -42,11 +43,11 @@
 | User dashboard | Ready | `swift test` covers dashboard decoding, quota progress, status labels, menu bar summaries, and local alerts | Add anomaly or model-cost concentration insights after alert rules prove useful |
 | Local configuration | Ready | `swift test` covers config persistence, legacy decoding, and multi-account token storage | Revisit Keychain only if the product promise changes |
 | Menu bar maturity | Ready for v0.1.6 | Summary modes, section visibility, compact density, stale detection, and alert banners are covered by tests, build checks, and README copy | Verify compact layout manually before public release |
-| Release archive | Ready | `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs tests, build, zip, DMG, and manifest checks | Update the version for each tag |
+| Release archive | Ready | `VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs tests, build, zip, DMG, manifest, and Homebrew Cask checks | Update the version for each tag |
 | GitHub release delivery | Ready as draft | `v*` tag CI packages, verifies, uploads artifacts, creates a draft GitHub Release, and requires notarization when all Apple secrets are configured | Publish the draft only after release notes and trust posture are reviewed |
 | Public trust | Blocked by Apple credentials | `REQUIRE_NOTARIZATION=true VERSION=v0.1.6 ./scripts/verify-release-candidate.sh` runs the notarized release path when Developer ID and Apple credentials are present | Provide `SIGN_IDENTITY`, `APPLE_ID`, `TEAM_ID`, and `APP_SPECIFIC_PASSWORD` |
 | Update delivery | Partial | GitHub Releases latest-version detection exists | Evaluate Sparkle-style signed update installation after notarization |
-| Distribution channels | Planned | GitHub Release zip and checksum are produced by CI | Consider Homebrew Cask after a notarized public release exists |
+| Distribution channels | Prepared | Homebrew Cask draft is generated from the release manifest and uploaded as a CI/release asset | Submit or publish a cask only after a notarized public release exists |
 | Support | Ready for v0.1.6 | Copy Diagnostics, Show Config, token-redacted diagnostics, and integration audit exist | Add issue templates or support bundle structure in a later MAGI pass |
 
 ## Release Commands

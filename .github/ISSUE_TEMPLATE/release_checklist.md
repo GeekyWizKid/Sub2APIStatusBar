@@ -35,6 +35,7 @@ assignees: ""
 - [ ] GitHub Actions package job passes.
 - [ ] Draft GitHub Release is created.
 - [ ] Draft assets include zip, DMG, manifest, and both `.sha256` files.
+- [ ] Draft assets include the generated Homebrew Cask draft.
 - [ ] If Apple secrets are complete, CI logs show the notarized release gate.
 - [ ] If Apple secrets are incomplete, draft release is kept unpublished or clearly treated as ad-hoc.
 
@@ -44,6 +45,7 @@ assignees: ""
 - [ ] Verify zip checksum from a clean download directory.
 - [ ] Verify DMG checksum from a clean download directory.
 - [ ] Compare downloaded asset digests and sizes against the manifest.
+- [ ] Confirm the Homebrew Cask draft uses the DMG URL and SHA-256 from the release manifest.
 - [ ] Mount DMG and confirm the app plus `/Applications` shortcut are present.
 - [ ] For trusted public release, confirm Gatekeeper accepts the downloaded app.
 

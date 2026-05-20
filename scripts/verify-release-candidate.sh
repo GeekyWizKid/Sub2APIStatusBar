@@ -77,4 +77,10 @@ fi
 step "Verify release manifest"
 VERSION="$VERSION" "$ROOT_DIR/scripts/verify-release-manifest.sh"
 
+step "Generate Homebrew cask"
+VERSION="$VERSION" "$ROOT_DIR/scripts/generate-homebrew-cask.sh"
+
+step "Verify Homebrew cask"
+VERSION="$VERSION" "$ROOT_DIR/scripts/verify-homebrew-cask.sh"
+
 step "Release candidate verified for $VERSION"

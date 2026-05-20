@@ -403,3 +403,17 @@ The only meaningful blockers for fully trusted macOS public distribution are App
 
 3. 提升
    - Once a real draft release exists, use the issue checklist to capture workflow and download evidence before publishing.
+
+### 2026-05-20 Cycle AA
+
+1. 审视
+   - Mature macOS open-source projects often provide a Homebrew Cask path after notarized public releases exist.
+   - The project had release assets and a manifest, but no cask draft that could reuse the manifest's DMG SHA-256 instead of duplicating metadata by hand.
+
+2. 执行
+   - Added `scripts/generate-homebrew-cask.sh` to generate a `sub2api-status-bar` cask draft from the release manifest.
+   - Added `scripts/verify-homebrew-cask.sh` to ensure the cask version, DMG URL, SHA-256, app stanza, homepage, description, and macOS requirement match release metadata.
+   - Wired cask generation into the release candidate gate, CI artifact upload, README output list, release checklist, release issue template, changelog, and v0.1.6 release notes.
+
+3. 提升
+   - Only submit or publish the cask after a real notarized public release exists and the downloaded DMG has passed the release checklist.

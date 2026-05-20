@@ -116,6 +116,7 @@ dist/Sub2APIStatusBar-0.1.6-macOS.zip.sha256
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg
 dist/Sub2APIStatusBar-0.1.6-macOS.dmg.sha256
 dist/Sub2APIStatusBar-0.1.6-macOS-manifest.json
+dist/sub2api-status-bar.rb
 ```
 
 ## Notarize A Release
