@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.1.11
+
+- Added a Simplified Chinese README and language switch links between English and Chinese docs.
+- Updated default release version wiring to v0.1.11.
+
 ## v0.1.10
 
 - Redesigned Copy Share Card as a social-ready Build Log poster with a warm sticker/receipt visual style.
